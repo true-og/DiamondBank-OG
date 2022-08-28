@@ -50,7 +50,7 @@ public class BankCommand implements CommandExecutor {
     }
 
     private void setBal(Player p, String[] args) {
-        if(plugin.checkPerms(p, "diamondbank.set")) return;
+        if(!plugin.checkPerms(p, "diamondbank.set")) return;
         if(args.length != 3) return;
 
         Player player = (Player) plugin.parseArgs(p, args[1], Player.class);
@@ -63,7 +63,7 @@ public class BankCommand implements CommandExecutor {
     }
 
     private void baltop(Player p) {
-        if(plugin.checkPerms(p, "diamondbank.set")) return;
+        if(!plugin.checkPerms(p, "diamondbank.set")) return;
 
         for (OfflinePlayer offlinePlayer : plugin.getServer().getOfflinePlayers()) {
             if(!balTop.contains(offlinePlayer.getPlayer())) balTop.add(offlinePlayer.getPlayer());
@@ -85,7 +85,7 @@ public class BankCommand implements CommandExecutor {
     }
 
     private void removeBal(Player p, String[] args) {
-        if(plugin.checkPerms(p, "diamondbank.remove")) return;
+        if(!plugin.checkPerms(p, "diamondbank.remove")) return;
         if(args.length != 3) return;
 
         Player player = (Player) plugin.parseArgs(p, args[1], Player.class);
@@ -99,7 +99,7 @@ public class BankCommand implements CommandExecutor {
     }
 
     private void addBal(Player p, String[] args) {
-        if(plugin.checkPerms(p, "diamondbank.add")) return;
+        if(!plugin.checkPerms(p, "diamondbank.add")) return;
         if(args.length != 3) return;
 
         Player player = (Player) plugin.parseArgs(p, args[1], Player.class);
@@ -113,12 +113,12 @@ public class BankCommand implements CommandExecutor {
     }
 
     private void transfer(Player p, String[] args) {
-        if(plugin.checkPerms(p, "diamondbank.transfer")) return;
+        if(!plugin.checkPerms(p, "diamondbank.transfer")) return;
         pay(p, args);
     }
 
     private void withdraw(Player p, String[] args) {
-        if(plugin.checkPerms(p, "diamondbank.withdraw")) return;
+        if(!plugin.checkPerms(p, "diamondbank.withdraw")) return;
         if(args.length != 2) return;
 
         EconomyResponse response;
@@ -130,7 +130,7 @@ public class BankCommand implements CommandExecutor {
     }
 
     private void pay(Player p, String[] args) {
-        if(plugin.checkPerms(p, "diamondbank.pay")) return;
+        if(!plugin.checkPerms(p, "diamondbank.pay")) return;
 
         Player player = (Player) plugin.parseArgs(p, args[1], Player.class);
         Integer amount = (Integer) plugin.parseArgs(p, args[2], Double.class);
@@ -152,7 +152,7 @@ public class BankCommand implements CommandExecutor {
     }
 
     private void deposit(Player p, String[] args) {
-        if(plugin.checkPerms(p, "diamondbank.deposit")) return;
+        if(!plugin.checkPerms(p, "diamondbank.deposit")) return;
         if (args.length > 2) return;
 
         ArrayList<ItemStack> items = new ArrayList<>();
@@ -183,7 +183,7 @@ public class BankCommand implements CommandExecutor {
 
 
     private void balance(Player p, String[] args) {
-        if(plugin.checkPerms(p, "diamondbank.balance")) return;
+        if(!plugin.checkPerms(p, "diamondbank.balance")) return;
         Double balance;
 
         if(args.length == 2) balance = (Double) plugin.parseArgs(p, args[1], Double.class);

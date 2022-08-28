@@ -47,6 +47,8 @@ public final class Plugin extends JavaPlugin {
     }
 
     public void onReload(Player p) {
+        if(!checkPerms(p, "bank.reload")) return;
+
         reloadConfig();
         p.sendMessage(getConfig().getString("config.reloadMessage"));
     }
@@ -74,10 +76,10 @@ public final class Plugin extends JavaPlugin {
     public boolean checkPerms(Player player, String node) {
         if(!player.hasPermission(node)) {
             player.sendMessage(constructString("config.permissionDenied", 0, ""));
-            return true;
+            return false;
         }
 
-        return false;
+        return true;
     }
 
     public PersistentDataContainer getPlayerContainer(OfflinePlayer p) {
