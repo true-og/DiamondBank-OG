@@ -63,7 +63,7 @@ public class BankCommand implements CommandExecutor {
     }
 
     private void baltop(Player p) {
-        if(!plugin.checkPerms(p, "diamondbank.set")) return;
+        if(!plugin.checkPerms(p, "diamondbank.baltop")) return;
 
         for (OfflinePlayer offlinePlayer : plugin.getServer().getOfflinePlayers()) {
             if(!balTop.contains(offlinePlayer.getPlayer())) balTop.add(offlinePlayer.getPlayer());
@@ -186,7 +186,10 @@ public class BankCommand implements CommandExecutor {
         if(!plugin.checkPerms(p, "diamondbank.balance")) return;
         Double balance;
 
-        if(args.length == 2) balance = (Double) plugin.parseArgs(p, args[1], Double.class);
+        if(args.length == 2) {
+            if(!plugin.checkPerms(p, "diamondbank.balance.others")) return;
+            balance = (Double) plugin.parseArgs(p, args[1], Double.class);
+        }
         else balance = plugin.econ.getBalance(p);
 
         if(balance == null) return;
