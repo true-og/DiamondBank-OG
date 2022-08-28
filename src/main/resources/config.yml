@@ -1,0 +1,21 @@
+config:
+  # Starting balance must be an integer
+  startingBalance: 10
+  # The amount of players to return from the baltop command
+  balTopMax: 10
+  balTopMsg: "Top Balances on the Server:"
+  failedFindPlayer: "Player $player could not be found"
+  insufficientBalanceMsg: "Not enough balance for this transaction"
+  setBalanceMsg: "Set $player's balance to $amount"
+  removeBalanceMsg: "Removed $amount from $player's balance"
+  paymentSentMsg: "Paid $player $amount"
+  paymentReceivedMsg: "$amount received from $player"
+  balanceMsg: "Your balance is $amount"
+  depositMessage: "$amount has been deposited into your account"
+  addBalanceMsg: "Added $amount to $player's account"
+  notEnoughInvErrMsg: "Not enough inventory space for the total withdraw. Overflow has been refunded"
+  permissionDenied: "You do not have permission for this command"
+  parsingError: "&cError! The amount entered does not seem to be a number"
+  unhandledError: "An unhandled error occurred but was caught. Please contact a server administrator."
+  insuffcientDiamondsMsg: "You do not have enough diamonds for this deposit!"
+  reloadMessage: "[Diamond Bank] Successfully reloaded!"
