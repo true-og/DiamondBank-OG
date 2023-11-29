@@ -1,10 +1,7 @@
 package io.github.andromdaa;
 
-import io.github.andromdaa.commands.BankCommand;
-import io.github.andromdaa.listeners.EventListener;
-import net.milkbowl.vault.economy.Economy;
-import net.milkbowl.vault.economy.EconomyResponse;
-import org.bukkit.ChatColor;
+import java.util.logging.Logger;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -13,7 +10,12 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.logging.Logger;
+import io.github.andromdaa.commands.BankCommand;
+import io.github.andromdaa.listeners.EventListener;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.EconomyResponse;
 
 
 public final class Plugin extends JavaPlugin {
@@ -29,7 +31,7 @@ public final class Plugin extends JavaPlugin {
 
         // vault setup
         if (econ == null ) {
-            log.severe(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
+            log.severe(String.format("[%s] - Disabled due to no Vault dependency found!", this.getName()));
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -68,7 +70,9 @@ public final class Plugin extends JavaPlugin {
         message = message.replaceAll("\\$player", playerName);
         message = message.replaceAll("\\$amount", String.valueOf(amount));
 
-        message = ChatColor.translateAlternateColorCodes('&', message);
+        TextComponent coloredMessage = LegacyComponentSerializer.legacyAmpersand().deserialize(message);
+        
+        message = coloredMessage.content();
 
         return message;
     }
@@ -90,11 +94,11 @@ public final class Plugin extends JavaPlugin {
     public <T> Object parseArgs(Player executor, String argument, Class<T> tClass){
         if(tClass.equals(Double.class)) {
             try { return (int) Double.parseDouble(argument); }
-            catch (NumberFormatException e) { executor.sendMessage(constructString("config.parsingError", 0, executor.getDisplayName())); }
+            catch (NumberFormatException e) { executor.sendMessage(constructString("config.parsingError", 0, executor.getName())); }
         }
         else if(tClass.equals(Player.class)) {
             try { return getServer().getPlayer(argument); }
-            catch (NullPointerException e) { executor.sendMessage(constructString("config.failedFindPlayer", 0, executor.getDisplayName())); }
+            catch (NullPointerException e) { executor.sendMessage(constructString("config.failedFindPlayer", 0, executor.getName())); }
         }
 
         return null;

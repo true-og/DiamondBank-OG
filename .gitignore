@@ -1,5 +1,8 @@
 # User-specific stuff
 .idea/
+.classpath
+.project
+.settings/
 
 *.iml
 *.ipr
@@ -10,6 +13,7 @@ out/
 
 # Compiled class file
 *.class
+bin/
 
 # Log file
 *.log
@@ -113,3 +117,5 @@ buildNumber.properties
 
 # Common working directory
 run/
+/.gradle/
+/build/
