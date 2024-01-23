@@ -128,6 +128,8 @@ public class BankCommand implements CommandExecutor {
 
 		EconomyResponse response = plugin.setPlayerBalance(player, amount, plugin.constructString("config.setBalanceMsg", amount, player.getName()));
 
+    p.sendMessage("Sent money to someone");
+
 		p.sendMessage(Util.legacySerializerAnyCase(response.errorMessage));
 
 	}
@@ -320,6 +322,7 @@ public class BankCommand implements CommandExecutor {
 			items.add(p.getInventory().getItemInMainHand());
 
 		}
+    // what the heck if i type "/bank deposit 3" it will deposit my entire inventory?????"
 		else {
 
 			items.addAll(Arrays.asList(p.getInventory().getContents()));
@@ -359,7 +362,9 @@ public class BankCommand implements CommandExecutor {
 
 		}
 
-		p.sendMessage("&fSuccessfully deposited &e" + diamonds + " &BDiamonds &finto your bank account.");
+    plugin.econ.depositPlayer(p,diamonds);
+ 
+		p.sendMessage("Successfully deposited " + diamonds + " Diamonds into your bank account.");
 
 	}
 
