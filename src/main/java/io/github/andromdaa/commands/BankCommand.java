@@ -15,6 +15,8 @@ import org.bukkit.inventory.ItemStack;
 import io.github.andromdaa.PlayerComparator;
 import io.github.andromdaa.Plugin;
 import io.github.andromdaa.util.Util;
+import io.github.andromdaa.PostgreSQL;
+import java.sql.*;
 import net.milkbowl.vault.economy.EconomyResponse;
 
 public class BankCommand implements CommandExecutor {
@@ -98,7 +100,15 @@ public class BankCommand implements CommandExecutor {
 			plugin.onReload(p);
 
 		}
-
+		else if (args[0].equalsIgnoreCase("postgres")) {
+			PostgreSQL pq = new PostgreSQL();
+			try {
+				pq.initDB();
+			}
+			catch(Exception e) {
+				Plugin.getPlugin().getLogger().info(e.toString());
+			}
+		}
 		return true;
 
 	}
