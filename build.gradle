@@ -1,7 +1,7 @@
 plugins {
 
     id 'java' // Tell gradle this is a java project.
-    id 'com.github.johnrengelman.shadow' version '7.1.2' // Import utility to package libraries into .jar file.
+    id 'com.github.johnrengelman.shadow' version '8.1.1' // Import utility to package libraries into .jar file.
     id 'eclipse' // Import eclipse plugin for IDE integration.
 
 }
@@ -52,13 +52,14 @@ dependencies {
     compileOnly "org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT" // Declare purpur API version to be packaged.
 	compileOnly "com.github.MilkBowl:VaultAPI:1.7" // Import Vault API.
     implementation "com.github.christianniehaus:Utilities-OG:e9ebc26c1f" // Import Utilities-OG API.
+    implementation "org.postgresql:postgresql:42.7.1" // Import PostgreSQL API.
 
 }
 
 shadowJar {
-
-    minimize()
-    
+    minimize {
+        exclude(dependency("org.postgresql:postgresql:.*"))
+    }
 }
 
 jar.dependsOn shadowJar

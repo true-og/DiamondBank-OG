@@ -3,7 +3,7 @@ version: 1.0
 main: io.github.andromdaa.Plugin
 api-version: 1.19
 commands:
-   bank:
-      description: Your description
-      usage: /<command>
-softdepend: [Vault]
+  bank:
+    description: Your description
+    usage: /<command>
+softdepend: [ Vault ]
