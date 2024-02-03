@@ -30,12 +30,12 @@ public class PostgreSQL {
 
     public void depositToPlayerBalance(UUID uuid, double amount) {
         double playerBalance = getPlayerBalance(uuid);
-        setPlayerBalance(uuid, playerBalance+amount);
+        setPlayerBalance(uuid, playerBalance + amount);
     }
 
     public void withdrawFromPlayerBalance(UUID uuid, double amount) {
         double playerBalance = getPlayerBalance(uuid);
-        setPlayerBalance(uuid, playerBalance-amount);
+        setPlayerBalance(uuid, playerBalance - amount);
         //return playerBalance-amount;
     }
 

@@ -1,11 +1,7 @@
 package io.github.andromdaa.listeners;
 
 import io.github.andromdaa.Plugin;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.persistence.PersistentDataType;
 
 public class EventListener implements Listener {
 

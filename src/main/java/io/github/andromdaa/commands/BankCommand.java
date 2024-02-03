@@ -3,7 +3,6 @@ package io.github.andromdaa.commands;
 import io.github.andromdaa.PlayerComparator;
 import io.github.andromdaa.Plugin;
 import io.github.andromdaa.util.Util;
-import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
