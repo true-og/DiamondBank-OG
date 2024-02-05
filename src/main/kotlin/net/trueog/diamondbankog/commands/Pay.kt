@@ -38,16 +38,18 @@ class Pay : CommandExecutor {
             return true
         }
 
-        val amount: Long
-        try {
-            amount = args[1].toLong()
-            if (amount <= 0) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot pay a negative amount."))
+        var amount = -1L
+        if (args[0] != "all") {
+            try {
+                amount = args[1].toLong()
+                if (amount <= 0) {
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot pay a negative amount."))
+                    return true
+                }
+            } catch (_: Exception) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Invalid argument."))
                 return true
             }
-        } catch (_: Exception) {
-            sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Invalid argument."))
-            return true
         }
 
         GlobalScope.launch {
@@ -62,13 +64,13 @@ class Pay : CommandExecutor {
                 return@launch
             }
 
-            var error = DiamondBankOG.postgreSQL.setPlayerBalance(sender.uniqueId, senderBalance - amount)
+            var error = DiamondBankOG.postgreSQL.setPlayerBalance(sender.uniqueId, senderBalance - if (amount == -1L) senderBalance else amount)
             if (error) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to set that player's balance."))
                 return@launch
             }
 
-            error = DiamondBankOG.postgreSQL.depositToPlayerBalance(player.uniqueId, amount)
+            error = DiamondBankOG.postgreSQL.depositToPlayerBalance(player.uniqueId, if (amount == -1L) senderBalance else amount)
             if (error) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to set that player's balance."))
                 return@launch
