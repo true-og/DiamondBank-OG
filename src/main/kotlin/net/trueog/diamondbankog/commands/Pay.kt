@@ -43,6 +43,7 @@ class Pay : CommandExecutor {
             amount = args[1].toLong()
             if (amount <= 0) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot pay a negative amount."))
+                return true
             }
         } catch (_: Exception) {
             sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Invalid argument."))

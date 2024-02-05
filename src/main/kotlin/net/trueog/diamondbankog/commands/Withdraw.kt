@@ -39,6 +39,7 @@ class Withdraw : CommandExecutor {
                 amount = args[0].toInt()
                 if (amount <= 0) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot withdraw a negative amount."))
+                    return true
                 }
             } catch (_: Exception) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Invalid argument."))
