@@ -1,26 +1,4 @@
-config:
-  prefix: "&8[&bDiamond&l&2-Bank&4-OG&8] "
-  # Starting balance must be an integer
-  startingBalance: 0
-  # The amount of players to return from the baltop command
-  balTopMax: 10
-  balTopMsg: "Richest Players:"
-  failedFindPlayer: "&cERROR: Player &6$player &ccould not be found."
-  insufficientBalanceMsg: "&cERROR: Not enough balance for this transaction."
-  setBalanceMsg: "&fSet &e$player's &fbalance to &B$amount."
-  removeBalanceMsg: "&6Removed &B$amount Diamonds &6from &e$player's &6balance."
-  paymentSentMsg: "&fPaid &6$player &B$amount Diamonds."
-  paymentReceivedMsg: "&B$amount Diamonds &freceived from &6$player."
-  balanceMsg: "&eYour balance is &B$amount Diamonds."
-  depositMessage: "&B$amount Diamonds &ehave been deposited into your bank account."
-  addBalanceMsg: "&eAdded &B$amount Diamonds &eto &6$player's &Baccount."
-  notEnoughInvErrMsg: "&cERROR: Not enough inventory space for the total withdraw. Overflow has been refunded."
-  permissionDenied: "&cERROR: You do not have permission for this command."
-  parsingError: "&cERROR: The amount entered does not seem to be a number."
-  unhandledError: "&cERROR: An unexpected error occurred. Please contact a server administrator."
-  insuffcientDiamondsMsg: "&cERROR: You do not have enough &BDiamonds &cfor this deposit!"
-  reloadMessage: "&aSuccessfully reloaded!"
-  postgresdbURL: "jdbc:postgresql://localhost:5432/diamond"
-  postgresUser: "postgres"
-  postgresUserPassword: "postgrespassword"
-  postgresTable: "diamond"
+postgresdbUrl: "jdbc:postgresql://localhost:5432/diamond"
+postgresUser: "postgres"
+postgresPassword: "postgrespassword"
+postgresTable: "diamond"

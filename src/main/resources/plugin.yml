@@ -1,9 +1,23 @@
 name: DiamondBank-OG
 version: 1.0
-main: io.github.andromdaa.Plugin
+main: net.trueog.diamondbankog.DiamondBankOG
 api-version: 1.19
 commands:
   bank:
     description: Your description
     usage: /<command>
-softdepend: [ Vault ]
+  deposit:
+    description: Deposit diamonds into your bank
+    usage: /deposit <amount> or /deposit all
+  withdraw:
+    description: Withdraw diamonds from your bank
+    usage: /withdraw <amount> or /withdraw all
+  setbalance:
+    description: Set the balance of a player
+    usage: /setbalance <playername> <amount> or /setbalance <playeruuid> <amount>
+  setbal:
+    description: Set the balance of a player
+    usage: /setbal <player> <amount> or /setbal <playeruuid> <amount>
+  pay:
+    description: Pay a player
+    usage: /pay <player> <amount>

@@ -1,6 +1,6 @@
 # DiamondBank-OG
 
-A free and open source Diamond Economy plugin for Spigot inspired by [The Diamond Bank](https://www.spigotmc.org/resources/the-diamond-bank.72020/).
+A free and open source Diamond Economy diamondBankOG for Spigot inspired by [The Diamond Bank](https://www.spigotmc.org/resources/the-diamond-bank.72020/).
 
 Features:
 
