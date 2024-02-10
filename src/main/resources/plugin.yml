@@ -1,7 +1,7 @@
 name: DiamondBank-OG
-version: 1.0
+version: '${version}'
 main: net.trueog.diamondbankog.DiamondBankOG
-api-version: 1.19
+api-version: '${apiVersion}'
 commands:
   bank:
     description: Your description
