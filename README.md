@@ -22,4 +22,4 @@ diamondbank-og.baltop\
 diamondbank-og.deposit\
 diamondbank-og.withdraw\
 diamondbank-og.pay\
-diamondbank-og.setbalance
+diamondbank-og.setbankbalance

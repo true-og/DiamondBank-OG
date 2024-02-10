@@ -14,7 +14,7 @@ class SetBankBalance : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         GlobalScope.launch {
-            if (!sender.hasPermission("diamondbank-og.setbalance")) {
+            if (!sender.hasPermission("diamondbank-og.setbankbalance")) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You do not have permission to use this command."))
                 return@launch
             }
