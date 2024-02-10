@@ -13,7 +13,7 @@ Maintained for TrueOG.
 
 ## Admin Commands
 
-/setbalance \<player> \<balance>
+/setbankbalance \<player> \<balance>
 
 ## Permissions
 diamondbank-og.balance\
