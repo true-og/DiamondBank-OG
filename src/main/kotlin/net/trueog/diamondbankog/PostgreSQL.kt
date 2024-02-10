@@ -188,11 +188,12 @@ class PostgreSQL {
                 connection.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${Config.getPostgresTable()}")
             val result = preparedStatement.await()
 
-            val rowData = result.rows[0] as ArrayRowData
-            number = if (rowData.columns[0] != null) {
-                rowData.columns[0] as Long
-            } else 0L
-
+            if (result.rows.size != 0) {
+                val rowData = result.rows[0] as ArrayRowData
+                number = if (rowData.columns[0] != null) {
+                    rowData.columns[0] as Long
+                } else 0L
+            }
         } catch (exception: SQLException) {
             DiamondBankOG.plugin.logger.info(exception.toString())
         }
