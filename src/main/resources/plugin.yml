@@ -12,12 +12,12 @@ commands:
   withdraw:
     description: Withdraw diamonds from your bank
     usage: /withdraw <amount> or /withdraw all
-  setbalance:
-    description: Set the balance of a player
-    usage: /setbalance <playername> <amount> or /setbalance <playeruuid> <amount>
-  setbal:
-    description: Set the balance of a player
-    usage: /setbal <player> <amount> or /setbal <playeruuid> <amount>
+  setbankbalance:
+    description: Set the bank balance of a player
+    usage: /setbankbalance <playername> <amount> or /setbankbalance <playeruuid> <amount>
+  setbankbal:
+    description: Set the bank balance of a player
+    usage: /setbankbal <player> <amount> or /setbankbal <playeruuid> <amount>
   pay:
     description: Pay a player
     usage: /pay <player> <amount>

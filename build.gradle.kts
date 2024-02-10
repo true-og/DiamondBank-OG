@@ -1,6 +1,7 @@
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("eclipse")
 }
 
 group = "net.trueog.diamondbank"
@@ -29,12 +30,10 @@ repositories {
     maven {
         url = uri("https://jitpack.io")
     }
-
 }
 
 dependencies {
     compileOnly("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT")
-    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     implementation("com.github.christianniehaus:Utilities-OG:e9ebc26c1f")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4")
 }
@@ -57,4 +56,11 @@ tasks.jar.configure {
 
 kotlin {
     jvmToolchain(17)
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+        vendor = JvmVendorSpec.GRAAL_VM
+    }
 }
