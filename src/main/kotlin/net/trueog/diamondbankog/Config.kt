@@ -23,19 +23,19 @@ object Config {
         config.save(file)
     }
 
-    fun getPostgresdbUrl(): String {
-        return config.get("postgresdbUrl").toString()
+    fun getPostgresUrl(): String {
+        return config.get("postgresUrl").toString()
     }
 
-    fun getPostgresdbUser(): String {
-        return config.get("postgresdbUser").toString()
+    fun getPostgresUser(): String {
+        return config.get("postgresUser").toString()
     }
 
-    fun getPostgresdbPassword(): String {
-        return config.get("postgresdbPassword").toString()
+    fun getPostgresPassword(): String {
+        return config.get("postgresPassword").toString()
     }
 
     fun getPostgresTable(): String {
-        return config.get("postgresdbTable").toString()
+        return config.get("postgresTable").toString()
     }
 }

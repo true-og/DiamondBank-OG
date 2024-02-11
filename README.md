@@ -13,7 +13,7 @@ Maintained for TrueOG.
 
 ## Admin Commands
 
-/setbalance \<player> \<balance>
+/setbankbalance \<player> \<balance>
 
 ## Permissions
 diamondbank-og.balance\
@@ -22,4 +22,4 @@ diamondbank-og.baltop\
 diamondbank-og.deposit\
 diamondbank-og.withdraw\
 diamondbank-og.pay\
-diamondbank-og.setbalance
+diamondbank-og.setbankbalance

@@ -1,4 +1,4 @@
-postgresdbUrl: "jdbc:postgresql://localhost:5432/diamond"
+postgresUrl: "jdbc:postgresql://localhost:5432/diamond"
 postgresUser: "postgres"
 postgresPassword: "postgrespassword"
 postgresTable: "diamond"

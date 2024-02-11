@@ -5,9 +5,10 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
 import net.trueog.diamondbankog.commands.Deposit
 import net.trueog.diamondbankog.commands.Pay
-import net.trueog.diamondbankog.commands.SetBalance
+import net.trueog.diamondbankog.commands.SetBankBalance
 import net.trueog.diamondbankog.commands.Withdraw
 import org.bukkit.plugin.java.JavaPlugin
+import java.util.*
 
 class DiamondBankOG : JavaPlugin() {
     companion object {
@@ -21,6 +22,7 @@ class DiamondBankOG : JavaPlugin() {
                     .build()
             )
             .build()
+        val blockInventoryFor = mutableListOf<UUID>()
     }
 
     override fun onEnable() {
@@ -39,8 +41,8 @@ class DiamondBankOG : JavaPlugin() {
 
         this.getCommand("deposit")?.setExecutor(Deposit())
         this.getCommand("withdraw")?.setExecutor(Withdraw())
-        this.getCommand("setbalance")?.setExecutor(SetBalance())
-        this.getCommand("setbal")?.setExecutor(SetBalance())
+        this.getCommand("setbankbalance")?.setExecutor(SetBankBalance())
+        this.getCommand("setbankbal")?.setExecutor(SetBankBalance())
         this.getCommand("pay")?.setExecutor(Pay())
     }
 
