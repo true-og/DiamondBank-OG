@@ -23,6 +23,14 @@ object Config {
         config.save(file)
     }
 
+    fun getSentryEnabled(): Boolean {
+        return config.get("sentryEnabled").toString().toBoolean()
+    }
+
+    fun getSentryDsn(): String {
+        return config.get("sentryDsn").toString()
+    }
+
     fun getPostgresUrl(): String {
         return config.get("postgresUrl").toString()
     }

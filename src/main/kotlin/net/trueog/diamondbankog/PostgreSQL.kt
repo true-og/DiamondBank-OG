@@ -20,14 +20,20 @@ class PostgreSQL {
 
     @Throws(SQLException::class, ClassNotFoundException::class)
     fun initDB() {
-        pool =
-            PostgreSQLConnectionBuilder.createConnectionPool("${Config.getPostgresUrl()}?user=${Config.getPostgresUser()}&password=${Config.getPostgresPassword()}")
-        val createTable =
-            pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.getPostgresTable()}(uuid TEXT, bank_balance decimal, inventory_balance decimal, ender_chest_balance decimal, unique(uuid))")
-        createTable.join()
-        val createIndex =
-            pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_balance ON ${Config.getPostgresTable()}(bank_balance, inventory_balance, ender_chest_balance)")
-        createIndex.join()
+        try {
+            pool =
+                PostgreSQLConnectionBuilder.createConnectionPool("${Config.getPostgresUrl()}?user=${Config.getPostgresUser()}&password=${Config.getPostgresPassword()}")
+            val createTable =
+                pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.getPostgresTable()}(uuid TEXT, bank_balance decimal, inventory_balance decimal, ender_chest_balance decimal, unique(uuid))")
+            createTable.join()
+            val createIndex =
+                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_balance ON ${Config.getPostgresTable()}(bank_balance, inventory_balance, ender_chest_balance)")
+            createIndex.join()
+        } catch (e: Exception) {
+            DiamondBankOG.economyDisabled = true
+            DiamondBankOG.plugin.logger.severe("ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?")
+            return
+        }
     }
 
     suspend fun setPlayerBalance(uuid: UUID, balance: Long, type: BalanceType): Boolean {
@@ -44,8 +50,7 @@ class PostgreSQL {
             val preparedStatement =
                 connection.sendPreparedStatement("INSERT INTO ${Config.getPostgresTable()}(uuid, $balanceType) VALUES('$uuid', $balance) ON CONFLICT (uuid) DO UPDATE SET $balanceType = excluded.$balanceType")
             preparedStatement.await()
-        } catch (exception: SQLException) {
-            DiamondBankOG.plugin.logger.info(exception.toString())
+        } catch (e: Exception) {
             return true
         }
         return false
@@ -144,9 +149,8 @@ class PostgreSQL {
                 inventoryBalance = 0L
                 enderChestBalance = 0L
             }
-
-        } catch (exception: SQLException) {
-            DiamondBankOG.plugin.logger.info(exception.toString())
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.info(e.toString())
         }
         return PlayerBalance(bankBalance, inventoryBalance, enderChestBalance)
     }
@@ -174,8 +178,8 @@ class PostgreSQL {
                     bankBalance + inventoryBalance + enderChestBalance
             }
             return baltop
-        } catch (exception: SQLException) {
-            DiamondBankOG.plugin.logger.info(exception.toString())
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.info(e.toString())
         }
         return null
     }
@@ -194,8 +198,8 @@ class PostgreSQL {
                     rowData.columns[0] as Long
                 } else 0L
             }
-        } catch (exception: SQLException) {
-            DiamondBankOG.plugin.logger.info(exception.toString())
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.info(e.toString())
         }
         return number
     }

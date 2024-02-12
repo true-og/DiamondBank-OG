@@ -36,6 +36,9 @@ dependencies {
     compileOnly("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT")
     implementation("com.github.christianniehaus:Utilities-OG:e9ebc26c1f")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4")
+
+    implementation("io.sentry:sentry:7.3.0")
+    implementation("io.sentry:sentry-kotlin-extensions:7.3.0")
 }
 
 tasks.shadowJar {

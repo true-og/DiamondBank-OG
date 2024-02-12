@@ -10,7 +10,7 @@ The PostgreSQL URL, user, password and the table that should be used are configu
 ## User Commands
 
 /balance or /bal and /balance \<player> or /bal \<player>\
-/baltop <page number (optional)>\
+/balancetop <page number (optional)> /baltop <page number (optional)>\\
 /deposit <amount (number or "all")>\
 /withdraw <amount (number or "all")>\
 /pay \<player> \<amount (number or "all")>
@@ -22,7 +22,7 @@ The PostgreSQL URL, user, password and the table that should be used are configu
 ## Permissions
 diamondbank-og.balance\
 diamondbank-og.balance.others\
-diamondbank-og.baltop\
+diamondbank-og.balancetop\
 diamondbank-og.deposit\
 diamondbank-og.withdraw\
 diamondbank-og.pay\

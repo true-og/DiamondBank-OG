@@ -1,165 +1,200 @@
 package net.trueog.diamondbankog
 
-import org.bukkit.Bukkit
+import io.sentry.Sentry
+import io.sentry.SentryEvent
+import io.sentry.protocol.Message
+import io.sentry.protocol.User
+import net.trueog.diamondbankog.Helper.PostgresFunction.SET_PLAYER_BALANCE
+import net.trueog.diamondbankog.Helper.PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE
+import net.trueog.diamondbankog.PostgreSQL.BalanceType.BANK_BALANCE
 import org.bukkit.Material
+import org.bukkit.block.ShulkerBox
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.BlockStateMeta
+import java.util.*
 
 object Helper {
-    suspend fun withdrawFromPlayer(sender: Player, amount: Long): Long? {
+    enum class PostgresFunction(val string: String) {
+        SET_PLAYER_BALANCE("setPlayerBalance"),
+        ADD_TO_PLAYER_BALANCE("addToPlayerBalance"),
+        SUBTRACT_FROM_PLAYER_BALANCE("subtractFromPlayerBalance")
+    }
+
+    suspend fun withdrawFromPlayer(player: Player, amount: Long): Long? {
         val somethingWentWrongMessage =
             DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong.")
 
-        val senderBalance = DiamondBankOG.postgreSQL.getPlayerBalance(sender.uniqueId, PostgreSQL.BalanceType.ALL)
-        if (senderBalance.bankBalance == null || senderBalance.inventoryBalance == null || senderBalance.enderChestBalance == null) {
-            sender.sendMessage(somethingWentWrongMessage)
+        val playerBalance = DiamondBankOG.postgreSQL.getPlayerBalance(player.uniqueId, PostgreSQL.BalanceType.ALL)
+        if (playerBalance.bankBalance == null || playerBalance.inventoryBalance == null || playerBalance.enderChestBalance == null) {
+            player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
         // Withdraw everything
         if (amount == -1L) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
-                sender.uniqueId,
-                senderBalance.bankBalance,
-                PostgreSQL.BalanceType.BANK_BALANCE
+                player.uniqueId,
+                playerBalance.bankBalance,
+                BANK_BALANCE
             )
             if (error) {
-                // TODO: Houston, we have an issue
-                sender.sendMessage(somethingWentWrongMessage)
+                handleError(
+                    player.uniqueId,
+                    SUBTRACT_FROM_PLAYER_BALANCE, playerBalance.bankBalance, BANK_BALANCE,
+                    playerBalance, "withdrawFromPlayer"
+                )
+                player.sendMessage(somethingWentWrongMessage)
                 return null
             }
 
-            error = withdrawFromInventory(sender, senderBalance.inventoryBalance, WithdrawType.INVENTORY)
+            error = player.inventory.withdraw(
+                playerBalance.inventoryBalance,
+                playerBalance
+            )
             if (error) {
-                sender.sendMessage(somethingWentWrongMessage)
+                player.sendMessage(somethingWentWrongMessage)
                 return null
             }
 
-            error = withdrawFromInventory(sender, senderBalance.enderChestBalance, WithdrawType.ENDER_CHEST)
+            error = player.enderChest.withdraw(
+                playerBalance.enderChestBalance,
+                playerBalance
+            )
             if (error) {
-                sender.sendMessage(somethingWentWrongMessage)
+                player.sendMessage(somethingWentWrongMessage)
                 return null
             }
-            return senderBalance.bankBalance + senderBalance.inventoryBalance + senderBalance.enderChestBalance
+            return playerBalance.bankBalance + playerBalance.inventoryBalance + playerBalance.enderChestBalance
         }
 
-        if (amount > senderBalance.bankBalance + senderBalance.inventoryBalance + senderBalance.enderChestBalance) {
-            sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${senderBalance.bankBalance + senderBalance.inventoryBalance} <aqua>${if (senderBalance.bankBalance + senderBalance.inventoryBalance == 1L) "Diamond" else "Diamonds"}<red>."))
+        if (amount > playerBalance.bankBalance + playerBalance.inventoryBalance + playerBalance.enderChestBalance) {
+            player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerBalance.bankBalance + playerBalance.inventoryBalance} <aqua>${if (playerBalance.bankBalance + playerBalance.inventoryBalance == 1L) "Diamond" else "Diamonds"}<red>."))
             return null
         }
 
-        if (amount <= senderBalance.bankBalance) {
+        if (amount <= playerBalance.bankBalance) {
             val error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
-                sender.uniqueId,
+                player.uniqueId,
                 amount,
-                PostgreSQL.BalanceType.BANK_BALANCE
+                BANK_BALANCE
             )
             if (error) {
-                // TODO: Houston, we have an issue
-                sender.sendMessage(somethingWentWrongMessage)
+                handleError(
+                    player.uniqueId,
+                    SUBTRACT_FROM_PLAYER_BALANCE, amount, BANK_BALANCE,
+                    playerBalance, "withdrawFromPlayer"
+                )
+                player.sendMessage(somethingWentWrongMessage)
                 return null
             }
             return amount
         }
 
-        if (amount <= senderBalance.bankBalance + senderBalance.inventoryBalance) {
+        if (amount <= playerBalance.bankBalance + playerBalance.inventoryBalance) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
-                sender.uniqueId,
-                senderBalance.bankBalance,
-                PostgreSQL.BalanceType.BANK_BALANCE
+                player.uniqueId,
+                playerBalance.bankBalance,
+                BANK_BALANCE
             )
             if (error) {
-                // TODO: Houston, we have an issue
-                sender.sendMessage(somethingWentWrongMessage)
+                handleError(
+                    player.uniqueId,
+                    SUBTRACT_FROM_PLAYER_BALANCE, playerBalance.bankBalance, BANK_BALANCE,
+                    playerBalance, "withdrawFromPlayer"
+                )
+                player.sendMessage(somethingWentWrongMessage)
                 return null
             }
 
-            error = withdrawFromInventory(sender, amount - senderBalance.bankBalance, WithdrawType.INVENTORY)
+            error = player.inventory.withdraw(
+                amount - playerBalance.bankBalance,
+                playerBalance
+            )
             if (error) {
-                sender.sendMessage(somethingWentWrongMessage)
+                player.sendMessage(somethingWentWrongMessage)
                 return null
             }
             return amount
         }
 
         var error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
-            sender.uniqueId,
-            senderBalance.bankBalance,
-            PostgreSQL.BalanceType.BANK_BALANCE
+            player.uniqueId,
+            playerBalance.bankBalance,
+            BANK_BALANCE
         )
         if (error) {
-            // TODO: Houston, we have an issue
-            sender.sendMessage(somethingWentWrongMessage)
+            handleError(
+                player.uniqueId,
+                SUBTRACT_FROM_PLAYER_BALANCE, playerBalance.bankBalance, BANK_BALANCE,
+                playerBalance, "withdrawFromPlayer"
+            )
+            player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
-        error = withdrawFromInventory(sender, senderBalance.inventoryBalance, WithdrawType.INVENTORY)
+        error = player.inventory.withdraw(playerBalance.inventoryBalance, playerBalance)
         if (error) {
-            sender.sendMessage(somethingWentWrongMessage)
+            player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
-        error = withdrawFromInventory(
-            sender,
-            amount - (senderBalance.bankBalance + senderBalance.inventoryBalance),
-            WithdrawType.ENDER_CHEST
+        error = player.enderChest.withdraw(
+            amount - (playerBalance.bankBalance + playerBalance.inventoryBalance),
+            playerBalance
         )
         if (error) {
-            sender.sendMessage(somethingWentWrongMessage)
+            player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
         return amount
     }
 
-    private enum class WithdrawType {
-        ENDER_CHEST, INVENTORY
-    }
+    suspend fun Inventory.withdraw(
+        amount: Long,
+        playerBalance: PostgreSQL.PlayerBalance
+    ): Boolean {
+        if (this.holder !is Player) return true
 
-    private suspend fun withdrawFromInventory(player: Player, amount: Long, type: WithdrawType): Boolean {
+        val player = this.holder as Player
+
         DiamondBankOG.blockInventoryFor.add(player.uniqueId)
-        val inventory = if (type == WithdrawType.INVENTORY) {
-            player.inventory
+        val balance = if (this.type == InventoryType.PLAYER) {
+            playerBalance.inventoryBalance!!
         } else {
-            player.enderChest
+            playerBalance.enderChestBalance!!
         }
 
-        val inventoryType = if (type == WithdrawType.INVENTORY) {
-            InventoryType.PLAYER
-        } else {
-            InventoryType.ENDER_CHEST
-        }
-
-        val balanceType = if (type == WithdrawType.INVENTORY) {
+        val balanceType = if (this.type == InventoryType.PLAYER) {
             PostgreSQL.BalanceType.INVENTORY_BALANCE
         } else {
             PostgreSQL.BalanceType.ENDER_CHEST_BALANCE
         }
 
-        val inventoryCopy: Inventory = Bukkit.createInventory(null, inventoryType)
-        inventoryCopy.contents = inventory.contents
-        val removeItemMap = inventoryCopy.removeItem(ItemStack(Material.DIAMOND, amount.toInt()))
-        if (removeItemMap.isNotEmpty()) {
-            val playerBalance = DiamondBankOG.postgreSQL.getPlayerBalance(player.uniqueId, balanceType)
-            val balance = if (balanceType == PostgreSQL.BalanceType.INVENTORY_BALANCE) {
-                playerBalance.inventoryBalance
-            } else playerBalance.enderChestBalance
-
-            if (balance == null) {
-                // TODO: Houston, we have an issue
+        val inventoryDiamonds = this.countDiamonds()
+        if (playerBalance.inventoryBalance != inventoryDiamonds) {
+            val error = DiamondBankOG.postgreSQL.setPlayerBalance(
+                player.uniqueId,
+                balance - (amount - inventoryDiamonds),
+                balanceType
+            )
+            if (error) {
+                handleError(
+                    player.uniqueId,
+                    SET_PLAYER_BALANCE,
+                    amount,
+                    balanceType,
+                    playerBalance,
+                    "withdrawFromInventory"
+                )
+                player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
                 DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
                 return true
             }
-
-            DiamondBankOG.postgreSQL.setPlayerBalance(
-                player.uniqueId,
-                balance - removeItemMap.size.toLong(),
-                balanceType
-            )
         }
-
 
         val error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
             player.uniqueId,
@@ -167,14 +202,83 @@ object Helper {
             balanceType
         )
         if (error) {
-            // TODO: Houston, we have an issue
+            handleError(
+                player.uniqueId,
+                SUBTRACT_FROM_PLAYER_BALANCE,
+                amount,
+                balanceType,
+                null,
+                "withdrawFromInventory"
+            )
+            player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
             DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
             return true
         }
 
-        inventory.removeItem(ItemStack(Material.DIAMOND, amount.toInt()))
+        val removeMap = this.removeItem(ItemStack(Material.DIAMOND, amount.toInt()))
+        if (removeMap.isNotEmpty()) {
+            var toBeRemoved = removeMap[0]!!.amount
+            val itemStacks = this.contents.filterNotNull().filter { it.type == Material.SHULKER_BOX }
+            for (itemStack in itemStacks) {
+                val blockStateMeta = (itemStack.itemMeta as BlockStateMeta)
+                itemStack.itemMeta
+                val shulkerBox = blockStateMeta.blockState as ShulkerBox
+                val shulkerRemoveMap = shulkerBox.inventory.removeItem(ItemStack(Material.DIAMOND, toBeRemoved))
+
+                blockStateMeta.blockState = shulkerBox
+                itemStack.itemMeta = blockStateMeta
+
+                if (shulkerRemoveMap.isNotEmpty()) {
+                    toBeRemoved = -toBeRemoved - shulkerRemoveMap[0]!!.amount
+                } else break
+            }
+        }
         DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
 
         return false
+    }
+
+    fun handleError(
+        uuid: UUID,
+        function: PostgresFunction,
+        amount: Long,
+        type: PostgreSQL.BalanceType,
+        playerBalance: PostgreSQL.PlayerBalance?,
+        inFunction: String
+    ) {
+        DiamondBankOG.economyDisabled = true
+        if (DiamondBankOG.sentryEnabled) {
+            val sentryUser = User()
+            sentryUser.id = uuid.toString()
+
+            val sentryEvent = SentryEvent()
+            sentryEvent.user = sentryUser
+            sentryEvent.setExtra("Function", "${function.string}(amount = $amount, type = $type)")
+            if (playerBalance != null) {
+                if (playerBalance.bankBalance != null) sentryEvent.setExtra("Bank Balance", playerBalance.bankBalance)
+                if (playerBalance.inventoryBalance != null) sentryEvent.setExtra(
+                    "Inventory Balance",
+                    playerBalance.inventoryBalance
+                )
+                if (playerBalance.enderChestBalance != null) sentryEvent.setExtra(
+                    "Ender chest Balance",
+                    playerBalance.enderChestBalance
+                )
+            }
+
+            val message = Message()
+            message.message = "${function.string} failed in $inFunction"
+            sentryEvent.message = message
+
+            Sentry.captureEvent(sentryEvent)
+        }
+    }
+
+    fun Inventory.countDiamonds(): Long {
+        val inventoryDiamonds = this.all(Material.DIAMOND).values.sumOf { it.amount }
+        val shulkerBoxDiamonds = this.all(Material.SHULKER_BOX).values.sumOf { itemStack ->
+            ((itemStack.itemMeta as BlockStateMeta).blockState as ShulkerBox).inventory.all(Material.DIAMOND).values.sumOf { it.amount }
+        }
+        return inventoryDiamonds.toLong() + shulkerBoxDiamonds.toLong()
     }
 }

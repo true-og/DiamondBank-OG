@@ -3,9 +3,6 @@ version: '${version}'
 main: net.trueog.diamondbankog.DiamondBankOG
 api-version: '${apiVersion}'
 commands:
-  bank:
-    description: Your description
-    usage: /<command>
   deposit:
     description: Deposit diamonds into your bank
     usage: /deposit <amount> or /deposit all
@@ -21,3 +18,18 @@ commands:
   pay:
     description: Pay a player
     usage: /pay <player> <amount>
+  balancetop:
+    description: Show the balancetop
+    usage: /balancetop <page number (optional)>
+  baltop:
+    description: Show the balancetop
+    usage: /baltop <page number (optional)>
+  balance:
+    description: Get your or someone else's balance
+    usage: /balance <player (optional)> or /balance <player (optional)>
+  bal:
+    description: Get your or someone else's balance
+    usage: /bal <player (optional)> or /bal <player (optional)>
+
+# So we can overwrite Essentials' commands
+softdepend: [ Essentials ]

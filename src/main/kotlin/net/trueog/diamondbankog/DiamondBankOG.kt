@@ -1,12 +1,10 @@
 package net.trueog.diamondbankog
 
+import io.sentry.Sentry
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
-import net.trueog.diamondbankog.commands.Deposit
-import net.trueog.diamondbankog.commands.Pay
-import net.trueog.diamondbankog.commands.SetBankBalance
-import net.trueog.diamondbankog.commands.Withdraw
+import net.trueog.diamondbankog.commands.*
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 
@@ -23,12 +21,26 @@ class DiamondBankOG : JavaPlugin() {
             )
             .build()
         val blockInventoryFor = mutableListOf<UUID>()
+        var sentryEnabled: Boolean = false
+        var economyDisabled: Boolean = false
     }
 
     override fun onEnable() {
         plugin = this
 
         Config.load()
+
+        if (Config.getSentryEnabled()) {
+            try {
+                Sentry.init { options ->
+                    options.dsn = Config.getSentryDsn()
+                }
+                sentryEnabled = true
+            } catch (e: Exception) {
+                sentryEnabled = false
+                this.logger.severe("Could not initialise Sentry/GlitchTip. The Sentry/GlitchTip DSN in your config might be invalid.")
+            }
+        }
 
         postgreSQL = PostgreSQL()
         try {
@@ -44,6 +56,10 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("setbankbalance")?.setExecutor(SetBankBalance())
         this.getCommand("setbankbal")?.setExecutor(SetBankBalance())
         this.getCommand("pay")?.setExecutor(Pay())
+        this.getCommand("balancetop")?.setExecutor(Balancetop())
+        this.getCommand("baltop")?.setExecutor(Balancetop())
+        this.getCommand("balance")?.setExecutor(Balance())
+        this.getCommand("bal")?.setExecutor(Balance())
     }
 
     override fun onDisable() {
