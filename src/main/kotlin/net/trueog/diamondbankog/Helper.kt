@@ -188,7 +188,7 @@ object Helper {
                     amount,
                     balanceType,
                     playerBalance,
-                    "withdrawFromInventory"
+                    "Inventory.withdraw"
                 )
                 player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
                 DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
@@ -208,7 +208,7 @@ object Helper {
                 amount,
                 balanceType,
                 playerBalance,
-                "withdrawFromInventory"
+                "Inventory.withdraw"
             )
             player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
             DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
@@ -243,7 +243,7 @@ object Helper {
                         change.toLong(),
                         balanceType,
                         playerBalance,
-                        "withdrawFromInventory"
+                        "Inventory.withdraw"
                     )
                     player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
                     DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
@@ -298,7 +298,7 @@ object Helper {
                     playerBalance.inventoryBalance
                 )
                 if (playerBalance.enderChestBalance != null) sentryEvent.setExtra(
-                    "Ender chest Balance",
+                    "Ender Chest Balance",
                     playerBalance.enderChestBalance
                 )
             }
