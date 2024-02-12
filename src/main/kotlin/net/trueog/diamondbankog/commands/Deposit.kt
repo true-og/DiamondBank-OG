@@ -80,7 +80,6 @@ class Deposit : CommandExecutor {
             var error = sender.inventory.withdraw(amount, playerBalance)
             if (error) return@launch
 
-
             error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
                 sender.uniqueId,
                 amount,
