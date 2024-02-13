@@ -9,15 +9,16 @@ The PostgreSQL URL, user, password and the table that should be used are configu
 
 ## User Commands
 
-/balance or /bal and /balance \<player> or /bal \<player>\
+/balance or /balance \<player name or player uuid>\
+/bal or /bal \<player name or player uuid>\
 /balancetop <page number (optional)> /baltop <page number (optional)>\\
 /deposit <amount (number or "all")>\
 /withdraw <amount (number or "all")>\
-/pay \<player> \<amount (number or "all")>
+/pay \<player name or player uuid> \<amount (number or "all")>
 
 ## Admin Commands
 
-/setbankbalance \<player> \<balance>
+/setbankbalance \<player name or player uuid> \<balance>
 
 ## Permissions
 diamondbank-og.balance\
