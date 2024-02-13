@@ -1,2 +1,7 @@
 jdk:
-  - openjdk17
+  - 17.0.10
+before_install:
+  - sdk install java 17.0.10-graalce
+  - sdk use java 17.0.10-graalce
+install:
+  - ./gradlew build publishToMavenLocal
