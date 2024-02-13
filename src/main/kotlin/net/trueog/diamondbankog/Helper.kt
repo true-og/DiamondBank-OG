@@ -221,8 +221,8 @@ object Helper {
             val diamondBlocks = this.contents.filterNotNull().filter { it.type == Material.DIAMOND_BLOCK }
             val blocksNeeded = ceil(toBeRemoved.toDouble() / 9).toInt()
             val wholeBlocks = if (blocksNeeded > diamondBlocks.size) diamondBlocks.size else blocksNeeded
-            val calculatedChange = 9 - ((wholeBlocks * 9) % 9)
-            val change = if (calculatedChange == 9) 0 else calculatedChange
+            val remainder = (wholeBlocks * 9) % 9
+            val change = if (remainder != 0) 9 - remainder else 0
 
             this.removeItem(ItemStack(Material.DIAMOND_BLOCK, wholeBlocks))
 
