@@ -174,8 +174,10 @@ class PostgreSQL {
                     (rowData.columns[3] as BigDecimal).toLong()
                 } else 0L
 
-                baltop[Bukkit.getOfflinePlayer(UUID.fromString(rowData.columns[0] as String)).name] =
-                    bankBalance + inventoryBalance + enderChestBalance
+                val player = Bukkit.getPlayer(UUID.fromString(rowData.columns[0] as String)) ?: Bukkit.getOfflinePlayer(
+                    UUID.fromString(rowData.columns[0] as String)
+                )
+                baltop[player.name] = bankBalance + inventoryBalance + enderChestBalance
             }
             return baltop
         } catch (e: Exception) {

@@ -5,13 +5,14 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
-import net.trueog.diamondbankog.Helper.PostgresFunction.ADD_TO_PLAYER_BALANCE
-import net.trueog.diamondbankog.PostgreSQL.BalanceType.BANK_BALANCE
+import net.trueog.diamondbankog.Helper.PostgresFunction
+import net.trueog.diamondbankog.PostgreSQL.BalanceType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import java.util.*
 
 class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
@@ -24,6 +25,17 @@ class Pay : CommandExecutor {
 
             if (sender !is Player) {
                 sender.sendMessage("You can only execute this command as a player.")
+                return@launch
+            }
+
+            if (DiamondBankOG.blockCommandsWithInventoryActionsFor.contains(sender.uniqueId)) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You are currently blocked from using /pay."))
+                return@launch
+            }
+
+            val worldName = sender.world.name
+            if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot use /pay <aqua>Diamonds <red>when in a minigame."))
                 return@launch
             }
 
@@ -41,7 +53,12 @@ class Pay : CommandExecutor {
                 return@launch
             }
 
-            val receiver = Bukkit.getOfflinePlayer(args[0])
+            val receiver = try {
+                Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
+            } catch (_: Exception) {
+                Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
+            }
+
             if (!receiver.hasPlayedBefore()) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>That player doesn't exist."))
                 return@launch
@@ -66,12 +83,12 @@ class Pay : CommandExecutor {
             val error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                 receiver.uniqueId,
                 amount,
-                BANK_BALANCE
+                BalanceType.BANK_BALANCE
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    ADD_TO_PLAYER_BALANCE, amount, BANK_BALANCE,
+                    PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, BalanceType.BANK_BALANCE,
                     null, "pay"
                 )
             }

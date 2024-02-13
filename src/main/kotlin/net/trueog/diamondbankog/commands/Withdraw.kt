@@ -5,10 +5,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
-import net.trueog.diamondbankog.Helper.PostgresFunction.ADD_TO_PLAYER_BALANCE
-import net.trueog.diamondbankog.Helper.PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE
-import net.trueog.diamondbankog.PostgreSQL.BalanceType.BANK_BALANCE
-import net.trueog.diamondbankog.PostgreSQL.BalanceType.INVENTORY_BALANCE
+import net.trueog.diamondbankog.Helper.PostgresFunction
+import net.trueog.diamondbankog.PostgreSQL.BalanceType
 import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -27,6 +25,17 @@ class Withdraw : CommandExecutor {
 
             if (sender !is Player) {
                 sender.sendMessage("You can only execute this command as a player.")
+                return@launch
+            }
+
+            if (DiamondBankOG.blockCommandsWithInventoryActionsFor.contains(sender.uniqueId)) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You are currently blocked from using /withdraw."))
+                return@launch
+            }
+
+            val worldName = sender.world.name
+            if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot use /withdraw when in a minigame."))
                 return@launch
             }
 
@@ -59,7 +68,7 @@ class Withdraw : CommandExecutor {
             }
 
             val playerBalance =
-                DiamondBankOG.postgreSQL.getPlayerBalance(sender.uniqueId, BANK_BALANCE)
+                DiamondBankOG.postgreSQL.getPlayerBalance(sender.uniqueId, BalanceType.BANK_BALANCE)
             if (playerBalance.bankBalance == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
@@ -85,14 +94,14 @@ class Withdraw : CommandExecutor {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
                 sender.uniqueId,
                 amount,
-                BANK_BALANCE
+                BalanceType.BANK_BALANCE
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    SUBTRACT_FROM_PLAYER_BALANCE,
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE,
                     amount,
-                    BANK_BALANCE,
+                    BalanceType.BANK_BALANCE,
                     playerBalance,
                     "withdraw"
                 )
@@ -105,14 +114,14 @@ class Withdraw : CommandExecutor {
             error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                 sender.uniqueId,
                 amount,
-                INVENTORY_BALANCE
+                BalanceType.INVENTORY_BALANCE
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    ADD_TO_PLAYER_BALANCE,
+                    PostgresFunction.ADD_TO_PLAYER_BALANCE,
                     amount,
-                    INVENTORY_BALANCE,
+                    BalanceType.INVENTORY_BALANCE,
                     playerBalance,
                     "withdraw"
                 )

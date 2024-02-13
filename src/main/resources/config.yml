@@ -1,6 +1,6 @@
-# ---Sentry/GlitchTip---
+# ---Sentry (or compatible services like GlitchTip)---
 sentryEnabled: false
-sentryDsn: https://abcdefghijklmnopqrstuvxyz.ingest.sentry.io/123456789
+sentryDsn: "Sentry(-compatible) DSN"
 
 # ---Postgres---
 postgresUrl: "jdbc:postgresql://localhost:5432/diamond"

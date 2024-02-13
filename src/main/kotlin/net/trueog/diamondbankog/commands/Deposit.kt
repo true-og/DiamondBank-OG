@@ -5,12 +5,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
-import net.trueog.diamondbankog.Helper.PostgresFunction.ADD_TO_PLAYER_BALANCE
-import net.trueog.diamondbankog.Helper.PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE
+import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.Helper.withdraw
-import net.trueog.diamondbankog.PostgreSQL
-import net.trueog.diamondbankog.PostgreSQL.BalanceType.BANK_BALANCE
-import net.trueog.diamondbankog.PostgreSQL.BalanceType.INVENTORY_BALANCE
+import net.trueog.diamondbankog.PostgreSQL.BalanceType
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -30,6 +27,17 @@ class Deposit : CommandExecutor {
                 return@launch
             }
 
+            if (DiamondBankOG.blockCommandsWithInventoryActionsFor.contains(sender.uniqueId)) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You are currently blocked from using /deposit."))
+                return@launch
+            }
+
+            val worldName = sender.world.name
+            if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot use /deposit <aqua>Diamonds <red>when in a minigame."))
+                return@launch
+            }
+
             if (!sender.hasPermission("diamondbank-og.deposit")) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You do not have permission to use this command."))
                 return@launch
@@ -45,7 +53,7 @@ class Deposit : CommandExecutor {
             }
 
             val playerBalance =
-                DiamondBankOG.postgreSQL.getPlayerBalance(sender.uniqueId, INVENTORY_BALANCE)
+                DiamondBankOG.postgreSQL.getPlayerBalance(sender.uniqueId, BalanceType.INVENTORY_BALANCE)
             if (playerBalance.inventoryBalance == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
@@ -56,7 +64,6 @@ class Deposit : CommandExecutor {
             }
 
             var amount = playerBalance.inventoryBalance
-
             if (args[0] != "all") {
                 try {
                     amount = args[0].toLong()
@@ -83,14 +90,14 @@ class Deposit : CommandExecutor {
             error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
                 sender.uniqueId,
                 amount,
-                INVENTORY_BALANCE
+                BalanceType.INVENTORY_BALANCE
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    SUBTRACT_FROM_PLAYER_BALANCE,
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE,
                     amount,
-                    INVENTORY_BALANCE,
+                    BalanceType.INVENTORY_BALANCE,
                     playerBalance,
                     "deposit"
                 )
@@ -102,14 +109,14 @@ class Deposit : CommandExecutor {
             error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                 sender.uniqueId,
                 amount,
-                PostgreSQL.BalanceType.BANK_BALANCE
+                BalanceType.BANK_BALANCE
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    ADD_TO_PLAYER_BALANCE,
+                    PostgresFunction.ADD_TO_PLAYER_BALANCE,
                     amount,
-                    BANK_BALANCE,
+                    BalanceType.BANK_BALANCE,
                     playerBalance,
                     "deposit"
                 )

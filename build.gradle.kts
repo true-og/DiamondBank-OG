@@ -1,6 +1,7 @@
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("maven-publish")
     id("eclipse")
 }
 
@@ -8,6 +9,16 @@ group = "net.trueog.diamondbank"
 version = "1.0.0"
 
 val apiVersion = "1.19"
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenPublication") {
+            groupId = "net.trueog.diamondbank"
+            artifactId = "DiamondBank-OG"
+            version = version
+        }
+    }
+}
 
 tasks.named<ProcessResources>("processResources") {
     val props = mapOf(

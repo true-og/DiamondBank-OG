@@ -3,10 +3,9 @@ package net.trueog.diamondbankog
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.Helper.PostgresFunction.SET_PLAYER_BALANCE
+import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.Helper.countDiamonds
-import net.trueog.diamondbankog.PostgreSQL.BalanceType.ENDER_CHEST_BALANCE
-import net.trueog.diamondbankog.PostgreSQL.BalanceType.INVENTORY_BALANCE
+import net.trueog.diamondbankog.PostgreSQL.BalanceType
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -28,19 +27,22 @@ class Events : Listener {
             return
         }
 
+        val worldName = event.player.world.name
+        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+
         GlobalScope.launch {
             val inventoryDiamonds = event.player.inventory.countDiamonds()
             var error = DiamondBankOG.postgreSQL.setPlayerBalance(
                 event.player.uniqueId,
                 inventoryDiamonds,
-                INVENTORY_BALANCE
+                BalanceType.INVENTORY_BALANCE
             )
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
-                    SET_PLAYER_BALANCE,
+                    PostgresFunction.SET_PLAYER_BALANCE,
                     inventoryDiamonds,
-                    INVENTORY_BALANCE,
+                    BalanceType.INVENTORY_BALANCE,
                     null,
                     "onPlayerJoin"
                 )
@@ -51,14 +53,14 @@ class Events : Listener {
             error = DiamondBankOG.postgreSQL.setPlayerBalance(
                 event.player.uniqueId,
                 enderChestDiamonds,
-                ENDER_CHEST_BALANCE
+                BalanceType.ENDER_CHEST_BALANCE
             )
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
-                    SET_PLAYER_BALANCE,
+                    PostgresFunction.SET_PLAYER_BALANCE,
                     enderChestDiamonds,
-                    ENDER_CHEST_BALANCE,
+                    BalanceType.ENDER_CHEST_BALANCE,
                     null,
                     "onPlayerJoin"
                 )
@@ -73,32 +75,43 @@ class Events : Listener {
             return
         }
 
+        val worldName = event.entity.world.name
+        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+
+        val itemType = event.item.itemStack.type
+        if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX) return
+
         if (DiamondBankOG.blockInventoryFor.contains(event.entity.uniqueId)) {
             event.isCancelled = true
             return
         }
-        if (event.item.itemStack.type != Material.DIAMOND && event.item.itemStack.type != Material.SHULKER_BOX) return
+
         val player = event.entity
         if (player !is Player) return
-        GlobalScope.launch {
-            val inventoryDiamonds = player.inventory.countDiamonds()
-            val error = DiamondBankOG.postgreSQL.setPlayerBalance(
-                player.uniqueId,
-                inventoryDiamonds,
-                INVENTORY_BALANCE
-            )
-            if (error) {
-                Helper.handleError(
-                    player.uniqueId,
-                    SET_PLAYER_BALANCE,
-                    inventoryDiamonds,
-                    INVENTORY_BALANCE,
-                    null,
-                    "onEntityPickupItem"
-                )
-                return@launch
+
+        object : BukkitRunnable() {
+            override fun run() {
+                GlobalScope.launch {
+                    val inventoryDiamonds = player.inventory.countDiamonds()
+                    val error = DiamondBankOG.postgreSQL.setPlayerBalance(
+                        player.uniqueId,
+                        inventoryDiamonds,
+                        BalanceType.INVENTORY_BALANCE
+                    )
+                    if (error) {
+                        Helper.handleError(
+                            player.uniqueId,
+                            PostgresFunction.SET_PLAYER_BALANCE,
+                            inventoryDiamonds,
+                            BalanceType.INVENTORY_BALANCE,
+                            null,
+                            "onEntityPickupItem"
+                        )
+                        return@launch
+                    }
+                }
             }
-        }
+        }.runTaskLater(DiamondBankOG.plugin, 1)
     }
 
     @EventHandler
@@ -107,30 +120,40 @@ class Events : Listener {
             return
         }
 
+        val worldName = event.player.world.name
+        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+
+        val itemType = event.itemDrop.itemStack.type
+        if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX) return
+
         if (DiamondBankOG.blockInventoryFor.contains(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }
-        if (event.itemDrop.itemStack.type != Material.DIAMOND && event.itemDrop.itemStack.type != Material.SHULKER_BOX) return
-        GlobalScope.launch {
-            val inventoryDiamonds = event.player.inventory.countDiamonds()
-            val error = DiamondBankOG.postgreSQL.setPlayerBalance(
-                event.player.uniqueId,
-                inventoryDiamonds,
-                INVENTORY_BALANCE
-            )
-            if (error) {
-                Helper.handleError(
-                    event.player.uniqueId,
-                    SET_PLAYER_BALANCE,
-                    inventoryDiamonds,
-                    INVENTORY_BALANCE,
-                    null,
-                    "onPlayerDropItem"
-                )
-                return@launch
+
+        object : BukkitRunnable() {
+            override fun run() {
+                GlobalScope.launch {
+                    val inventoryDiamonds = event.player.inventory.countDiamonds()
+                    val error = DiamondBankOG.postgreSQL.setPlayerBalance(
+                        event.player.uniqueId,
+                        inventoryDiamonds,
+                        BalanceType.INVENTORY_BALANCE
+                    )
+                    if (error) {
+                        Helper.handleError(
+                            event.player.uniqueId,
+                            PostgresFunction.SET_PLAYER_BALANCE,
+                            inventoryDiamonds,
+                            BalanceType.INVENTORY_BALANCE,
+                            null,
+                            "onPlayerDropItem"
+                        )
+                        return@launch
+                    }
+                }
             }
-        }
+        }.runTaskLater(DiamondBankOG.plugin, 1)
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -139,6 +162,9 @@ class Events : Listener {
             return
         }
 
+        val worldName = event.player.world.name
+        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+
         object : BukkitRunnable() {
             override fun run() {
                 GlobalScope.launch {
@@ -146,14 +172,14 @@ class Events : Listener {
                     var error = DiamondBankOG.postgreSQL.setPlayerBalance(
                         event.player.uniqueId,
                         inventoryDiamonds,
-                        INVENTORY_BALANCE
+                        BalanceType.INVENTORY_BALANCE
                     )
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            SET_PLAYER_BALANCE,
+                            PostgresFunction.SET_PLAYER_BALANCE,
                             inventoryDiamonds,
-                            INVENTORY_BALANCE,
+                            BalanceType.INVENTORY_BALANCE,
                             null,
                             "onPlayerJoin"
                         )
@@ -165,14 +191,14 @@ class Events : Listener {
                     error = DiamondBankOG.postgreSQL.setPlayerBalance(
                         event.player.uniqueId,
                         enderChestDiamonds,
-                        ENDER_CHEST_BALANCE
+                        BalanceType.ENDER_CHEST_BALANCE
                     )
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            SET_PLAYER_BALANCE,
+                            PostgresFunction.SET_PLAYER_BALANCE,
                             enderChestDiamonds,
-                            ENDER_CHEST_BALANCE,
+                            BalanceType.ENDER_CHEST_BALANCE,
                             null,
                             "onInventoryClose"
                         )

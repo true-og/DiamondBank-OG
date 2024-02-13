@@ -4,12 +4,13 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.PostgreSQL
+import net.trueog.diamondbankog.PostgreSQL.BalanceType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import java.util.*
 
 class Balance : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
@@ -33,7 +34,11 @@ class Balance : CommandExecutor {
                     return@launch
                 }
 
-                val otherPlayer = Bukkit.getOfflinePlayer(args[0])
+                val otherPlayer = try {
+                    Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
+                } catch (_: Exception) {
+                    Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
+                }
                 if (!otherPlayer.hasPlayedBefore()) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>That player doesn't exist."))
                     return@launch
@@ -41,7 +46,7 @@ class Balance : CommandExecutor {
 
                 val balance = DiamondBankOG.postgreSQL.getPlayerBalance(
                     otherPlayer.uniqueId,
-                    PostgreSQL.BalanceType.ALL
+                    BalanceType.ALL
                 )
                 if (balance.bankBalance == null || balance.inventoryBalance == null || balance.enderChestBalance == null) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to get your balance."))
@@ -60,7 +65,11 @@ class Balance : CommandExecutor {
                     return@launch
                 }
 
-                val otherPlayer = Bukkit.getOfflinePlayer(args[0])
+                val otherPlayer = try {
+                    Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
+                } catch (_: Exception) {
+                    Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
+                }
                 if (!otherPlayer.hasPlayedBefore()) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>That player doesn't exist."))
                     return@launch
@@ -69,7 +78,7 @@ class Balance : CommandExecutor {
             }
             val balance = DiamondBankOG.postgreSQL.getPlayerBalance(
                 balancePlayer.uniqueId,
-                PostgreSQL.BalanceType.ALL
+                BalanceType.ALL
             )
             if (balance.bankBalance == null || balance.inventoryBalance == null || balance.enderChestBalance == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to get your balance."))
