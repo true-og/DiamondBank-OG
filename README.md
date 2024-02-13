@@ -10,7 +10,7 @@ The PostgreSQL URL, user, password and the table that should be used are configu
 ## User Commands
 
 /balance or /balance \<player name or player uuid>\
-/bal or /bal <player name or player uuid>
+/bal or /bal <player name or player uuid>\
 /balancetop <page number (optional)> /baltop <page number (optional)>\\
 /deposit <amount (number or "all")>\
 /withdraw <amount (number or "all")>\
