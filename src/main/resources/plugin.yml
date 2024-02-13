@@ -11,13 +11,13 @@ commands:
     usage: /withdraw <amount> or /withdraw all
   setbankbalance:
     description: Set the bank balance of a player
-    usage: /setbankbalance <playername> <amount> or /setbankbalance <playeruuid> <amount>
+    usage: /setbankbalance <player name or player uuid> <amount>
   setbankbal:
     description: Set the bank balance of a player
-    usage: /setbankbal <player> <amount> or /setbankbal <playeruuid> <amount>
+    usage: /setbankbal <player name or player uuid> <amount>
   pay:
     description: Pay a player
-    usage: /pay <player> <amount>
+    usage: /pay <player name or player uuid> <amount>
   balancetop:
     description: Show the balancetop
     usage: /balancetop <page number (optional)>
@@ -26,10 +26,10 @@ commands:
     usage: /baltop <page number (optional)>
   balance:
     description: Get your or someone else's balance
-    usage: /balance <player (optional)> or /balance <player (optional)>
+    usage: /balance or /balance <player name or player uuid>
   bal:
     description: Get your or someone else's balance
-    usage: /bal <player (optional)> or /bal <player (optional)>
+    usage: /bal or /bal <player name or player uuid>
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials ]
