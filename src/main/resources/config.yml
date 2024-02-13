@@ -1,3 +1,8 @@
+# ---Sentry (or compatible services like GlitchTip)---
+sentryEnabled: false
+sentryDsn: "Sentry(-compatible) DSN URL"
+
+# ---Postgres---
 postgresUrl: "jdbc:postgresql://localhost:5432/diamond"
 postgresUser: "postgres"
 postgresPassword: "postgrespassword"

@@ -5,19 +5,37 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
-import net.trueog.diamondbankog.PostgreSQL
+import net.trueog.diamondbankog.Helper.PostgresFunction
+import net.trueog.diamondbankog.PostgreSQL.BalanceType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import java.util.*
 
 class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         GlobalScope.launch {
+            if (DiamondBankOG.economyDisabled) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
+                return@launch
+            }
+
             if (sender !is Player) {
                 sender.sendMessage("You can only execute this command as a player.")
+                return@launch
+            }
+
+            if (DiamondBankOG.blockCommandsWithInventoryActionsFor.contains(sender.uniqueId)) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You are currently blocked from using /pay."))
+                return@launch
+            }
+
+            val worldName = sender.world.name
+            if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot use /pay <aqua>Diamonds <red>when in a minigame."))
                 return@launch
             }
 
@@ -35,7 +53,12 @@ class Pay : CommandExecutor {
                 return@launch
             }
 
-            val receiver = Bukkit.getOfflinePlayer(args[0])
+            val receiver = try {
+                Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
+            } catch (_: Exception) {
+                Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
+            }
+
             if (!receiver.hasPlayedBefore()) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>That player doesn't exist."))
                 return@launch
@@ -45,7 +68,7 @@ class Pay : CommandExecutor {
             if (args[0] != "all") {
                 try {
                     amount = args[1].toLong()
-                    if (amount <= 0) {
+                    if (amount < 0) {
                         sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot pay a negative amount."))
                         return@launch
                     }
@@ -60,10 +83,14 @@ class Pay : CommandExecutor {
             val error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                 receiver.uniqueId,
                 amount,
-                PostgreSQL.BalanceType.BANK_BALANCE
+                BalanceType.BANK_BALANCE
             )
             if (error) {
-                // TODO: Houston, we have an issue
+                Helper.handleError(
+                    sender.uniqueId,
+                    PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, BalanceType.BANK_BALANCE,
+                    null, "pay"
+                )
             }
 
             sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <green>Successfully paid <yellow>$withdrawnAmount <aqua>${if (withdrawnAmount == 1L) "Diamond" else "Diamonds"} <green>to <red>${receiver.name}<green>."))

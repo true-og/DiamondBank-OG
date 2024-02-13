@@ -4,16 +4,22 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.PostgreSQL
+import net.trueog.diamondbankog.PostgreSQL.BalanceType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import java.util.*
 
 class SetBankBalance : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         GlobalScope.launch {
+            if (DiamondBankOG.economyDisabled) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
+                return@launch
+            }
+
             if (!sender.hasPermission("diamondbank-og.setbankbalance")) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You do not have permission to use this command."))
                 return@launch
@@ -28,7 +34,11 @@ class SetBankBalance : CommandExecutor {
                 return@launch
             }
 
-            val player = Bukkit.getOfflinePlayer(args[0])
+            val player = try {
+                Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
+            } catch (_: Exception) {
+                Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
+            }
             if (!player.hasPlayedBefore()) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>That player doesn't exist."))
                 return@launch
@@ -43,7 +53,7 @@ class SetBankBalance : CommandExecutor {
             }
 
             val error =
-                DiamondBankOG.postgreSQL.setPlayerBalance(player.uniqueId, balance, PostgreSQL.BalanceType.BANK_BALANCE)
+                DiamondBankOG.postgreSQL.setPlayerBalance(player.uniqueId, balance, BalanceType.BANK_BALANCE)
             if (error) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to set that player's balance."))
                 return@launch
