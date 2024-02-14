@@ -22,12 +22,12 @@ class PostgreSQL {
     fun initDB() {
         try {
             pool =
-                PostgreSQLConnectionBuilder.createConnectionPool("${Config.getPostgresUrl()}?user=${Config.getPostgresUser()}&password=${Config.getPostgresPassword()}")
+                PostgreSQLConnectionBuilder.createConnectionPool("${Config.postgresUrl}?user=${Config.postgresUser}&password=${Config.postgresPassword}")
             val createTable =
-                pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.getPostgresTable()}(uuid TEXT, bank_balance decimal, inventory_balance decimal, ender_chest_balance decimal, unique(uuid))")
+                pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid TEXT, bank_balance decimal, inventory_balance decimal, ender_chest_balance decimal, unique(uuid))")
             createTable.join()
             val createIndex =
-                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_balance ON ${Config.getPostgresTable()}(bank_balance, inventory_balance, ender_chest_balance)")
+                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_balance ON ${Config.postgresTable}(bank_balance, inventory_balance, ender_chest_balance)")
             createIndex.join()
         } catch (e: Exception) {
             DiamondBankOG.economyDisabled = true
@@ -48,7 +48,7 @@ class PostgreSQL {
             }
 
             val preparedStatement =
-                connection.sendPreparedStatement("INSERT INTO ${Config.getPostgresTable()}(uuid, $balanceType) VALUES('$uuid', $balance) ON CONFLICT (uuid) DO UPDATE SET $balanceType = excluded.$balanceType")
+                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, $balanceType) VALUES('$uuid', $balance) ON CONFLICT (uuid) DO UPDATE SET $balanceType = excluded.$balanceType")
             preparedStatement.await()
         } catch (e: Exception) {
             return true
@@ -107,7 +107,7 @@ class PostgreSQL {
             }
 
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT $balanceType FROM ${Config.getPostgresTable()} WHERE uuid = '$uuid' LIMIT 1")
+                connection.sendPreparedStatement("SELECT $balanceType FROM ${Config.postgresTable} WHERE uuid = '$uuid' LIMIT 1")
             val result = preparedStatement.await()
 
             if (result.rows.size != 0) {
@@ -159,7 +159,7 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT * FROM ${Config.getPostgresTable()} ORDER BY bank_balance DESC, inventory_balance DESC, ender_chest_balance DESC OFFSET $offset LIMIT 10")
+                connection.sendPreparedStatement("SELECT * FROM ${Config.postgresTable} ORDER BY bank_balance DESC, inventory_balance DESC, ender_chest_balance DESC OFFSET $offset LIMIT 10")
             val result = preparedStatement.await()
             val baltop = mutableMapOf<String?, Long>()
             result.rows.forEach {
@@ -191,7 +191,7 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${Config.getPostgresTable()}")
+                connection.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${Config.postgresTable}")
             val result = preparedStatement.await()
 
             if (result.rows.size != 0) {

@@ -3,6 +3,7 @@ package net.trueog.diamondbankog.commands
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.PostgreSQL.BalanceType
 import org.bukkit.Bukkit
@@ -17,12 +18,12 @@ class Balance : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         GlobalScope.launch {
             if (DiamondBankOG.economyDisabled) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
                 return@launch
             }
 
             if (!sender.hasPermission("diamondbank-og.balance")) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You do not have permission to use this command."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command."))
                 return@launch
             }
 
@@ -30,7 +31,7 @@ class Balance : CommandExecutor {
 
             if (sender !is Player) {
                 if (args.isEmpty()) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Please provide that name or UUID of the player that you want to check the balance of."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Please provide that name or UUID of the player that you want to check the balance of."))
                     return@launch
                 }
 
@@ -40,7 +41,7 @@ class Balance : CommandExecutor {
                     Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
                 }
                 if (!otherPlayer.hasPlayedBefore()) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>That player doesn't exist."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist."))
                     return@launch
                 }
 
@@ -49,7 +50,7 @@ class Balance : CommandExecutor {
                     BalanceType.ALL
                 )
                 if (balance.bankBalance == null || balance.inventoryBalance == null || balance.enderChestBalance == null) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to get your balance."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                     return@launch
                 }
                 val totalBalance = balance.bankBalance + balance.inventoryBalance + balance.enderChestBalance
@@ -61,7 +62,7 @@ class Balance : CommandExecutor {
                 sender
             } else {
                 if (!sender.hasPermission("diamondbank-og.balance.others")) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You do not have permission to use this command."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command."))
                     return@launch
                 }
 
@@ -71,7 +72,7 @@ class Balance : CommandExecutor {
                     Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
                 }
                 if (!otherPlayer.hasPlayedBefore()) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>That player doesn't exist."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist."))
                     return@launch
                 }
                 otherPlayer
@@ -81,7 +82,7 @@ class Balance : CommandExecutor {
                 BalanceType.ALL
             )
             if (balance.bankBalance == null || balance.inventoryBalance == null || balance.enderChestBalance == null) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to get your balance."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
             val totalBalance = balance.bankBalance + balance.inventoryBalance + balance.enderChestBalance

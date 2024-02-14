@@ -23,7 +23,7 @@ class Events : Listener {
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (DiamondBankOG.economyDisabled) {
-            event.player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
+            event.player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
             return
         }
 
