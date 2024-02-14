@@ -3,6 +3,7 @@ package net.trueog.diamondbankog.commands
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.PostgresFunction
@@ -18,7 +19,7 @@ class Deposit : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         GlobalScope.launch {
             if (DiamondBankOG.economyDisabled) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
                 return@launch
             }
 
@@ -28,38 +29,38 @@ class Deposit : CommandExecutor {
             }
 
             if (DiamondBankOG.blockCommandsWithInventoryActionsFor.contains(sender.uniqueId)) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You are currently blocked from using /deposit."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You are currently blocked from using /deposit."))
                 return@launch
             }
 
             val worldName = sender.world.name
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot use /deposit <aqua>Diamonds <red>when in a minigame."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot use /deposit <aqua>Diamonds <red>when in a minigame."))
                 return@launch
             }
 
             if (!sender.hasPermission("diamondbank-og.deposit")) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You do not have permission to use this command."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command."))
                 return@launch
             }
 
             if (args == null || args.isEmpty()) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You did not provide the amount of <aqua>dDiamonds <red>that you want to deposit."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You did not provide the amount of <aqua>dDiamonds <red>that you want to deposit."))
                 return@launch
             }
             if (args.size != 1) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Please (only) provide the amount of <aqua>dDiamonds <red>you want to deposit. Either a number or \"all\"."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Please (only) provide the amount of <aqua>dDiamonds <red>you want to deposit. Either a number or \"all\"."))
                 return@launch
             }
 
             val playerBalance =
                 DiamondBankOG.postgreSQL.getPlayerBalance(sender.uniqueId, BalanceType.INVENTORY_BALANCE)
             if (playerBalance.inventoryBalance == null) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to get your balance."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
             if (playerBalance.inventoryBalance == 0L) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."))
                 return@launch
             }
 
@@ -68,16 +69,16 @@ class Deposit : CommandExecutor {
                 try {
                     amount = args[0].toLong()
                     if (amount < 0) {
-                        sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You cannot deposit a negative amount."))
+                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot deposit a negative amount."))
                         return@launch
                     }
                 } catch (_: Exception) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Invalid argument."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
                     return@launch
                 }
 
                 if (amount > playerBalance.inventoryBalance) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <red>in your inventory."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <red>in your inventory."))
                     return@launch
                 }
             }
@@ -101,7 +102,7 @@ class Deposit : CommandExecutor {
                     playerBalance,
                     "deposit"
                 )
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to deposit."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
                 DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }
@@ -120,13 +121,13 @@ class Deposit : CommandExecutor {
                     playerBalance,
                     "deposit"
                 )
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong while trying to deposit."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
                 DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }
 
             DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
-            sender.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <green>Successfully deposited <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <green>into your bank account."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <green>into your bank account."))
         }
         return true
     }

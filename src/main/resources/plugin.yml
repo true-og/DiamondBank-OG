@@ -30,6 +30,9 @@ commands:
   bal:
     description: Get your or someone else's balance
     usage: /bal or /bal <player name or player uuid>
+  diamondbankreload:
+    description: Reload the config
+    usage: /diamondbankreload
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials ]

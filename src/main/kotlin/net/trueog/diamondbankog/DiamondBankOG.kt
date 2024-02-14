@@ -19,6 +19,7 @@ class DiamondBankOG : JavaPlugin() {
     companion object {
         lateinit var plugin: DiamondBankOG
         lateinit var postgreSQL: PostgreSQL
+        fun isPostgreSQLInitialised() = ::postgreSQL.isInitialized
         var mm = MiniMessage.builder()
             .tags(
                 TagResolver.builder()
@@ -36,17 +37,20 @@ class DiamondBankOG : JavaPlugin() {
     override fun onEnable() {
         plugin = this
 
-        Config.load()
+        if (Config.load()) {
+            Bukkit.getPluginManager().disablePlugin(this)
+            return
+        }
 
-        if (Config.getSentryEnabled()) {
+        if (Config.sentryEnabled) {
             try {
                 Sentry.init { options ->
-                    options.dsn = Config.getSentryDsn()
+                    options.dsn = Config.sentryDsn
                 }
                 sentryEnabled = true
             } catch (e: Exception) {
                 sentryEnabled = false
-                this.logger.severe("Could not initialise Sentry/GlitchTip. The Sentry/GlitchTip DSN in your config might be invalid.")
+                this.logger.severe("Could not initialise Sentry. The Sentry(-compatible) DSN in your config might be invalid.")
             }
         }
 
@@ -55,6 +59,8 @@ class DiamondBankOG : JavaPlugin() {
             postgreSQL.initDB()
         } catch (e: Exception) {
             plugin.logger.info(e.toString())
+            Bukkit.getPluginManager().disablePlugin(this)
+            return
         }
 
         this.server.pluginManager.registerEvents(Events(), this)
@@ -68,10 +74,11 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("baltop")?.setExecutor(Balancetop())
         this.getCommand("balance")?.setExecutor(Balance())
         this.getCommand("bal")?.setExecutor(Balance())
+        this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
     }
 
     override fun onDisable() {
-        postgreSQL.pool.disconnect().get()
+        if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
     }
 
     // API

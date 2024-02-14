@@ -3,47 +3,76 @@ package net.trueog.diamondbankog
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
+import kotlin.properties.Delegates
 
 object Config {
     private lateinit var config: FileConfiguration
-    private lateinit var file: File
 
-    fun load() {
-        file = File(DiamondBankOG.plugin.dataFolder, "config.yml")
+    lateinit var prefix: String
+    var sentryEnabled by Delegates.notNull<Boolean>()
+    lateinit var sentryDsn: String
+    lateinit var postgresUrl: String
+    lateinit var postgresUser: String
+    lateinit var postgresPassword: String
+    lateinit var postgresTable: String
+
+    fun load(): Boolean {
+        val file = File(DiamondBankOG.plugin.dataFolder, "config.yml")
         if (!file.exists()) {
             DiamondBankOG.plugin.saveDefaultConfig()
         }
-
         config = YamlConfiguration.loadConfiguration(file)
-
-        this.save()
-    }
-
-    private fun save() {
         config.save(file)
-    }
 
-    fun getSentryEnabled(): Boolean {
-        return config.get("sentryEnabled").toString().toBoolean()
-    }
+        try {
+            prefix = config.get("prefix") as String
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"prefix\" as a string")
+            return true
+        }
 
-    fun getSentryDsn(): String {
-        return config.get("sentryDsn").toString()
-    }
+        try {
+            sentryEnabled = config.get("sentryEnabled") as Boolean
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"sentryEnabled\" as a boolean")
+            return true
+        }
 
-    fun getPostgresUrl(): String {
-        return config.get("postgresUrl").toString()
-    }
+        try {
+            sentryDsn = config.get("sentryDsn") as String
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"sentryDsn\" as a string")
+            return true
+        }
 
-    fun getPostgresUser(): String {
-        return config.get("postgresUser").toString()
-    }
+        try {
+            postgresUrl = config.get("postgresUrl") as String
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"postgresUrl\" as a string")
+            return true
+        }
 
-    fun getPostgresPassword(): String {
-        return config.get("postgresPassword").toString()
-    }
+        try {
+            postgresUser = config.get("postgresUser") as String
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"postgresUser\" as a string")
+            return true
+        }
 
-    fun getPostgresTable(): String {
-        return config.get("postgresTable").toString()
+        try {
+            postgresPassword = config.get("postgresPassword") as String
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"postgresPassword\" as a string")
+            return true
+        }
+
+        try {
+            postgresTable = config.get("postgresTable") as String
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"postgresTable\" as a string")
+            return true
+        }
+
+        return false
     }
 }

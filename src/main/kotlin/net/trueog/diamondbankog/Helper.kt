@@ -24,7 +24,7 @@ object Helper {
 
     suspend fun withdrawFromPlayer(player: Player, amount: Long): Long? {
         val somethingWentWrongMessage =
-            DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong.")
+            DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong.")
 
         val playerBalance = DiamondBankOG.postgreSQL.getPlayerBalance(player.uniqueId, BalanceType.ALL)
         if (playerBalance.bankBalance == null || playerBalance.inventoryBalance == null || playerBalance.enderChestBalance == null) {
@@ -70,7 +70,7 @@ object Helper {
         }
 
         if (amount > playerBalance.bankBalance + playerBalance.inventoryBalance + playerBalance.enderChestBalance) {
-            player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerBalance.bankBalance + playerBalance.inventoryBalance} <aqua>${if (playerBalance.bankBalance + playerBalance.inventoryBalance == 1L) "Diamond" else "Diamonds"}<red>."))
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerBalance.bankBalance + playerBalance.inventoryBalance} <aqua>${if (playerBalance.bankBalance + playerBalance.inventoryBalance == 1L) "Diamond" else "Diamonds"}<red>."))
             return null
         }
 
@@ -181,7 +181,7 @@ object Helper {
                         .sumOf { 64 - it.amount }
 
                 if (change > (emptySlotsInInventory + leftOverSpaceInInventory)) {
-                    player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: You don't have enough inventory space in your shulker box to store <yellow>$change <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>of change from converting diamond blocks into <aqua>Diamonds<reset>, so the <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>has been deposited into your bank."))
+                    player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: You don't have enough inventory space in your shulker box to store <yellow>$change <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>of change from converting diamond blocks into <aqua>Diamonds<reset>, so the <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>has been deposited into your bank."))
                     val error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                         player.uniqueId,
                         change.toLong(),
@@ -196,16 +196,16 @@ object Helper {
                             null,
                             "Inventory.withdrawDiamondBlocks"
                         )
-                        player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
+                        player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong."))
                         DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
                         return null
                     }
                 } else {
                     player.inventory.addItem(ItemStack(Material.DIAMOND, change))
-                    player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: You don't have enough inventory space in your shulker box to store <yellow>$change <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>of change from converting diamond blocks into <aqua>Diamonds<reset>, so the <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>have been added to your inventory."))
+                    player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: You don't have enough inventory space in your shulker box to store <yellow>$change <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>of change from converting diamond blocks into <aqua>Diamonds<reset>, so the <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>have been added to your inventory."))
                 }
             } else {
-                player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: You don't have enough inventory space to store <yellow>$change <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>of change from converting diamond blocks into <aqua>Diamonds<reset>, so the <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>has been deposited into your bank."))
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: You don't have enough inventory space to store <yellow>$change <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>of change from converting diamond blocks into <aqua>Diamonds<reset>, so the <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>has been deposited into your bank."))
                 val error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                     player.uniqueId,
                     change.toLong(),
@@ -220,7 +220,7 @@ object Helper {
                         null,
                         "Inventory.withdrawDiamondBlocks"
                     )
-                    player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
+                    player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong."))
                     DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
                     return null
                 }
@@ -269,7 +269,7 @@ object Helper {
                     playerBalance,
                     "Inventory.withdraw"
                 )
-                player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong."))
                 DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
                 return true
             }
@@ -289,7 +289,7 @@ object Helper {
                 playerBalance,
                 "Inventory.withdraw"
             )
-            player.sendMessage(DiamondBankOG.mm.deserialize("<dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]<reset>: <red>Something went wrong."))
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong."))
             DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
             return true
         }
