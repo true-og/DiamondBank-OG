@@ -1,13 +1,10 @@
 package net.trueog.diamondbankog
 
-import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 import kotlin.properties.Delegates
 
 object Config {
-    private lateinit var config: FileConfiguration
-
     lateinit var prefix: String
     var sentryEnabled by Delegates.notNull<Boolean>()
     lateinit var sentryDsn: String
@@ -21,7 +18,7 @@ object Config {
         if (!file.exists()) {
             DiamondBankOG.plugin.saveDefaultConfig()
         }
-        config = YamlConfiguration.loadConfiguration(file)
+        val config = YamlConfiguration.loadConfiguration(file)
         config.save(file)
 
         try {
