@@ -50,6 +50,7 @@ dependencies {
 
     implementation("io.sentry:sentry:7.3.0")
     implementation("io.sentry:sentry-kotlin-extensions:7.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 }
 
 tasks.shadowJar {
