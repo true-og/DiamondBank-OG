@@ -73,20 +73,11 @@ class PostgreSQL {
     private suspend fun getPlayerBalanceWrapper(uuid: UUID, type: BalanceType): Long? {
         val playerBalance = getPlayerBalance(uuid, type)
 
-        when (type) {
-            BalanceType.BANK_BALANCE -> if (playerBalance.bankBalance == null) return null
-            BalanceType.INVENTORY_BALANCE -> if (playerBalance.inventoryBalance == null) return null
-            BalanceType.ENDER_CHEST_BALANCE -> if (playerBalance.enderChestBalance == null) return null
-            else -> return null
-        }
-
         return when (type) {
             BalanceType.BANK_BALANCE -> playerBalance.bankBalance
             BalanceType.INVENTORY_BALANCE -> playerBalance.inventoryBalance
             BalanceType.ENDER_CHEST_BALANCE -> playerBalance.enderChestBalance
-
-            // Shouldn't be called anyway
-            else -> 0
+            else -> return null
         }
     }
 
