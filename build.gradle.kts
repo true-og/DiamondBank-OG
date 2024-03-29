@@ -1,12 +1,12 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.9.22"
+    id("org.jetbrains.kotlin.jvm") version "1.9.23"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("maven-publish")
     id("eclipse")
 }
 
 group = "net.trueog.diamondbank"
-version = "1.0.0"
+version = "1.1"
 
 val apiVersion = "1.19"
 
@@ -14,7 +14,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenPublication") {
             groupId = "net.trueog.diamondbank"
-            artifactId = "DiamondBank-OG"
+            artifactId = "DiamondBankOG"
             version = version
         }
     }
@@ -50,7 +50,7 @@ dependencies {
 
     implementation("io.sentry:sentry:7.3.0")
     implementation("io.sentry:sentry-kotlin-extensions:7.3.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 }
 
 tasks.shadowJar {
