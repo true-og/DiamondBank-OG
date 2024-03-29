@@ -13,7 +13,7 @@ import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.*
 
-class PostgreSQL {
+public class PostgreSQL {
 
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
@@ -39,7 +39,7 @@ class PostgreSQL {
         }
     }
 
-    suspend fun setPlayerBalance(uuid: UUID, balance: Long, type: BalanceType): Boolean {
+    public suspend fun setPlayerBalance(uuid: UUID, balance: Long, type: BalanceType): Boolean {
         try {
             val connection = pool.asSuspending.connect()
 
@@ -59,14 +59,14 @@ class PostgreSQL {
         return false
     }
 
-    suspend fun addToPlayerBalance(uuid: UUID, amount: Long, type: BalanceType): Boolean {
+    public suspend fun addToPlayerBalance(uuid: UUID, amount: Long, type: BalanceType): Boolean {
         val playerBalance = getPlayerBalanceWrapper(uuid, type) ?: return true
 
         val error = setPlayerBalance(uuid, playerBalance + amount, type)
         return error
     }
 
-    suspend fun subtractFromPlayerBalance(uuid: UUID, amount: Long, type: BalanceType): Boolean {
+    public suspend fun subtractFromPlayerBalance(uuid: UUID, amount: Long, type: BalanceType): Boolean {
         val playerBalance = getPlayerBalanceWrapper(uuid, type) ?: return true
 
         val error = setPlayerBalance(uuid, playerBalance - amount, type)
@@ -86,7 +86,7 @@ class PostgreSQL {
 
     data class PlayerBalance(val bankBalance: Long?, val inventoryBalance: Long?, val enderChestBalance: Long?)
 
-    suspend fun getPlayerBalance(uuid: UUID, type: BalanceType): PlayerBalance {
+    public suspend fun getPlayerBalance(uuid: UUID, type: BalanceType): PlayerBalance {
         var bankBalance: Long? = null
         var inventoryBalance: Long? = null
         var enderChestBalance: Long? = null
@@ -149,7 +149,7 @@ class PostgreSQL {
         return PlayerBalance(bankBalance, inventoryBalance, enderChestBalance)
     }
 
-    suspend fun getBaltop(offset: Int): MutableMap<String?, Long>? {
+    public suspend fun getBaltop(offset: Int): MutableMap<String?, Long>? {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
