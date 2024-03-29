@@ -1,3 +1,5 @@
+@file:JvmName("DiamondBankAPI") // Makes the file appear as 'DiamondBankAPI' class in Java.
+
 package net.trueog.diamondbankog
 
 import com.github.jasync.sql.db.asSuspending
@@ -12,6 +14,7 @@ import java.sql.SQLException
 import java.util.*
 
 class PostgreSQL {
+
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
     enum class BalanceType {
