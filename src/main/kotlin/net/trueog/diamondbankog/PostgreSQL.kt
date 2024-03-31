@@ -1,5 +1,3 @@
-@file:JvmName("DiamondBankAPI") // Makes the file appear as 'DiamondBankAPI' class in Java.
-
 package net.trueog.diamondbankog
 
 import com.github.jasync.sql.db.asSuspending
@@ -17,7 +15,7 @@ public class PostgreSQL {
 
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
-    enum class BalanceType {
+    public enum class BalanceType {
         BANK_BALANCE, INVENTORY_BALANCE, ENDER_CHEST_BALANCE, ALL
     }
 
@@ -84,7 +82,7 @@ public class PostgreSQL {
         }
     }
 
-    data class PlayerBalance(val bankBalance: Long?, val inventoryBalance: Long?, val enderChestBalance: Long?)
+    public data class PlayerBalance(val bankBalance: Long?, val inventoryBalance: Long?, val enderChestBalance: Long?)
 
     public suspend fun getPlayerBalance(uuid: UUID, type: BalanceType): PlayerBalance {
         var bankBalance: Long? = null
