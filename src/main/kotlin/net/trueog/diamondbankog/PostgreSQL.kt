@@ -77,7 +77,7 @@ class PostgreSQL {
             BalanceType.BANK_BALANCE -> playerBalance.bankBalance
             BalanceType.INVENTORY_BALANCE -> playerBalance.inventoryBalance
             BalanceType.ENDER_CHEST_BALANCE -> playerBalance.enderChestBalance
-            BalanceType.ALL -> playerBalance.bankBalance + playerBalance.inventoryBalance + playerBalance.enderChestBalance
+            BalanceType.ALL -> if (playerBalance.bankBalance != null && playerBalance.inventoryBalance != null && playerBalance.enderChestBalance != null) playerBalance.bankBalance + playerBalance.inventoryBalance + playerBalance.enderChestBalance else null
             else -> return null
         }
     }
