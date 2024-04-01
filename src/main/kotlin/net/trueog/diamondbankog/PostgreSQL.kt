@@ -11,8 +11,7 @@ import java.math.BigDecimal
 import java.sql.SQLException
 import java.util.*
 
-public class PostgreSQL {
-
+class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
     public enum class BalanceType {
@@ -37,7 +36,7 @@ public class PostgreSQL {
         }
     }
 
-    public suspend fun setPlayerBalance(uuid: UUID, balance: Long, type: BalanceType): Boolean {
+    suspend fun setPlayerBalance(uuid: UUID, balance: Double, type: BalanceType): Boolean {
         try {
             val connection = pool.asSuspending.connect()
 
@@ -57,21 +56,21 @@ public class PostgreSQL {
         return false
     }
 
-    public suspend fun addToPlayerBalance(uuid: UUID, amount: Long, type: BalanceType): Boolean {
+    suspend fun addToPlayerBalance(uuid: UUID, amount: Double, type: BalanceType): Boolean {
         val playerBalance = getPlayerBalanceWrapper(uuid, type) ?: return true
 
         val error = setPlayerBalance(uuid, playerBalance + amount, type)
         return error
     }
 
-    public suspend fun subtractFromPlayerBalance(uuid: UUID, amount: Long, type: BalanceType): Boolean {
+    suspend fun subtractFromPlayerBalance(uuid: UUID, amount: Double, type: BalanceType): Boolean {
         val playerBalance = getPlayerBalanceWrapper(uuid, type) ?: return true
 
         val error = setPlayerBalance(uuid, playerBalance - amount, type)
         return error
     }
 
-    private suspend fun getPlayerBalanceWrapper(uuid: UUID, type: BalanceType): Long? {
+    private suspend fun getPlayerBalanceWrapper(uuid: UUID, type: BalanceType): Double? {
         val playerBalance = getPlayerBalance(uuid, type)
 
         return when (type) {
@@ -82,12 +81,12 @@ public class PostgreSQL {
         }
     }
 
-    public data class PlayerBalance(val bankBalance: Long?, val inventoryBalance: Long?, val enderChestBalance: Long?)
+    public data class PlayerBalance(val bankBalance: Double?, val inventoryBalance: Double?, val enderChestBalance: Double?)
 
-    public suspend fun getPlayerBalance(uuid: UUID, type: BalanceType): PlayerBalance {
-        var bankBalance: Long? = null
-        var inventoryBalance: Long? = null
-        var enderChestBalance: Long? = null
+    suspend fun getPlayerBalance(uuid: UUID, type: BalanceType): PlayerBalance {
+        var bankBalance: Double? = null
+        var inventoryBalance: Double? = null
+        var enderChestBalance: Double? = null
         try {
             val connection = pool.asSuspending.connect()
 
@@ -108,38 +107,38 @@ public class PostgreSQL {
                 when (type) {
                     BalanceType.BANK_BALANCE -> {
                         bankBalance = if (rowData.columns[0] != null) {
-                            (rowData.columns[0] as BigDecimal).toLong()
-                        } else 0L
+                            (rowData.columns[0] as BigDecimal).toDouble()
+                        } else 0.0
                     }
 
                     BalanceType.INVENTORY_BALANCE -> {
                         inventoryBalance = if (rowData.columns[0] != null) {
-                            (rowData.columns[0] as BigDecimal).toLong()
-                        } else 0L
+                            (rowData.columns[0] as BigDecimal).toDouble()
+                        } else 0.0
                     }
 
                     BalanceType.ENDER_CHEST_BALANCE -> {
                         enderChestBalance = if (rowData.columns[0] != null) {
-                            (rowData.columns[0] as BigDecimal).toLong()
-                        } else 0L
+                            (rowData.columns[0] as BigDecimal).toDouble()
+                        } else 0.0
                     }
 
                     BalanceType.ALL -> {
                         bankBalance = if (rowData.columns[0] != null) {
-                            (rowData.columns[0] as BigDecimal).toLong()
-                        } else 0L
+                            (rowData.columns[0] as BigDecimal).toDouble()
+                        } else 0.0
                         inventoryBalance = if (rowData.columns[1] != null) {
-                            (rowData.columns[1] as BigDecimal).toLong()
-                        } else 0L
+                            (rowData.columns[1] as BigDecimal).toDouble()
+                        } else 0.0
                         enderChestBalance = if (rowData.columns[2] != null) {
-                            (rowData.columns[2] as BigDecimal).toLong()
-                        } else 0L
+                            (rowData.columns[2] as BigDecimal).toDouble()
+                        } else 0.0
                     }
                 }
             } else {
-                bankBalance = 0L
-                inventoryBalance = 0L
-                enderChestBalance = 0L
+                bankBalance = 0.0
+                inventoryBalance = 0.0
+                enderChestBalance = 0.0
             }
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.info(e.toString())
@@ -147,24 +146,24 @@ public class PostgreSQL {
         return PlayerBalance(bankBalance, inventoryBalance, enderChestBalance)
     }
 
-    public suspend fun getBaltop(offset: Int): MutableMap<String?, Long>? {
+    suspend fun getBaltop(offset: Int): MutableMap<String?, Double>? {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
                 connection.sendPreparedStatement("SELECT * FROM ${Config.postgresTable} ORDER BY bank_balance DESC, inventory_balance DESC, ender_chest_balance DESC OFFSET $offset LIMIT 10")
             val result = preparedStatement.await()
-            val baltop = mutableMapOf<String?, Long>()
+            val baltop = mutableMapOf<String?, Double>()
             result.rows.forEach {
                 val rowData = it as ArrayRowData
                 val bankBalance = if (rowData.columns[1] != null) {
-                    (rowData.columns[1] as BigDecimal).toLong()
-                } else 0L
+                    (rowData.columns[1] as BigDecimal).toDouble()
+                } else 0.0
                 val inventoryBalance = if (rowData.columns[2] != null) {
-                    (rowData.columns[2] as BigDecimal).toLong()
-                } else 0L
+                    (rowData.columns[2] as BigDecimal).toDouble()
+                } else 0.0
                 val enderChestBalance = if (rowData.columns[3] != null) {
-                    (rowData.columns[3] as BigDecimal).toLong()
-                } else 0L
+                    (rowData.columns[3] as BigDecimal).toDouble()
+                } else 0.0
 
                 val player = Bukkit.getPlayer(UUID.fromString(rowData.columns[0] as String)) ?: Bukkit.getOfflinePlayer(
                     UUID.fromString(rowData.columns[0] as String)

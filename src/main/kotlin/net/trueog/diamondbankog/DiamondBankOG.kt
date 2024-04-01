@@ -83,22 +83,22 @@ class DiamondBankOG : JavaPlugin() {
 
     // API
     @OptIn(DelicateCoroutinesApi::class)
-    fun addToPlayerBankBalance(uuid: UUID, amount: Long): CompletableFuture<Boolean> {
+    public fun addToPlayerBankBalance(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
         return GlobalScope.future { postgreSQL.addToPlayerBalance(uuid, amount, BalanceType.BANK_BALANCE) }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun subtractFromPlayerBankBalance(uuid: UUID, amount: Long): CompletableFuture<Boolean> {
+    public fun subtractFromPlayerBankBalance(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
         return GlobalScope.future { postgreSQL.subtractFromPlayerBalance(uuid, amount, BalanceType.BANK_BALANCE) }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun getPlayerBalance(uuid: UUID, type: BalanceType): CompletableFuture<PostgreSQL.PlayerBalance> {
+    public fun getPlayerBalance(uuid: UUID, type: BalanceType): CompletableFuture<PostgreSQL.PlayerBalance> {
         return GlobalScope.future { postgreSQL.getPlayerBalance(uuid, type) }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun withdrawFromPlayer(uuid: UUID, amount: Long): CompletableFuture<Boolean> {
+    public fun withdrawFromPlayer(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
         val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
         if (!player.hasPlayedBefore()) return GlobalScope.future { true }
         if (!player.isOnline) return GlobalScope.future { true }
@@ -108,7 +108,7 @@ class DiamondBankOG : JavaPlugin() {
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun payPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Long): CompletableFuture<Boolean> {
+    public fun payPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Double): CompletableFuture<Boolean> {
         val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
         if (!sender.hasPlayedBefore()) return GlobalScope.future { true }
         if (!sender.isOnline) return GlobalScope.future { true }

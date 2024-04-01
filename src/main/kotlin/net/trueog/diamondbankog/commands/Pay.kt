@@ -65,10 +65,10 @@ class Pay : CommandExecutor {
                 return@launch
             }
 
-            var amount = -1L
+            var amount = -1.0
             if (args[0] != "all") {
                 try {
-                    amount = args[1].toLong()
+                    amount = args[1].toDouble()
                     if (amount < 0) {
                         sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot pay a negative amount."))
                         return@launch
@@ -94,11 +94,11 @@ class Pay : CommandExecutor {
                 )
             }
 
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully paid <yellow>$withdrawnAmount <aqua>${if (withdrawnAmount == 1L) "Diamond" else "Diamonds"} <green>to <red>${receiver.name}<green>."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully paid <yellow>$withdrawnAmount <aqua>${if (withdrawnAmount <= 1.0) "Diamond" else "Diamonds"} <green>to <red>${receiver.name}<green>."))
 
             if (receiver.isOnline) {
                 val receiverPlayer = receiver.player ?: return@launch
-                receiverPlayer.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>${sender.name} has paid you <yellow>$withdrawnAmount <aqua>${if (withdrawnAmount == 1L) "Diamond" else "Diamonds"}<green>."))
+                receiverPlayer.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>${sender.name} has paid you <yellow>$withdrawnAmount <aqua>${if (withdrawnAmount <= 1.0) "Diamond" else "Diamonds"}<green>."))
             }
         }
         return true

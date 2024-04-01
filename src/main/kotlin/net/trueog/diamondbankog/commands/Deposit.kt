@@ -59,7 +59,7 @@ class Deposit : CommandExecutor {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
-            if (playerBalance.inventoryBalance == 0L) {
+            if (playerBalance.inventoryBalance == 0.0) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."))
                 return@launch
             }
@@ -67,7 +67,7 @@ class Deposit : CommandExecutor {
             var amount = playerBalance.inventoryBalance
             if (args[0] != "all") {
                 try {
-                    amount = args[0].toLong()
+                    amount = args[0].toDouble()
                     if (amount < 0) {
                         sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot deposit a negative amount."))
                         return@launch
@@ -78,7 +78,7 @@ class Deposit : CommandExecutor {
                 }
 
                 if (amount > playerBalance.inventoryBalance) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <red>in your inventory."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount <= 1.0) "Diamond" else "Diamonds"} <red>in your inventory."))
                     return@launch
                 }
             }
@@ -127,7 +127,7 @@ class Deposit : CommandExecutor {
             }
 
             DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <green>into your bank account."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$amount <aqua>${if (amount <= 1.0) "Diamond" else "Diamonds"} <green>into your bank account."))
         }
         return true
     }

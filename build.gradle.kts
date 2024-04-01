@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.9.23"
+    id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("maven-publish")
     id("eclipse")
@@ -48,9 +48,9 @@ dependencies {
     implementation("com.github.christianniehaus:Utilities-OG:e9ebc26c1f")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4")
 
-    implementation("io.sentry:sentry:7.3.0")
-    implementation("io.sentry:sentry-kotlin-extensions:7.3.0")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("io.sentry:sentry:7.6.0")
+    implementation("io.sentry:sentry-kotlin-extensions:7.6.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
 }
 
 tasks.shadowJar {
