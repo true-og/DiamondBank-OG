@@ -16,11 +16,9 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class DiamondBankOG : JavaPlugin() {
-
     companion object {
         lateinit var plugin: DiamondBankOG
         lateinit var postgreSQL: PostgreSQL
-        private var instance: DiamondBankOG? = null
         fun isPostgreSQLInitialised() = ::postgreSQL.isInitialized
         var mm = MiniMessage.builder()
             .tags(
@@ -34,16 +32,6 @@ class DiamondBankOG : JavaPlugin() {
         val blockCommandsWithInventoryActionsFor = mutableListOf<UUID>()
         var sentryEnabled: Boolean = false
         var economyDisabled: Boolean = false
-    }
-
-    public fun getInstance(): DiamondBankOG {
-        synchronized(this) {
-            if (instance == null) {
-                instance = DiamondBankOG() 
-            }
-            // Double exclamation to assert non-null instance
-            return instance!!
-         }
     }
 
     override fun onEnable() {
@@ -106,8 +94,7 @@ class DiamondBankOG : JavaPlugin() {
 
     @OptIn(DelicateCoroutinesApi::class)
     public fun getPlayerBalance(uuid: UUID, type: BalanceType): CompletableFuture<Double?> {
-        val diamondBank = getInstance()
-        return diamondBank.getPlayerBalance(uuid, type) // Delegate to instance method
+        return GlobalScope.future { postgreSQL.getPlayerBalanceWrapper(uuid, type) }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
