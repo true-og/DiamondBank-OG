@@ -106,7 +106,8 @@ class DiamondBankOG : JavaPlugin() {
 
     @OptIn(DelicateCoroutinesApi::class)
     public fun getPlayerBalance(uuid: UUID, type: BalanceType): CompletableFuture<Double?> {
-        return GlobalScope.future { postgreSQL.getPlayerBalanceWrapper(uuid, type) }
+        val diamondBank = getInstance()
+        return diamondBank.getPlayerBalance(uuid, type) // Delegate to instance method
     }
 
     @OptIn(DelicateCoroutinesApi::class)
