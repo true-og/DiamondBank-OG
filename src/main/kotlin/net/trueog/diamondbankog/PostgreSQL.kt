@@ -14,7 +14,7 @@ import java.util.*
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
-    public enum class BalanceType {
+    enum class BalanceType {
         BANK_BALANCE, INVENTORY_BALANCE, ENDER_CHEST_BALANCE, ALL
     }
 
@@ -81,7 +81,7 @@ class PostgreSQL {
         }
     }
 
-    public data class PlayerBalance(val bankBalance: Double?, val inventoryBalance: Double?, val enderChestBalance: Double?)
+    data class PlayerBalance(val bankBalance: Double?, val inventoryBalance: Double?, val enderChestBalance: Double?)
 
     suspend fun getPlayerBalance(uuid: UUID, type: BalanceType): PlayerBalance {
         var bankBalance: Double? = null
