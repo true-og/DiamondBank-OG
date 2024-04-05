@@ -141,4 +141,5 @@ class DiamondBankOG : JavaPlugin() {
     override fun onDisable() {
         if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
     }
+
 }
