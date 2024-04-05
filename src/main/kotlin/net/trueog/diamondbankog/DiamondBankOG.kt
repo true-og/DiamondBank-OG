@@ -32,6 +32,10 @@ class DiamondBankOG : JavaPlugin() {
         val blockCommandsWithInventoryActionsFor = mutableListOf<UUID>()
         var sentryEnabled: Boolean = false
         var economyDisabled: Boolean = false
+        @JvmStatic
+        public fun getPlayerBalance(uuid: UUID, type: BalanceType): CompletableFuture<Double?> {
+            return GlobalScope.future { postgreSQL.getPlayerBalanceWrapper(uuid, type) }
+        }
     }
 
     override fun onEnable() {
@@ -134,22 +138,6 @@ class DiamondBankOG : JavaPlugin() {
                 true
             } else false
         }
-    }
-    
-    companion object {
-        @JvmStatic
-        @OptIn(DelicateCoroutinesApi::class)
-        fun getPlayerBalance(uuid: UUID, type: BalanceType, scope: CoroutineScope): CompletableFuture<Result<Double>> {
-            return scope.future { 
-                try {
-                    Result.success(postgreSQL.getPlayerBalanceWrapper(uuid, type))
-                }
-                catch (error: Exception) {
-                    Result.failure(error) 
-                }
-            }
-        }
-
     }
     
 }
