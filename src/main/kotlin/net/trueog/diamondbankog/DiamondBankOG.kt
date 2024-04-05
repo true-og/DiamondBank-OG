@@ -16,6 +16,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class DiamondBankOG : JavaPlugin() {
+    @OptIn(DelicateCoroutinesApi::class)
     companion object {
         lateinit var plugin: DiamondBankOG
         lateinit var postgreSQL: PostgreSQL
@@ -32,6 +33,66 @@ class DiamondBankOG : JavaPlugin() {
         val blockCommandsWithInventoryActionsFor = mutableListOf<UUID>()
         var sentryEnabled: Boolean = false
         var economyDisabled: Boolean = false
+
+        // API
+        @JvmStatic
+        @Suppress("unused")
+        fun addToPlayerBankBalance(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
+            return GlobalScope.future { postgreSQL.addToPlayerBalance(uuid, amount, BalanceType.BANK_BALANCE) }
+        }
+
+        @JvmStatic
+        @Suppress("unused")
+        fun subtractFromPlayerBankBalance(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
+            return GlobalScope.future { postgreSQL.subtractFromPlayerBalance(uuid, amount, BalanceType.BANK_BALANCE) }
+        }
+
+        @JvmStatic
+        @Suppress("unused")
+        fun getPlayerBalance(uuid: UUID, type: BalanceType): CompletableFuture<PostgreSQL.PlayerBalance> {
+            return GlobalScope.future { postgreSQL.getPlayerBalance(uuid, type) }
+        }
+
+        @JvmStatic
+        @Suppress("unused")
+        fun withdrawFromPlayer(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
+            val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+            if (!player.hasPlayedBefore()) return GlobalScope.future { true }
+            if (!player.isOnline) return GlobalScope.future { true }
+            val playerPlayer = player.player ?: return GlobalScope.future { true }
+
+            return GlobalScope.future { Helper.withdrawFromPlayer(playerPlayer, amount) == null }
+        }
+
+        @JvmStatic
+        @Suppress("unused")
+        fun payPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Double): CompletableFuture<Boolean> {
+            val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
+            if (!sender.hasPlayedBefore()) return GlobalScope.future { true }
+            if (!sender.isOnline) return GlobalScope.future { true }
+            val senderPlayer = sender.player ?: return GlobalScope.future { true }
+
+            val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
+            if (!receiver.hasPlayedBefore()) return GlobalScope.future { true }
+
+            return GlobalScope.future {
+                Helper.withdrawFromPlayer(senderPlayer, amount) ?: GlobalScope.future { true }
+
+                val error = postgreSQL.addToPlayerBalance(
+                    receiver.uniqueId,
+                    amount,
+                    BalanceType.BANK_BALANCE
+                )
+                if (error) {
+                    Helper.handleError(
+                        sender.uniqueId,
+                        PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, BalanceType.BANK_BALANCE,
+                        null, "pay"
+                    )
+                    true
+                } else false
+            }
+        }
     }
 
     override fun onEnable() {
@@ -79,60 +140,5 @@ class DiamondBankOG : JavaPlugin() {
 
     override fun onDisable() {
         if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
-    }
-
-    // API
-    @OptIn(DelicateCoroutinesApi::class)
-    public fun addToPlayerBankBalance(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
-        return GlobalScope.future { postgreSQL.addToPlayerBalance(uuid, amount, BalanceType.BANK_BALANCE) }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    public fun subtractFromPlayerBankBalance(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
-        return GlobalScope.future { postgreSQL.subtractFromPlayerBalance(uuid, amount, BalanceType.BANK_BALANCE) }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    public fun getPlayerBalance(uuid: UUID, type: BalanceType): CompletableFuture<Double?> {
-        return GlobalScope.future { postgreSQL.getPlayerBalanceWrapper(uuid, type) }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    public fun withdrawFromPlayer(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
-        val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-        if (!player.hasPlayedBefore()) return GlobalScope.future { true }
-        if (!player.isOnline) return GlobalScope.future { true }
-        val playerPlayer = player.player ?: return GlobalScope.future { true }
-
-        return GlobalScope.future { Helper.withdrawFromPlayer(playerPlayer, amount) == null }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    public fun payPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Double): CompletableFuture<Boolean> {
-        val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
-        if (!sender.hasPlayedBefore()) return GlobalScope.future { true }
-        if (!sender.isOnline) return GlobalScope.future { true }
-        val senderPlayer = sender.player ?: return GlobalScope.future { true }
-
-        val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
-        if (!receiver.hasPlayedBefore()) return GlobalScope.future { true }
-
-        return GlobalScope.future {
-            Helper.withdrawFromPlayer(senderPlayer, amount) ?: GlobalScope.future { true }
-
-            val error = postgreSQL.addToPlayerBalance(
-                receiver.uniqueId,
-                amount,
-                BalanceType.BANK_BALANCE
-            )
-            if (error) {
-                Helper.handleError(
-                    sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, BalanceType.BANK_BALANCE,
-                    null, "pay"
-                )
-                true
-            } else false
-        }
     }
 }
