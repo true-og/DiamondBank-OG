@@ -92,10 +92,10 @@ class DiamondBankOG : JavaPlugin() {
         return GlobalScope.future { postgreSQL.subtractFromPlayerBalance(uuid, amount, BalanceType.BANK_BALANCE) }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
+    /*@OptIn(DelicateCoroutinesApi::class)
     public fun getPlayerBalance(uuid: UUID, type: BalanceType): CompletableFuture<Double?> {
         return GlobalScope.future { postgreSQL.getPlayerBalanceWrapper(uuid, type) }
-    }
+    }*/
 
     @OptIn(DelicateCoroutinesApi::class)
     public fun withdrawFromPlayer(uuid: UUID, amount: Double): CompletableFuture<Boolean> {
@@ -135,4 +135,21 @@ class DiamondBankOG : JavaPlugin() {
             } else false
         }
     }
+    
+    companion object {
+        @JvmStatic
+        @OptIn(DelicateCoroutinesApi::class)
+        fun getPlayerBalance(uuid: UUID, type: BalanceType, scope: CoroutineScope): CompletableFuture<Result<Double>> {
+            return scope.future { 
+                try {
+                    Result.success(postgreSQL.getPlayerBalanceWrapper(uuid, type))
+                }
+                catch (error: Exception) {
+                    Result.failure(error) 
+                }
+            }
+        }
+
+    }
+    
 }
