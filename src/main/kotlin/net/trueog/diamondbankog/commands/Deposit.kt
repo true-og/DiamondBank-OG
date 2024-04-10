@@ -83,10 +83,11 @@ class Deposit : CommandExecutor {
                 }
             }
 
-            DiamondBankOG.blockInventoryFor.add(sender.uniqueId)
-
             var error = sender.inventory.withdraw(amount, playerBalance)
-            if (error) return@launch
+            if (error) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
+                return@launch
+            }
 
             error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                 sender.uniqueId,
@@ -107,7 +108,6 @@ class Deposit : CommandExecutor {
                 return@launch
             }
 
-            DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$amount <aqua>${if (amount <= 1.0) "Diamond" else "Diamonds"} <green>into your bank account."))
         }
         return true
