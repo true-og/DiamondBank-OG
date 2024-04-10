@@ -53,18 +53,18 @@ class Deposit : CommandExecutor {
                 return@launch
             }
 
-            val playerBalance =
+            val playerDiamonds =
                 DiamondBankOG.postgreSQL.getPlayerDiamonds(sender.uniqueId, DiamondType.INVENTORY)
-            if (playerBalance.inventoryDiamonds == null) {
+            if (playerDiamonds.inventoryDiamonds == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
-            if (playerBalance.inventoryDiamonds == 0) {
+            if (playerDiamonds.inventoryDiamonds == 0) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."))
                 return@launch
             }
 
-            var amount = playerBalance.inventoryDiamonds
+            var amount = playerDiamonds.inventoryDiamonds
             if (args[0] != "all") {
                 try {
                     amount = args[0].toInt()
@@ -77,13 +77,13 @@ class Deposit : CommandExecutor {
                     return@launch
                 }
 
-                if (amount > playerBalance.inventoryDiamonds) {
+                if (amount > playerDiamonds.inventoryDiamonds) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>in your inventory."))
                     return@launch
                 }
             }
 
-            var error = sender.inventory.withdraw(amount, playerBalance)
+            var error = sender.inventory.withdraw(amount, playerDiamonds)
             if (error) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
                 return@launch
@@ -97,10 +97,10 @@ class Deposit : CommandExecutor {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_BALANCE,
+                    PostgresFunction.ADD_TO_PLAYER_DIAMONDS,
                     amount,
                     DiamondType.BANK,
-                    playerBalance,
+                    playerDiamonds,
                     "deposit"
                 )
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))

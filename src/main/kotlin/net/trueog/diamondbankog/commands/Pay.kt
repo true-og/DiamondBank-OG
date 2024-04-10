@@ -89,7 +89,7 @@ class Pay : CommandExecutor {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, DiamondType.BANK,
+                    PostgresFunction.ADD_TO_PLAYER_DIAMONDS, amount, DiamondType.BANK,
                     null, "pay"
                 )
             }

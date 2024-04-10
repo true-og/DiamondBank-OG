@@ -26,7 +26,7 @@ class PostgreSQL {
                 pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid TEXT, bank_diamonds integer, inventory_diamonds integer, ender_chest_diamonds integer, bank_shards integer, inventory_shards integer, ender_chest_shards integer, unique(uuid))")
             createTable.join()
             val createIndex =
-                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_balance ON ${Config.postgresTable}(bank_diamonds, inventory_diamonds, ender_chest_diamonds, bank_shards, inventory_shards, ender_chest_shards)")
+                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_diamonds ON ${Config.postgresTable}(bank_diamonds, inventory_diamonds, ender_chest_diamonds, bank_shards, inventory_shards, ender_chest_shards)")
             createIndex.join()
         } catch (e: Exception) {
             DiamondBankOG.economyDisabled = true
@@ -35,7 +35,7 @@ class PostgreSQL {
         }
     }
 
-    suspend fun setPlayerDiamonds(uuid: UUID, balance: Int, type: DiamondType): Boolean {
+    suspend fun setPlayerDiamonds(uuid: UUID, diamonds: Int, type: DiamondType): Boolean {
         try {
             val connection = pool.asSuspending.connect()
 
@@ -47,7 +47,7 @@ class PostgreSQL {
             }
 
             val preparedStatement =
-                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, $diamondType) VALUES('$uuid', $balance) ON CONFLICT (uuid) DO UPDATE SET $diamondType = excluded.$diamondType")
+                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, $diamondType) VALUES('$uuid', $diamonds) ON CONFLICT (uuid) DO UPDATE SET $diamondType = excluded.$diamondType")
             preparedStatement.await()
         } catch (e: Exception) {
             return true

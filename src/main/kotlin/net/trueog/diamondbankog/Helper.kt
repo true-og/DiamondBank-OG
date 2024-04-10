@@ -17,17 +17,17 @@ import kotlin.math.ceil
 
 object Helper {
     enum class PostgresFunction(val string: String) {
-        SET_PLAYER_BALANCE("setPlayerBalance"),
-        ADD_TO_PLAYER_BALANCE("addToPlayerBalance"),
-        SUBTRACT_FROM_PLAYER_BALANCE("subtractFromPlayerBalance")
+        SET_PLAYER_DIAMONDS("setPlayerDiamonds"),
+        ADD_TO_PLAYER_DIAMONDS("addToPlayerDiamonds"),
+        SUBTRACT_FROM_PLAYER_DIAMONDS("subtractFromPlayerDiamonds")
     }
 
     suspend fun withdrawFromPlayer(player: Player, amount: Int): Int? {
         val somethingWentWrongMessage =
             DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong.")
 
-        val playerBalance = DiamondBankOG.postgreSQL.getPlayerDiamonds(player.uniqueId, DiamondType.ALL)
-        if (playerBalance.bankDiamonds == null || playerBalance.inventoryDiamonds == null || playerBalance.enderChestDiamonds == null) {
+        val playerDiamonds = DiamondBankOG.postgreSQL.getPlayerDiamonds(player.uniqueId, DiamondType.ALL)
+        if (playerDiamonds.bankDiamonds == null || playerDiamonds.inventoryDiamonds == null || playerDiamonds.enderChestDiamonds == null) {
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
@@ -36,22 +36,22 @@ object Helper {
         if (amount == -1) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
                 player.uniqueId,
-                playerBalance.bankDiamonds,
+                playerDiamonds.bankDiamonds,
                 DiamondType.BANK
             )
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE, playerBalance.bankDiamonds, DiamondType.BANK,
-                    playerBalance, "withdrawFromPlayer"
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.bankDiamonds, DiamondType.BANK,
+                    playerDiamonds, "withdrawFromPlayer"
                 )
                 player.sendMessage(somethingWentWrongMessage)
                 return null
             }
 
             error = player.inventory.withdraw(
-                playerBalance.inventoryDiamonds,
-                playerBalance
+                playerDiamonds.inventoryDiamonds,
+                playerDiamonds
             )
             if (error) {
                 player.sendMessage(somethingWentWrongMessage)
@@ -59,22 +59,22 @@ object Helper {
             }
 
             error = player.enderChest.withdraw(
-                playerBalance.enderChestDiamonds,
-                playerBalance
+                playerDiamonds.enderChestDiamonds,
+                playerDiamonds
             )
             if (error) {
                 player.sendMessage(somethingWentWrongMessage)
                 return null
             }
-            return playerBalance.bankDiamonds + playerBalance.inventoryDiamonds + playerBalance.enderChestDiamonds
+            return playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds + playerDiamonds.enderChestDiamonds
         }
 
-        if (amount > playerBalance.bankDiamonds + playerBalance.inventoryDiamonds + playerBalance.enderChestDiamonds) {
-            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerBalance.bankDiamonds + playerBalance.inventoryDiamonds} <aqua>${if (playerBalance.bankDiamonds + playerBalance.inventoryDiamonds == 1) "Diamond" else "Diamonds"}<red>."))
+        if (amount > playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds + playerDiamonds.enderChestDiamonds) {
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds} <aqua>${if (playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds == 1) "Diamond" else "Diamonds"}<red>."))
             return null
         }
 
-        if (amount <= playerBalance.bankDiamonds) {
+        if (amount <= playerDiamonds.bankDiamonds) {
             val error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
                 player.uniqueId,
                 amount,
@@ -83,8 +83,8 @@ object Helper {
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE, amount, DiamondType.BANK,
-                    playerBalance, "withdrawFromPlayer"
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, amount, DiamondType.BANK,
+                    playerDiamonds, "withdrawFromPlayer"
                 )
                 player.sendMessage(somethingWentWrongMessage)
                 return null
@@ -92,25 +92,25 @@ object Helper {
             return amount
         }
 
-        if (amount <= playerBalance.bankDiamonds + playerBalance.inventoryDiamonds) {
+        if (amount <= playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
                 player.uniqueId,
-                playerBalance.bankDiamonds,
+                playerDiamonds.bankDiamonds,
                 DiamondType.BANK
             )
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE, playerBalance.bankDiamonds, DiamondType.BANK,
-                    playerBalance, "withdrawFromPlayer"
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.bankDiamonds, DiamondType.BANK,
+                    playerDiamonds, "withdrawFromPlayer"
                 )
                 player.sendMessage(somethingWentWrongMessage)
                 return null
             }
 
             error = player.inventory.withdraw(
-                amount - playerBalance.bankDiamonds,
-                playerBalance
+                amount - playerDiamonds.bankDiamonds,
+                playerDiamonds
             )
             if (error) {
                 player.sendMessage(somethingWentWrongMessage)
@@ -121,28 +121,28 @@ object Helper {
 
         var error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
             player.uniqueId,
-            playerBalance.bankDiamonds,
+            playerDiamonds.bankDiamonds,
             DiamondType.BANK
         )
         if (error) {
             handleError(
                 player.uniqueId,
-                PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE, playerBalance.bankDiamonds, DiamondType.BANK,
-                playerBalance, "withdrawFromPlayer"
+                PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.bankDiamonds, DiamondType.BANK,
+                playerDiamonds, "withdrawFromPlayer"
             )
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
-        error = player.inventory.withdraw(playerBalance.inventoryDiamonds, playerBalance)
+        error = player.inventory.withdraw(playerDiamonds.inventoryDiamonds, playerDiamonds)
         if (error) {
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
         error = player.enderChest.withdraw(
-            amount - (playerBalance.bankDiamonds + playerBalance.inventoryDiamonds),
-            playerBalance
+            amount - (playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds),
+            playerDiamonds
         )
         if (error) {
             player.sendMessage(somethingWentWrongMessage)
@@ -190,7 +190,7 @@ object Helper {
                     if (error) {
                         handleError(
                             player.uniqueId,
-                            PostgresFunction.ADD_TO_PLAYER_BALANCE,
+                            PostgresFunction.ADD_TO_PLAYER_DIAMONDS,
                             change,
                             diamondType,
                             null,
@@ -214,7 +214,7 @@ object Helper {
                 if (error) {
                     handleError(
                         player.uniqueId,
-                        PostgresFunction.ADD_TO_PLAYER_BALANCE,
+                        PostgresFunction.ADD_TO_PLAYER_DIAMONDS,
                         change,
                         diamondType,
                         null,
@@ -241,7 +241,7 @@ object Helper {
         val player = this.holder as Player
         DiamondBankOG.blockInventoryFor.add(player.uniqueId)
 
-        val balance = if (this.type == InventoryType.PLAYER) {
+        val diamonds = if (this.type == InventoryType.PLAYER) {
             playerDiamonds.inventoryDiamonds!!
         } else {
             playerDiamonds.enderChestDiamonds!!
@@ -257,13 +257,13 @@ object Helper {
         if (playerDiamonds.inventoryDiamonds != inventoryDiamonds) {
             val error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
                 player.uniqueId,
-                balance - (amount - inventoryDiamonds),
+                diamonds - (amount - inventoryDiamonds),
                 diamondType
             )
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SET_PLAYER_BALANCE,
+                    PostgresFunction.SET_PLAYER_DIAMONDS,
                     amount,
                     diamondType,
                     playerDiamonds,
@@ -283,7 +283,7 @@ object Helper {
         if (error) {
             handleError(
                 player.uniqueId,
-                PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE,
+                PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS,
                 amount,
                 diamondType,
                 playerDiamonds,

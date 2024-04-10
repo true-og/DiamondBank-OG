@@ -10,12 +10,12 @@ import java.util.concurrent.CompletableFuture
 @OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     @Suppress("unused")
-    fun addToPlayerBankBalance(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+    fun addToPlayerBankDiamonds(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
         return GlobalScope.future { postgreSQL.addToPlayerDiamonds(uuid, amount, PostgreSQL.DiamondType.BANK) }
     }
 
     @Suppress("unused")
-    fun subtractFromPlayerBankBalance(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+    fun subtractFromPlayerBankDiamonds(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
         return GlobalScope.future {
             postgreSQL.subtractFromPlayerDiamonds(
                 uuid,
@@ -26,7 +26,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     @Suppress("unused")
-    fun getPlayerBalance(uuid: UUID, type: PostgreSQL.DiamondType): CompletableFuture<PostgreSQL.PlayerDiamonds> {
+    fun getPlayerDiamonds(uuid: UUID, type: PostgreSQL.DiamondType): CompletableFuture<PostgreSQL.PlayerDiamonds> {
         return GlobalScope.future { postgreSQL.getPlayerDiamonds(uuid, type) }
     }
 
@@ -61,7 +61,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    Helper.PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, PostgreSQL.DiamondType.BANK,
+                    Helper.PostgresFunction.ADD_TO_PLAYER_DIAMONDS, amount, PostgreSQL.DiamondType.BANK,
                     null, "pay"
                 )
                 true

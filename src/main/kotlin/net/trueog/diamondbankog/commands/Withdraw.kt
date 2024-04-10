@@ -68,17 +68,17 @@ class Withdraw : CommandExecutor {
                 }
             }
 
-            val playerBalance =
+            val playerDiamonds =
                 DiamondBankOG.postgreSQL.getPlayerDiamonds(sender.uniqueId, DiamondType.BANK)
-            if (playerBalance.bankDiamonds == null) {
+            if (playerDiamonds.bankDiamonds == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
 
-            if (amount == -1) amount = playerBalance.bankDiamonds
+            if (amount == -1) amount = playerDiamonds.bankDiamonds
 
-            if (amount > playerBalance.bankDiamonds) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerBalance.bankDiamonds} <aqua>${if (playerBalance.bankDiamonds == 1) "diamond" else "diamonds"}<red>."))
+            if (amount > playerDiamonds.bankDiamonds) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerDiamonds.bankDiamonds} <aqua>${if (playerDiamonds.bankDiamonds == 1) "diamond" else "diamonds"}<red>."))
                 return@launch
             }
 
@@ -100,10 +100,10 @@ class Withdraw : CommandExecutor {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE,
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS,
                     amount,
                     DiamondType.BANK,
-                    playerBalance,
+                    playerDiamonds,
                     "withdraw"
                 )
 
@@ -120,10 +120,10 @@ class Withdraw : CommandExecutor {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_BALANCE,
+                    PostgresFunction.ADD_TO_PLAYER_DIAMONDS,
                     amount,
                     DiamondType.INVENTORY,
-                    playerBalance,
+                    playerDiamonds,
                     "withdraw"
                 )
 

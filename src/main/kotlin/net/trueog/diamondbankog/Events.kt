@@ -40,7 +40,7 @@ class Events : Listener {
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
-                    PostgresFunction.SET_PLAYER_BALANCE,
+                    PostgresFunction.SET_PLAYER_DIAMONDS,
                     inventoryDiamonds,
                     DiamondType.INVENTORY,
                     null,
@@ -58,7 +58,7 @@ class Events : Listener {
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
-                    PostgresFunction.SET_PLAYER_BALANCE,
+                    PostgresFunction.SET_PLAYER_DIAMONDS,
                     enderChestDiamonds,
                     DiamondType.ENDER_CHEST,
                     null,
@@ -101,7 +101,7 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             player.uniqueId,
-                            PostgresFunction.SET_PLAYER_BALANCE,
+                            PostgresFunction.SET_PLAYER_DIAMONDS,
                             inventoryDiamonds,
                             DiamondType.INVENTORY,
                             null,
@@ -143,7 +143,7 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_BALANCE,
+                            PostgresFunction.SET_PLAYER_DIAMONDS,
                             inventoryDiamonds,
                             DiamondType.INVENTORY,
                             null,
@@ -177,7 +177,7 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_BALANCE,
+                            PostgresFunction.SET_PLAYER_DIAMONDS,
                             inventoryDiamonds,
                             DiamondType.INVENTORY,
                             null,
@@ -196,7 +196,7 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_BALANCE,
+                            PostgresFunction.SET_PLAYER_DIAMONDS,
                             enderChestDiamonds,
                             DiamondType.ENDER_CHEST,
                             null,
@@ -208,47 +208,4 @@ class Events : Listener {
             }
         }.runTaskLater(DiamondBankOG.plugin, 1)
     }
-
-//    @EventHandler
-//    fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
-//        val args = event.message.split(" ", limit = 3)
-//        handleGive(args)
-//    }
-//
-//    @EventHandler
-//    fun onServerCommand(event: ServerCommandEvent) {
-//        val args = event.command.split(" ", limit = 3)
-//        handleGive(args)
-//    }
-//
-//    private fun handleGive(args: List<String>) {
-//        GlobalScope.launch {
-//            if (args[0] != "/give" && args[0] != "/essentials:give" && args[0] != "/minecraft:give") return@launch
-//            if (args.size != 3 && args.size != 4) return@launch
-//            if (args[2] != "diamond" && args[2] != "minecraft:diamond") return@launch
-//
-//            val player = Bukkit.getOfflinePlayer(args[1])
-//            val playerPlayer = player.player ?: return@launch
-//
-//            if (player.isOnline) {
-//                val inventoryDiamonds = playerPlayer.inventory.countDiamondsInInventory()
-//                val error = DiamondBankOG.postgreSQL.setPlayerBalance(
-//                    player.uniqueId,
-//                    inventoryDiamonds,
-//                    INVENTORY_BALANCE
-//                )
-//                if (error) {
-//                    Helper.handleError(
-//                        playerPlayer.uniqueId,
-//                        SET_PLAYER_BALANCE,
-//                        inventoryDiamonds,
-//                        INVENTORY_BALANCE,
-//                        null,
-//                        "handleGive"
-//                    )
-//                    return@launch
-//                }
-//            }
-//        }
-//    }
 }
