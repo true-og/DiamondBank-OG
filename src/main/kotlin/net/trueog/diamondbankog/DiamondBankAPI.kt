@@ -26,7 +26,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     @Suppress("unused")
-    fun getPlayerDiamonds(uuid: UUID, type: PostgreSQL.DiamondType): CompletableFuture<PostgreSQL.PlayerDiamonds> {
+    fun getPlayerDiamonds(uuid: UUID, type: PostgreSQL.DiamondType): CompletableFuture<PostgreSQL.GetResponse> {
         return GlobalScope.future { postgreSQL.getPlayerDiamonds(uuid, type) }
     }
 
@@ -67,5 +67,26 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 true
             } else false
         }
+    }
+
+    @Suppress("unused")
+    fun addToPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+        return GlobalScope.future { postgreSQL.addToPlayerShards(uuid, amount, PostgreSQL.ShardType.BANK) }
+    }
+
+    @Suppress("unused")
+    fun subtractFromPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+        return GlobalScope.future {
+            postgreSQL.subtractFromPlayerShards(
+                uuid,
+                amount,
+                PostgreSQL.ShardType.BANK
+            )
+        }
+    }
+
+    @Suppress("unused")
+    fun getPlayerShards(uuid: UUID, type: PostgreSQL.ShardType): CompletableFuture<PostgreSQL.GetResponse> {
+        return GlobalScope.future { postgreSQL.getPlayerShards(uuid, type) }
     }
 }
