@@ -54,10 +54,10 @@ class Withdraw : CommandExecutor {
                 return@launch
             }
 
-            var amount = -1.0
+            var amount = -1
             if (args[0] != "all") {
                 try {
-                    amount = args[0].toDouble()
+                    amount = args[0].toInt()
                     if (amount < 0) {
                         sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot withdraw a negative amount."))
                         return@launch
@@ -75,10 +75,10 @@ class Withdraw : CommandExecutor {
                 return@launch
             }
 
-            if (amount == -1.0) amount = playerBalance.bankBalance
+            if (amount == -1) amount = playerBalance.bankBalance
 
             if (amount > playerBalance.bankBalance) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount <= 1.0) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerBalance.bankBalance} <aqua>${if (playerBalance.bankBalance <= 1.0) "diamond" else "diamonds"}<red>."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerBalance.bankBalance} <aqua>${if (playerBalance.bankBalance == 1) "diamond" else "diamonds"}<red>."))
                 return@launch
             }
 
@@ -87,7 +87,7 @@ class Withdraw : CommandExecutor {
             val leftOverSpace = sender.inventory.storageContents.filterNotNull().filter { it.type == Material.DIAMOND }
                 .sumOf { 64 - it.amount }
             if (amount > (emptySlots + leftOverSpace)) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$amount <aqua>${if (amount <= 1.0) "Diamond" else "Diamonds"}<red>."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"}<red>."))
                 DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }
@@ -131,9 +131,9 @@ class Withdraw : CommandExecutor {
                 DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }
-            sender.inventory.addItem(ItemStack(Material.DIAMOND, amount.toInt()))
+            sender.inventory.addItem(ItemStack(Material.DIAMOND, amount))
             DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully withdrew <yellow>$amount <aqua>${if (amount <= 1.0) "Diamond" else "Diamonds"} <green>from your bank account."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully withdrew <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <green>from your bank account."))
         }
         return true
     }

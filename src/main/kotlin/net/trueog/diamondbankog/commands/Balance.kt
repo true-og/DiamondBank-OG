@@ -54,7 +54,7 @@ class Balance : CommandExecutor {
                     return@launch
                 }
                 val totalBalance = balance.bankBalance + balance.inventoryBalance + balance.enderChestBalance
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalBalance <aqua>${if (totalBalance <= 1.0) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankBalance}<white>, <red>Inventory: <yellow>${balance.inventoryBalance}<white>, <red>Ender Chest: <yellow>${balance.enderChestBalance}<white>)."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankBalance}<white>, <red>Inventory: <yellow>${balance.inventoryBalance}<white>, <red>Ender Chest: <yellow>${balance.enderChestBalance}<white>)."))
                 return@launch
             }
 
@@ -86,7 +86,7 @@ class Balance : CommandExecutor {
                 return@launch
             }
             val totalBalance = balance.bankBalance + balance.inventoryBalance + balance.enderChestBalance
-            sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: <yellow>$totalBalance <aqua>${if (totalBalance <= 1.0) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankBalance}<white>, <red>Inventory: <yellow>${balance.inventoryBalance}<white>, <red>Ender Chest: <yellow>${balance.enderChestBalance}<white>)."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankBalance}<white>, <red>Inventory: <yellow>${balance.inventoryBalance}<white>, <red>Ender Chest: <yellow>${balance.enderChestBalance}<white>)."))
             return@launch
         }
         return true
