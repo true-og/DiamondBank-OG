@@ -369,7 +369,10 @@ object Helper {
             sentryEvent.user = sentryUser
             sentryEvent.setExtra("Function", "${function.string}(amount = $amount, type = $diamondType)")
             if (playerDiamonds != null) {
-                if (playerDiamonds.bankDiamonds != null) sentryEvent.setExtra("Bank Balance", playerDiamonds.bankDiamonds)
+                if (playerDiamonds.bankDiamonds != null) sentryEvent.setExtra(
+                    "Bank Balance",
+                    playerDiamonds.bankDiamonds
+                )
                 if (playerDiamonds.inventoryDiamonds != null) sentryEvent.setExtra(
                     "Inventory Balance",
                     playerDiamonds.inventoryDiamonds
