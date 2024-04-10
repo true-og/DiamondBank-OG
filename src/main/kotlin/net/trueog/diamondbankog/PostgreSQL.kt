@@ -70,7 +70,7 @@ class PostgreSQL {
         return error
     }
 
-    suspend fun getPlayerBalanceWrapper(uuid: UUID, type: BalanceType): Double? {
+    private suspend fun getPlayerBalanceWrapper(uuid: UUID, type: BalanceType): Double? {
         val playerBalance = getPlayerBalance(uuid, type)
 
         return when (type) {

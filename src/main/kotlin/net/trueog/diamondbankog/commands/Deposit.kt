@@ -45,11 +45,11 @@ class Deposit : CommandExecutor {
             }
 
             if (args == null || args.isEmpty()) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You did not provide the amount of <aqua>dDiamonds <red>that you want to deposit."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You did not provide the amount of <aqua>Diamonds <red>that you want to deposit."))
                 return@launch
             }
             if (args.size != 1) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Please (only) provide the amount of <aqua>dDiamonds <red>you want to deposit. Either a number or \"all\"."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Please (only) provide the amount of <aqua>Diamonds <red>you want to deposit. Either a number or \"all\"."))
                 return@launch
             }
 
@@ -87,25 +87,6 @@ class Deposit : CommandExecutor {
 
             var error = sender.inventory.withdraw(amount, playerBalance)
             if (error) return@launch
-
-            error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
-                sender.uniqueId,
-                amount,
-                BalanceType.INVENTORY_BALANCE
-            )
-            if (error) {
-                Helper.handleError(
-                    sender.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE,
-                    amount,
-                    BalanceType.INVENTORY_BALANCE,
-                    playerBalance,
-                    "deposit"
-                )
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
-                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
-                return@launch
-            }
 
             error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                 sender.uniqueId,
