@@ -13,8 +13,12 @@ import java.util.*
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
-    enum class DiamondType {
-        BANK, INVENTORY, ENDER_CHEST, ALL
+    enum class DiamondType(val string: String) {
+        BANK("bank_diamonds"), INVENTORY("inventory_diamonds"), ENDER_CHEST("ender_chest_diamonds"), ALL("bank_diamonds, inventory_diamonds, ender_chest_diamonds")
+    }
+
+    enum class ShardType(val string: String) {
+        BANK("bank_shards"), INVENTORY("inventory_shards"), ENDER_CHEST("ender_chest_shards"), ALL("bank_shards, inventory_shards, ender_chest_shards")
     }
 
     @Throws(SQLException::class, ClassNotFoundException::class)
@@ -25,9 +29,12 @@ class PostgreSQL {
             val createTable =
                 pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid TEXT, bank_diamonds integer, inventory_diamonds integer, ender_chest_diamonds integer, bank_shards integer, inventory_shards integer, ender_chest_shards integer, unique(uuid))")
             createTable.join()
-            val createIndex =
-                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_diamonds ON ${Config.postgresTable}(bank_diamonds, inventory_diamonds, ender_chest_diamonds, bank_shards, inventory_shards, ender_chest_shards)")
-            createIndex.join()
+
+            for (column in arrayOf("uuid", "bank_diamonds", "inventory_diamonds", "ender_chest_diamonds", "bank_shards", "inventory_shards", "ender_chest_shards")) {
+                val createIndex =
+                    pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_$column ON ${Config.postgresTable}($column)")
+                createIndex.join()
+            }
         } catch (e: Exception) {
             DiamondBankOG.economyDisabled = true
             DiamondBankOG.plugin.logger.severe("ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?")
@@ -35,19 +42,16 @@ class PostgreSQL {
         }
     }
 
+    data class GetResponse(val amountInBank: Int?, val amountInInventory: Int?, val amountInEnderChest: Int?)
+
     suspend fun setPlayerDiamonds(uuid: UUID, diamonds: Int, type: DiamondType): Boolean {
+        if (type == DiamondType.ALL) return true
+
         try {
             val connection = pool.asSuspending.connect()
 
-            val diamondType = when (type) {
-                DiamondType.BANK -> "bank_diamonds"
-                DiamondType.INVENTORY -> "inventory_diamonds"
-                DiamondType.ENDER_CHEST -> "ender_chest_diamonds"
-                else -> return true
-            }
-
             val preparedStatement =
-                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, $diamondType) VALUES('$uuid', $diamonds) ON CONFLICT (uuid) DO UPDATE SET $diamondType = excluded.$diamondType")
+                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, ${type.string}) VALUES('$uuid', $diamonds) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}")
             preparedStatement.await()
         } catch (e: Exception) {
             return true
@@ -55,49 +59,44 @@ class PostgreSQL {
         return false
     }
 
-    suspend fun addToPlayerDiamonds(uuid: UUID, amount: Int, type: DiamondType): Boolean {
+    suspend fun addToPlayerDiamonds(uuid: UUID, diamonds: Int, type: DiamondType): Boolean {
+        if (type == DiamondType.ALL) return true
+
         val playerDiamonds = getPlayerDiamondsWrapper(uuid, type) ?: return true
 
-        val error = setPlayerDiamonds(uuid, playerDiamonds + amount, type)
+        val error = setPlayerDiamonds(uuid, playerDiamonds + diamonds, type)
         return error
     }
 
-    suspend fun subtractFromPlayerDiamonds(uuid: UUID, amount: Int, type: DiamondType): Boolean {
-        val playerDiamonds = getPlayerDiamondsWrapper(uuid, type) ?: return true
+    suspend fun subtractFromPlayerDiamonds(uuid: UUID, diamonds: Int, type: DiamondType): Boolean {
+        if (type == DiamondType.ALL) return true
 
-        val error = setPlayerDiamonds(uuid, playerDiamonds - amount, type)
+        val getResponse = getPlayerDiamondsWrapper(uuid, type) ?: return true
+
+        val error = setPlayerDiamonds(uuid, getResponse - diamonds, type)
         return error
     }
 
     private suspend fun getPlayerDiamondsWrapper(uuid: UUID, type: DiamondType): Int? {
-        val playerDiamonds = getPlayerDiamonds(uuid, type)
+        val getResponse = getPlayerDiamonds(uuid, type)
 
         return when (type) {
-            DiamondType.BANK -> playerDiamonds.bankDiamonds
-            DiamondType.INVENTORY -> playerDiamonds.inventoryDiamonds
-            DiamondType.ENDER_CHEST -> playerDiamonds.enderChestDiamonds
-            DiamondType.ALL -> if (playerDiamonds.bankDiamonds != null && playerDiamonds.inventoryDiamonds != null && playerDiamonds.enderChestDiamonds != null) playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds + playerDiamonds.enderChestDiamonds else null
+            DiamondType.BANK -> getResponse.amountInBank
+            DiamondType.INVENTORY -> getResponse.amountInInventory
+            DiamondType.ENDER_CHEST -> getResponse.amountInEnderChest
+            DiamondType.ALL -> if (getResponse.amountInBank != null && getResponse.amountInInventory != null && getResponse.amountInEnderChest != null) getResponse.amountInBank + getResponse.amountInInventory + getResponse.amountInEnderChest else null
         }
     }
 
-    data class PlayerDiamonds(val bankDiamonds: Int?, val inventoryDiamonds: Int?, val enderChestDiamonds: Int?)
-
-    suspend fun getPlayerDiamonds(uuid: UUID, type: DiamondType): PlayerDiamonds {
-        var bankDiamonds: Int? = null
-        var inventoryDiamonds: Int? = null
-        var enderChestDiamonds: Int? = null
+    suspend fun getPlayerDiamonds(uuid: UUID, type: DiamondType): GetResponse {
+        var amountInBank: Int? = null
+        var amountInInventory: Int? = null
+        var amountInEnderChest: Int? = null
         try {
             val connection = pool.asSuspending.connect()
 
-            val diamondType = when (type) {
-                DiamondType.BANK -> "bank_diamonds"
-                DiamondType.INVENTORY -> "inventory_diamonds"
-                DiamondType.ENDER_CHEST -> "ender_chest_diamonds"
-                DiamondType.ALL -> "bank_diamonds, inventory_diamonds, ender_chest_diamonds"
-            }
-
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT $diamondType FROM ${Config.postgresTable} WHERE uuid = '$uuid' LIMIT 1")
+                connection.sendPreparedStatement("SELECT ${type.string} FROM ${Config.postgresTable} WHERE uuid = '$uuid' LIMIT 1")
             val result = preparedStatement.await()
 
             if (result.rows.size != 0) {
@@ -105,44 +104,143 @@ class PostgreSQL {
 
                 when (type) {
                     DiamondType.BANK -> {
-                        bankDiamonds = if (rowData.columns[0] != null) {
+                        amountInBank = if (rowData.columns[0] != null) {
                             rowData.columns[0] as Int
                         } else 0
                     }
 
                     DiamondType.INVENTORY -> {
-                        inventoryDiamonds = if (rowData.columns[0] != null) {
+                        amountInInventory = if (rowData.columns[0] != null) {
                             rowData.columns[0] as Int
                         } else 0
                     }
 
                     DiamondType.ENDER_CHEST -> {
-                        enderChestDiamonds = if (rowData.columns[0] != null) {
+                        amountInEnderChest = if (rowData.columns[0] != null) {
                             rowData.columns[0] as Int
                         } else 0
                     }
 
                     DiamondType.ALL -> {
-                        bankDiamonds = if (rowData.columns[0] != null) {
+                        amountInBank = if (rowData.columns[0] != null) {
                             rowData.columns[0] as Int
                         } else 0
-                        inventoryDiamonds = if (rowData.columns[1] != null) {
+                        amountInInventory = if (rowData.columns[1] != null) {
                             rowData.columns[1] as Int
                         } else 0
-                        enderChestDiamonds = if (rowData.columns[2] != null) {
+                        amountInEnderChest = if (rowData.columns[2] != null) {
                             rowData.columns[2] as Int
                         } else 0
                     }
                 }
             } else {
-                bankDiamonds = 0
-                inventoryDiamonds = 0
-                enderChestDiamonds = 0
+                amountInBank = 0
+                amountInInventory = 0
+                amountInEnderChest = 0
             }
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.info(e.toString())
         }
-        return PlayerDiamonds(bankDiamonds, inventoryDiamonds, enderChestDiamonds)
+        return GetResponse(amountInBank, amountInInventory, amountInEnderChest)
+    }
+
+    suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
+        if (type == ShardType.ALL) return true
+        try {
+            val connection = pool.asSuspending.connect()
+
+            val preparedStatement =
+                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, ${type.string}) VALUES('$uuid', $shards) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}")
+            preparedStatement.await()
+        } catch (e: Exception) {
+            return true
+        }
+        return false
+    }
+
+    suspend fun addToPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
+        if (type == ShardType.ALL) return true
+
+        val playerDiamonds = getPlayerShardsWrapper(uuid, type) ?: return true
+
+        val error = setPlayerShards(uuid, playerDiamonds + shards, type)
+        return error
+    }
+
+    suspend fun subtractFromPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
+        if (type == ShardType.ALL) return true
+
+        val playerDiamonds = getPlayerShardsWrapper(uuid, type) ?: return true
+
+        val error = setPlayerShards(uuid, playerDiamonds - shards, type)
+        return error
+    }
+
+    private suspend fun getPlayerShardsWrapper(uuid: UUID, type: ShardType): Int? {
+        val getResponse = getPlayerShards(uuid, type)
+
+        return when (type) {
+            ShardType.BANK -> getResponse.amountInBank
+            ShardType.INVENTORY -> getResponse.amountInInventory
+            ShardType.ENDER_CHEST -> getResponse.amountInEnderChest
+            ShardType.ALL -> if (getResponse.amountInBank != null && getResponse.amountInInventory != null && getResponse.amountInEnderChest != null) getResponse.amountInBank + getResponse.amountInInventory + getResponse.amountInEnderChest else null
+        }
+    }
+
+    suspend fun getPlayerShards(uuid: UUID, type: ShardType): GetResponse {
+        var bankShards: Int? = null
+        var inventoryShards: Int? = null
+        var enderChestShards: Int? = null
+        try {
+            val connection = pool.asSuspending.connect()
+
+            val preparedStatement =
+                connection.sendPreparedStatement("SELECT ${type.string} FROM ${Config.postgresTable} WHERE uuid = '$uuid' LIMIT 1")
+            val result = preparedStatement.await()
+
+            if (result.rows.size != 0) {
+                val rowData = result.rows[0] as ArrayRowData
+
+                when (type) {
+                    ShardType.BANK -> {
+                        bankShards = if (rowData.columns[0] != null) {
+                            rowData.columns[0] as Int
+                        } else 0
+                    }
+
+                    ShardType.INVENTORY -> {
+                        inventoryShards = if (rowData.columns[0] != null) {
+                            rowData.columns[0] as Int
+                        } else 0
+                    }
+
+                    ShardType.ENDER_CHEST -> {
+                        enderChestShards = if (rowData.columns[0] != null) {
+                            rowData.columns[0] as Int
+                        } else 0
+                    }
+
+                    ShardType.ALL -> {
+                        bankShards = if (rowData.columns[0] != null) {
+                            rowData.columns[0] as Int
+                        } else 0
+                        inventoryShards = if (rowData.columns[1] != null) {
+                            rowData.columns[1] as Int
+                        } else 0
+                        enderChestShards = if (rowData.columns[2] != null) {
+                            rowData.columns[2] as Int
+                        } else 0
+                    }
+                }
+            } else {
+                bankShards = 0
+                inventoryShards = 0
+                enderChestShards = 0
+            }
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.info(e.toString())
+        }
+        return GetResponse(bankShards, inventoryShards, enderChestShards)
     }
 
     suspend fun getBaltop(offset: Int): MutableMap<String?, Int>? {
