@@ -108,7 +108,7 @@ class Deposit : CommandExecutor {
                 return@launch
             }
 
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$amount <aqua>${if (amount <= 1L) "Diamond" else "Diamonds"} <green>into your bank account."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <green>into your bank account."))
         }
         return true
     }
