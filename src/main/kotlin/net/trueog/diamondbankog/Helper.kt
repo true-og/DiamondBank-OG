@@ -22,7 +22,7 @@ object Helper {
         SUBTRACT_FROM_PLAYER_BALANCE("subtractFromPlayerBalance")
     }
 
-    suspend fun withdrawFromPlayer(player: Player, amount: Double): Double? {
+    suspend fun withdrawFromPlayer(player: Player, amount: Long): Long? {
         val somethingWentWrongMessage =
             DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong.")
 
@@ -33,7 +33,7 @@ object Helper {
         }
 
         // Withdraw everything
-        if (amount == -1.0) {
+        if (amount == -1L) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
                 player.uniqueId,
                 playerBalance.bankBalance,
@@ -70,7 +70,7 @@ object Helper {
         }
 
         if (amount > playerBalance.bankBalance + playerBalance.inventoryBalance + playerBalance.enderChestBalance) {
-            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount <= 1.0) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerBalance.bankBalance + playerBalance.inventoryBalance} <aqua>${if (playerBalance.bankBalance + playerBalance.inventoryBalance <= 1.0) "Diamond" else "Diamonds"}<red>."))
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1L) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerBalance.bankBalance + playerBalance.inventoryBalance} <aqua>${if (playerBalance.bankBalance + playerBalance.inventoryBalance == 1L) "Diamond" else "Diamonds"}<red>."))
             return null
         }
 
@@ -184,14 +184,14 @@ object Helper {
                     player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: You don't have enough inventory space in your shulker box to store <yellow>$change <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>of change from converting diamond blocks into <aqua>Diamonds<reset>, so the <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>has been deposited into your bank."))
                     val error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                         player.uniqueId,
-                        change.toDouble(),
+                        change.toLong(),
                         BalanceType.BANK_BALANCE
                     )
                     if (error) {
                         handleError(
                             player.uniqueId,
                             PostgresFunction.ADD_TO_PLAYER_BALANCE,
-                            change.toDouble(),
+                            change.toLong(),
                             balanceType,
                             null,
                             "Inventory.withdrawDiamondBlocks"
@@ -208,14 +208,14 @@ object Helper {
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: You don't have enough inventory space to store <yellow>$change <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>of change from converting diamond blocks into <aqua>Diamonds<reset>, so the <aqua>${if (change == 1) "Diamond" else "Diamonds"} <reset>has been deposited into your bank."))
                 val error = DiamondBankOG.postgreSQL.addToPlayerBalance(
                     player.uniqueId,
-                    change.toDouble(),
+                    change.toLong(),
                     BalanceType.BANK_BALANCE
                 )
                 if (error) {
                     handleError(
                         player.uniqueId,
                         PostgresFunction.ADD_TO_PLAYER_BALANCE,
-                        change.toDouble(),
+                        change.toLong(),
                         balanceType,
                         null,
                         "Inventory.withdrawDiamondBlocks"
@@ -233,7 +233,7 @@ object Helper {
     }
 
     suspend fun Inventory.withdraw(
-        amount: Double,
+        amount: Long,
         playerBalance: PostgreSQL.PlayerBalance
     ): Boolean {
         if (this.holder !is Player) return true
@@ -340,23 +340,22 @@ object Helper {
         return false
     }
 
-    fun Inventory.countDiamonds(): Double {
-        val inventoryDiamonds = this.all(Material.DIAMOND).values.sumOf { it.amount }.toDouble()
-        val inventoryDiamondBlocks = this.all(Material.DIAMOND_BLOCK).values.sumOf { it.amount * 9 }.toDouble()
-
+    fun Inventory.countDiamonds(): Long {
+        val inventoryDiamonds = this.all(Material.DIAMOND).values.sumOf { it.amount }.toLong()
         val shulkerBoxDiamonds = this.all(Material.SHULKER_BOX).values.sumOf { itemStack ->
             ((itemStack.itemMeta as BlockStateMeta).blockState as ShulkerBox).inventory.all(Material.DIAMOND).values.sumOf { it.amount }
-        }.toDouble()
+        }.toLong()
+        val inventoryDiamondBlocks = this.all(Material.DIAMOND_BLOCK).values.sumOf { it.amount * 9 }.toLong()
         val shulkerBoxDiamondBlocks = this.all(Material.SHULKER_BOX).values.sumOf { itemStack ->
             ((itemStack.itemMeta as BlockStateMeta).blockState as ShulkerBox).inventory.all(Material.DIAMOND_BLOCK).values.sumOf { it.amount * 9 }
-        }.toDouble()
+        }.toLong()
         return inventoryDiamonds + shulkerBoxDiamonds + inventoryDiamondBlocks + shulkerBoxDiamondBlocks
     }
 
     fun handleError(
         uuid: UUID,
         function: PostgresFunction,
-        amount: Double,
+        amount: Long,
         balanceType: BalanceType,
         playerBalance: PostgreSQL.PlayerBalance?,
         inFunction: String

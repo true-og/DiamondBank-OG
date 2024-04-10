@@ -45,9 +45,9 @@ class SetBankBalance : CommandExecutor {
                 return@launch
             }
 
-            val balance: Double
+            val balance: Long
             try {
-                balance = args[1].toDouble()
+                balance = args[1].toLong()
             } catch (_: Exception) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
                 return@launch
@@ -59,7 +59,7 @@ class SetBankBalance : CommandExecutor {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to set that player's balance."))
                 return@launch
             }
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully set the balance of <red>${player.name} <green>to <yellow>$balance <aqua>${if (balance == 1.0) "Diamond" else "Diamonds"}<green>."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully set the balance of <red>${player.name} <green>to <yellow>$balance <aqua>${if (balance == 1L) "Diamond" else "Diamonds"}<green>."))
         }
         return true
     }
