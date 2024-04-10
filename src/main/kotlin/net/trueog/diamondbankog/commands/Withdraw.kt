@@ -70,15 +70,15 @@ class Withdraw : CommandExecutor {
 
             val playerDiamonds =
                 DiamondBankOG.postgreSQL.getPlayerDiamonds(sender.uniqueId, DiamondType.BANK)
-            if (playerDiamonds.bankDiamonds == null) {
+            if (playerDiamonds.amountInBank == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
 
-            if (amount == -1) amount = playerDiamonds.bankDiamonds
+            if (amount == -1) amount = playerDiamonds.amountInBank
 
-            if (amount > playerDiamonds.bankDiamonds) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerDiamonds.bankDiamonds} <aqua>${if (playerDiamonds.bankDiamonds == 1) "diamond" else "diamonds"}<red>."))
+            if (amount > playerDiamonds.amountInBank) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerDiamonds.amountInBank} <aqua>${if (playerDiamonds.amountInBank == 1) "diamond" else "diamonds"}<red>."))
                 return@launch
             }
 

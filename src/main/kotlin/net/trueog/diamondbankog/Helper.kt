@@ -27,7 +27,7 @@ object Helper {
             DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong.")
 
         val playerDiamonds = DiamondBankOG.postgreSQL.getPlayerDiamonds(player.uniqueId, DiamondType.ALL)
-        if (playerDiamonds.bankDiamonds == null || playerDiamonds.inventoryDiamonds == null || playerDiamonds.enderChestDiamonds == null) {
+        if (playerDiamonds.amountInBank == null || playerDiamonds.amountInInventory == null || playerDiamonds.amountInEnderChest == null) {
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
@@ -36,13 +36,13 @@ object Helper {
         if (amount == -1) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
                 player.uniqueId,
-                playerDiamonds.bankDiamonds,
+                playerDiamonds.amountInBank,
                 DiamondType.BANK
             )
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.bankDiamonds, DiamondType.BANK,
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.amountInBank, DiamondType.BANK,
                     playerDiamonds, "withdrawFromPlayer"
                 )
                 player.sendMessage(somethingWentWrongMessage)
@@ -50,7 +50,7 @@ object Helper {
             }
 
             error = player.inventory.withdraw(
-                playerDiamonds.inventoryDiamonds,
+                playerDiamonds.amountInInventory,
                 playerDiamonds
             )
             if (error) {
@@ -59,22 +59,22 @@ object Helper {
             }
 
             error = player.enderChest.withdraw(
-                playerDiamonds.enderChestDiamonds,
+                playerDiamonds.amountInEnderChest,
                 playerDiamonds
             )
             if (error) {
                 player.sendMessage(somethingWentWrongMessage)
                 return null
             }
-            return playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds + playerDiamonds.enderChestDiamonds
+            return playerDiamonds.amountInBank + playerDiamonds.amountInInventory + playerDiamonds.amountInEnderChest
         }
 
-        if (amount > playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds + playerDiamonds.enderChestDiamonds) {
-            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds} <aqua>${if (playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds == 1) "Diamond" else "Diamonds"}<red>."))
+        if (amount > playerDiamonds.amountInBank + playerDiamonds.amountInInventory + playerDiamonds.amountInEnderChest) {
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerDiamonds.amountInBank + playerDiamonds.amountInInventory} <aqua>${if (playerDiamonds.amountInBank + playerDiamonds.amountInInventory == 1) "Diamond" else "Diamonds"}<red>."))
             return null
         }
 
-        if (amount <= playerDiamonds.bankDiamonds) {
+        if (amount <= playerDiamonds.amountInBank) {
             val error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
                 player.uniqueId,
                 amount,
@@ -92,16 +92,16 @@ object Helper {
             return amount
         }
 
-        if (amount <= playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds) {
+        if (amount <= playerDiamonds.amountInBank + playerDiamonds.amountInInventory) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
                 player.uniqueId,
-                playerDiamonds.bankDiamonds,
+                playerDiamonds.amountInBank,
                 DiamondType.BANK
             )
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.bankDiamonds, DiamondType.BANK,
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.amountInBank, DiamondType.BANK,
                     playerDiamonds, "withdrawFromPlayer"
                 )
                 player.sendMessage(somethingWentWrongMessage)
@@ -109,7 +109,7 @@ object Helper {
             }
 
             error = player.inventory.withdraw(
-                amount - playerDiamonds.bankDiamonds,
+                amount - playerDiamonds.amountInBank,
                 playerDiamonds
             )
             if (error) {
@@ -121,27 +121,27 @@ object Helper {
 
         var error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
             player.uniqueId,
-            playerDiamonds.bankDiamonds,
+            playerDiamonds.amountInBank,
             DiamondType.BANK
         )
         if (error) {
             handleError(
                 player.uniqueId,
-                PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.bankDiamonds, DiamondType.BANK,
+                PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerDiamonds.amountInBank, DiamondType.BANK,
                 playerDiamonds, "withdrawFromPlayer"
             )
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
-        error = player.inventory.withdraw(playerDiamonds.inventoryDiamonds, playerDiamonds)
+        error = player.inventory.withdraw(playerDiamonds.amountInInventory, playerDiamonds)
         if (error) {
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
         error = player.enderChest.withdraw(
-            amount - (playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds),
+            amount - (playerDiamonds.amountInBank + playerDiamonds.amountInInventory),
             playerDiamonds
         )
         if (error) {
@@ -234,7 +234,7 @@ object Helper {
 
     suspend fun Inventory.withdraw(
         amount: Int,
-        playerDiamonds: PostgreSQL.PlayerDiamonds
+        playerDiamonds: PostgreSQL.GetResponse
     ): Boolean {
         if (this.holder !is Player) return true
 
@@ -242,9 +242,9 @@ object Helper {
         DiamondBankOG.blockInventoryFor.add(player.uniqueId)
 
         val diamonds = if (this.type == InventoryType.PLAYER) {
-            playerDiamonds.inventoryDiamonds!!
+            playerDiamonds.amountInInventory!!
         } else {
-            playerDiamonds.enderChestDiamonds!!
+            playerDiamonds.amountInEnderChest!!
         }
 
         val diamondType = if (this.type == InventoryType.PLAYER) {
@@ -254,7 +254,7 @@ object Helper {
         }
 
         val inventoryDiamonds = this.countDiamonds()
-        if (playerDiamonds.inventoryDiamonds != inventoryDiamonds) {
+        if (playerDiamonds.amountInInventory != inventoryDiamonds) {
             val error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
                 player.uniqueId,
                 diamonds - (amount - inventoryDiamonds),
@@ -357,7 +357,7 @@ object Helper {
         function: PostgresFunction,
         amount: Int,
         diamondType: DiamondType,
-        playerDiamonds: PostgreSQL.PlayerDiamonds?,
+        playerDiamonds: PostgreSQL.GetResponse?,
         inFunction: String
     ) {
         DiamondBankOG.economyDisabled = true
@@ -369,17 +369,17 @@ object Helper {
             sentryEvent.user = sentryUser
             sentryEvent.setExtra("Function", "${function.string}(amount = $amount, type = $diamondType)")
             if (playerDiamonds != null) {
-                if (playerDiamonds.bankDiamonds != null) sentryEvent.setExtra(
+                if (playerDiamonds.amountInBank != null) sentryEvent.setExtra(
                     "Bank Balance",
-                    playerDiamonds.bankDiamonds
+                    playerDiamonds.amountInBank
                 )
-                if (playerDiamonds.inventoryDiamonds != null) sentryEvent.setExtra(
+                if (playerDiamonds.amountInInventory != null) sentryEvent.setExtra(
                     "Inventory Balance",
-                    playerDiamonds.inventoryDiamonds
+                    playerDiamonds.amountInInventory
                 )
-                if (playerDiamonds.enderChestDiamonds != null) sentryEvent.setExtra(
+                if (playerDiamonds.amountInEnderChest != null) sentryEvent.setExtra(
                     "Ender Chest Balance",
-                    playerDiamonds.enderChestDiamonds
+                    playerDiamonds.amountInEnderChest
                 )
             }
 
@@ -396,17 +396,17 @@ object Helper {
             Function: ${function.string}(amount = $amount, type = $diamondType)
             ${
                 if (playerDiamonds != null) {
-                    if (playerDiamonds.bankDiamonds != null) "Bank Balance: ${playerDiamonds.bankDiamonds}" else ""
+                    if (playerDiamonds.amountInBank != null) "Bank Balance: ${playerDiamonds.amountInBank}" else ""
                 } else ""
             }
             ${
                 if (playerDiamonds != null) {
-                    if (playerDiamonds.inventoryDiamonds != null) "Inventory Balance: ${playerDiamonds.inventoryDiamonds}" else ""
+                    if (playerDiamonds.amountInInventory != null) "Inventory Balance: ${playerDiamonds.amountInInventory}" else ""
                 } else ""
             }
             ${
                 if (playerDiamonds != null) {
-                    if (playerDiamonds.enderChestDiamonds != null) "Ender Chest Balance: ${playerDiamonds.enderChestDiamonds}" else ""
+                    if (playerDiamonds.amountInEnderChest != null) "Ender Chest Balance: ${playerDiamonds.amountInEnderChest}" else ""
                 } else ""
             }
         """.trimIndent()

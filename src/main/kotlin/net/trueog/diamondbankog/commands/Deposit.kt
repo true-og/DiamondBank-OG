@@ -55,16 +55,16 @@ class Deposit : CommandExecutor {
 
             val playerDiamonds =
                 DiamondBankOG.postgreSQL.getPlayerDiamonds(sender.uniqueId, DiamondType.INVENTORY)
-            if (playerDiamonds.inventoryDiamonds == null) {
+            if (playerDiamonds.amountInInventory == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
-            if (playerDiamonds.inventoryDiamonds == 0) {
+            if (playerDiamonds.amountInInventory == 0) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."))
                 return@launch
             }
 
-            var amount = playerDiamonds.inventoryDiamonds
+            var amount = playerDiamonds.amountInInventory
             if (args[0] != "all") {
                 try {
                     amount = args[0].toInt()
@@ -77,7 +77,7 @@ class Deposit : CommandExecutor {
                     return@launch
                 }
 
-                if (amount > playerDiamonds.inventoryDiamonds) {
+                if (amount > playerDiamonds.amountInInventory) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>in your inventory."))
                     return@launch
                 }

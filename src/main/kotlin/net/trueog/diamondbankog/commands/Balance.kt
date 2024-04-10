@@ -49,12 +49,12 @@ class Balance : CommandExecutor {
                     otherPlayer.uniqueId,
                     DiamondType.ALL
                 )
-                if (balance.bankDiamonds == null || balance.inventoryDiamonds == null || balance.enderChestDiamonds == null) {
+                if (balance.amountInBank == null || balance.amountInInventory == null || balance.amountInEnderChest == null) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                     return@launch
                 }
-                val totalBalance = balance.bankDiamonds + balance.inventoryDiamonds + balance.enderChestDiamonds
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankDiamonds}<white>, <red>Inventory: <yellow>${balance.inventoryDiamonds}<white>, <red>Ender Chest: <yellow>${balance.enderChestDiamonds}<white>)."))
+                val totalBalance = balance.amountInBank + balance.amountInInventory + balance.amountInEnderChest
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.amountInBank}<white>, <red>Inventory: <yellow>${balance.amountInInventory}<white>, <red>Ender Chest: <yellow>${balance.amountInEnderChest}<white>)."))
                 return@launch
             }
 
@@ -81,12 +81,12 @@ class Balance : CommandExecutor {
                 balancePlayer.uniqueId,
                 DiamondType.ALL
             )
-            if (balance.bankDiamonds == null || balance.inventoryDiamonds == null || balance.enderChestDiamonds == null) {
+            if (balance.amountInBank == null || balance.amountInInventory == null || balance.amountInEnderChest == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
-            val totalBalance = balance.bankDiamonds + balance.inventoryDiamonds + balance.enderChestDiamonds
-            sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankDiamonds}<white>, <red>Inventory: <yellow>${balance.inventoryDiamonds}<white>, <red>Ender Chest: <yellow>${balance.enderChestDiamonds}<white>)."))
+            val totalBalance = balance.amountInBank + balance.amountInInventory + balance.amountInEnderChest
+            sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.amountInBank}<white>, <red>Inventory: <yellow>${balance.amountInInventory}<white>, <red>Ender Chest: <yellow>${balance.amountInEnderChest}<white>)."))
             return@launch
         }
         return true
