@@ -7,7 +7,7 @@ import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.PostgresFunction
-import net.trueog.diamondbankog.PostgreSQL.BalanceType
+import net.trueog.diamondbankog.PostgreSQL.DiamondType
 import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -69,16 +69,16 @@ class Withdraw : CommandExecutor {
             }
 
             val playerBalance =
-                DiamondBankOG.postgreSQL.getPlayerBalance(sender.uniqueId, BalanceType.BANK_BALANCE)
-            if (playerBalance.bankBalance == null) {
+                DiamondBankOG.postgreSQL.getPlayerDiamonds(sender.uniqueId, DiamondType.BANK)
+            if (playerBalance.bankDiamonds == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
 
-            if (amount == -1) amount = playerBalance.bankBalance
+            if (amount == -1) amount = playerBalance.bankDiamonds
 
-            if (amount > playerBalance.bankBalance) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerBalance.bankBalance} <aqua>${if (playerBalance.bankBalance == 1) "diamond" else "diamonds"}<red>."))
+            if (amount > playerBalance.bankDiamonds) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>${playerBalance.bankDiamonds} <aqua>${if (playerBalance.bankDiamonds == 1) "diamond" else "diamonds"}<red>."))
                 return@launch
             }
 
@@ -92,17 +92,17 @@ class Withdraw : CommandExecutor {
                 return@launch
             }
 
-            var error = DiamondBankOG.postgreSQL.subtractFromPlayerBalance(
+            var error = DiamondBankOG.postgreSQL.subtractFromPlayerDiamonds(
                 sender.uniqueId,
                 amount,
-                BalanceType.BANK_BALANCE
+                DiamondType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
                     PostgresFunction.SUBTRACT_FROM_PLAYER_BALANCE,
                     amount,
-                    BalanceType.BANK_BALANCE,
+                    DiamondType.BANK,
                     playerBalance,
                     "withdraw"
                 )
@@ -112,17 +112,17 @@ class Withdraw : CommandExecutor {
                 return@launch
             }
 
-            error = DiamondBankOG.postgreSQL.addToPlayerBalance(
+            error = DiamondBankOG.postgreSQL.addToPlayerDiamonds(
                 sender.uniqueId,
                 amount,
-                BalanceType.INVENTORY_BALANCE
+                DiamondType.INVENTORY
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
                     PostgresFunction.ADD_TO_PLAYER_BALANCE,
                     amount,
-                    BalanceType.INVENTORY_BALANCE,
+                    DiamondType.INVENTORY,
                     playerBalance,
                     "withdraw"
                 )

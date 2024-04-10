@@ -5,7 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.PostgreSQL.BalanceType
+import net.trueog.diamondbankog.PostgreSQL.DiamondType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -45,16 +45,16 @@ class Balance : CommandExecutor {
                     return@launch
                 }
 
-                val balance = DiamondBankOG.postgreSQL.getPlayerBalance(
+                val balance = DiamondBankOG.postgreSQL.getPlayerDiamonds(
                     otherPlayer.uniqueId,
-                    BalanceType.ALL
+                    DiamondType.ALL
                 )
-                if (balance.bankBalance == null || balance.inventoryBalance == null || balance.enderChestBalance == null) {
+                if (balance.bankDiamonds == null || balance.inventoryDiamonds == null || balance.enderChestDiamonds == null) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                     return@launch
                 }
-                val totalBalance = balance.bankBalance + balance.inventoryBalance + balance.enderChestBalance
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankBalance}<white>, <red>Inventory: <yellow>${balance.inventoryBalance}<white>, <red>Ender Chest: <yellow>${balance.enderChestBalance}<white>)."))
+                val totalBalance = balance.bankDiamonds + balance.inventoryDiamonds + balance.enderChestDiamonds
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankDiamonds}<white>, <red>Inventory: <yellow>${balance.inventoryDiamonds}<white>, <red>Ender Chest: <yellow>${balance.enderChestDiamonds}<white>)."))
                 return@launch
             }
 
@@ -77,16 +77,16 @@ class Balance : CommandExecutor {
                 }
                 otherPlayer
             }
-            val balance = DiamondBankOG.postgreSQL.getPlayerBalance(
+            val balance = DiamondBankOG.postgreSQL.getPlayerDiamonds(
                 balancePlayer.uniqueId,
-                BalanceType.ALL
+                DiamondType.ALL
             )
-            if (balance.bankBalance == null || balance.inventoryBalance == null || balance.enderChestBalance == null) {
+            if (balance.bankDiamonds == null || balance.inventoryDiamonds == null || balance.enderChestDiamonds == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
-            val totalBalance = balance.bankBalance + balance.inventoryBalance + balance.enderChestBalance
-            sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankBalance}<white>, <red>Inventory: <yellow>${balance.inventoryBalance}<white>, <red>Ender Chest: <yellow>${balance.enderChestBalance}<white>)."))
+            val totalBalance = balance.bankDiamonds + balance.inventoryDiamonds + balance.enderChestDiamonds
+            sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.bankDiamonds}<white>, <red>Inventory: <yellow>${balance.inventoryDiamonds}<white>, <red>Ender Chest: <yellow>${balance.enderChestDiamonds}<white>)."))
             return@launch
         }
         return true

@@ -11,23 +11,23 @@ import java.util.concurrent.CompletableFuture
 class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     @Suppress("unused")
     fun addToPlayerBankBalance(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
-        return GlobalScope.future { postgreSQL.addToPlayerBalance(uuid, amount, PostgreSQL.BalanceType.BANK_BALANCE) }
+        return GlobalScope.future { postgreSQL.addToPlayerDiamonds(uuid, amount, PostgreSQL.DiamondType.BANK) }
     }
 
     @Suppress("unused")
     fun subtractFromPlayerBankBalance(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
         return GlobalScope.future {
-            postgreSQL.subtractFromPlayerBalance(
+            postgreSQL.subtractFromPlayerDiamonds(
                 uuid,
                 amount,
-                PostgreSQL.BalanceType.BANK_BALANCE
+                PostgreSQL.DiamondType.BANK
             )
         }
     }
 
     @Suppress("unused")
-    fun getPlayerBalance(uuid: UUID, type: PostgreSQL.BalanceType): CompletableFuture<PostgreSQL.PlayerBalance> {
-        return GlobalScope.future { postgreSQL.getPlayerBalance(uuid, type) }
+    fun getPlayerBalance(uuid: UUID, type: PostgreSQL.DiamondType): CompletableFuture<PostgreSQL.PlayerDiamonds> {
+        return GlobalScope.future { postgreSQL.getPlayerDiamonds(uuid, type) }
     }
 
     @Suppress("unused")
@@ -53,15 +53,15 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         return GlobalScope.future {
             Helper.withdrawFromPlayer(senderPlayer, amount) ?: GlobalScope.future { true }
 
-            val error = postgreSQL.addToPlayerBalance(
+            val error = postgreSQL.addToPlayerDiamonds(
                 receiver.uniqueId,
                 amount,
-                PostgreSQL.BalanceType.BANK_BALANCE
+                PostgreSQL.DiamondType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    Helper.PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, PostgreSQL.BalanceType.BANK_BALANCE,
+                    Helper.PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, PostgreSQL.DiamondType.BANK,
                     null, "pay"
                 )
                 true

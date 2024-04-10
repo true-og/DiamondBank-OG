@@ -7,7 +7,7 @@ import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.PostgresFunction
-import net.trueog.diamondbankog.PostgreSQL.BalanceType
+import net.trueog.diamondbankog.PostgreSQL.DiamondType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -81,15 +81,15 @@ class Pay : CommandExecutor {
 
             val withdrawnAmount = Helper.withdrawFromPlayer(sender, amount) ?: return@launch
 
-            val error = DiamondBankOG.postgreSQL.addToPlayerBalance(
+            val error = DiamondBankOG.postgreSQL.addToPlayerDiamonds(
                 receiver.uniqueId,
                 amount,
-                BalanceType.BANK_BALANCE
+                DiamondType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, BalanceType.BANK_BALANCE,
+                    PostgresFunction.ADD_TO_PLAYER_BALANCE, amount, DiamondType.BANK,
                     null, "pay"
                 )
             }

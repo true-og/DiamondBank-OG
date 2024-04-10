@@ -8,7 +8,7 @@ import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.Helper.withdraw
-import net.trueog.diamondbankog.PostgreSQL.BalanceType
+import net.trueog.diamondbankog.PostgreSQL.DiamondType
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -54,17 +54,17 @@ class Deposit : CommandExecutor {
             }
 
             val playerBalance =
-                DiamondBankOG.postgreSQL.getPlayerBalance(sender.uniqueId, BalanceType.INVENTORY_BALANCE)
-            if (playerBalance.inventoryBalance == null) {
+                DiamondBankOG.postgreSQL.getPlayerDiamonds(sender.uniqueId, DiamondType.INVENTORY)
+            if (playerBalance.inventoryDiamonds == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
-            if (playerBalance.inventoryBalance == 0) {
+            if (playerBalance.inventoryDiamonds == 0) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."))
                 return@launch
             }
 
-            var amount = playerBalance.inventoryBalance
+            var amount = playerBalance.inventoryDiamonds
             if (args[0] != "all") {
                 try {
                     amount = args[0].toInt()
@@ -77,7 +77,7 @@ class Deposit : CommandExecutor {
                     return@launch
                 }
 
-                if (amount > playerBalance.inventoryBalance) {
+                if (amount > playerBalance.inventoryDiamonds) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>in your inventory."))
                     return@launch
                 }
@@ -89,17 +89,17 @@ class Deposit : CommandExecutor {
                 return@launch
             }
 
-            error = DiamondBankOG.postgreSQL.addToPlayerBalance(
+            error = DiamondBankOG.postgreSQL.addToPlayerDiamonds(
                 sender.uniqueId,
                 amount,
-                BalanceType.BANK_BALANCE
+                DiamondType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
                     PostgresFunction.ADD_TO_PLAYER_BALANCE,
                     amount,
-                    BalanceType.BANK_BALANCE,
+                    DiamondType.BANK,
                     playerBalance,
                     "deposit"
                 )

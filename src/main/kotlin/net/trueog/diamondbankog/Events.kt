@@ -5,7 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.Helper.countDiamonds
-import net.trueog.diamondbankog.PostgreSQL.BalanceType
+import net.trueog.diamondbankog.PostgreSQL.DiamondType
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -32,17 +32,17 @@ class Events : Listener {
 
         GlobalScope.launch {
             val inventoryDiamonds = event.player.inventory.countDiamonds()
-            var error = DiamondBankOG.postgreSQL.setPlayerBalance(
+            var error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
                 event.player.uniqueId,
                 inventoryDiamonds,
-                BalanceType.INVENTORY_BALANCE
+                DiamondType.INVENTORY
             )
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
                     PostgresFunction.SET_PLAYER_BALANCE,
                     inventoryDiamonds,
-                    BalanceType.INVENTORY_BALANCE,
+                    DiamondType.INVENTORY,
                     null,
                     "onPlayerJoin"
                 )
@@ -50,17 +50,17 @@ class Events : Listener {
             }
 
             val enderChestDiamonds = event.player.enderChest.countDiamonds()
-            error = DiamondBankOG.postgreSQL.setPlayerBalance(
+            error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
                 event.player.uniqueId,
                 enderChestDiamonds,
-                BalanceType.ENDER_CHEST_BALANCE
+                DiamondType.ENDER_CHEST
             )
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
                     PostgresFunction.SET_PLAYER_BALANCE,
                     enderChestDiamonds,
-                    BalanceType.ENDER_CHEST_BALANCE,
+                    DiamondType.ENDER_CHEST,
                     null,
                     "onPlayerJoin"
                 )
@@ -93,17 +93,17 @@ class Events : Listener {
             override fun run() {
                 GlobalScope.launch {
                     val inventoryDiamonds = player.inventory.countDiamonds()
-                    val error = DiamondBankOG.postgreSQL.setPlayerBalance(
+                    val error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
                         player.uniqueId,
                         inventoryDiamonds,
-                        BalanceType.INVENTORY_BALANCE
+                        DiamondType.INVENTORY
                     )
                     if (error) {
                         Helper.handleError(
                             player.uniqueId,
                             PostgresFunction.SET_PLAYER_BALANCE,
                             inventoryDiamonds,
-                            BalanceType.INVENTORY_BALANCE,
+                            DiamondType.INVENTORY,
                             null,
                             "onEntityPickupItem"
                         )
@@ -135,17 +135,17 @@ class Events : Listener {
             override fun run() {
                 GlobalScope.launch {
                     val inventoryDiamonds = event.player.inventory.countDiamonds()
-                    val error = DiamondBankOG.postgreSQL.setPlayerBalance(
+                    val error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
                         event.player.uniqueId,
                         inventoryDiamonds,
-                        BalanceType.INVENTORY_BALANCE
+                        DiamondType.INVENTORY
                     )
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
                             PostgresFunction.SET_PLAYER_BALANCE,
                             inventoryDiamonds,
-                            BalanceType.INVENTORY_BALANCE,
+                            DiamondType.INVENTORY,
                             null,
                             "onPlayerDropItem"
                         )
@@ -169,17 +169,17 @@ class Events : Listener {
             override fun run() {
                 GlobalScope.launch {
                     val inventoryDiamonds = event.player.inventory.countDiamonds()
-                    var error = DiamondBankOG.postgreSQL.setPlayerBalance(
+                    var error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
                         event.player.uniqueId,
                         inventoryDiamonds,
-                        BalanceType.INVENTORY_BALANCE
+                        DiamondType.INVENTORY
                     )
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
                             PostgresFunction.SET_PLAYER_BALANCE,
                             inventoryDiamonds,
-                            BalanceType.INVENTORY_BALANCE,
+                            DiamondType.INVENTORY,
                             null,
                             "onPlayerJoin"
                         )
@@ -188,17 +188,17 @@ class Events : Listener {
 
                     if (event.inventory.type != InventoryType.ENDER_CHEST) return@launch
                     val enderChestDiamonds = event.player.enderChest.countDiamonds()
-                    error = DiamondBankOG.postgreSQL.setPlayerBalance(
+                    error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
                         event.player.uniqueId,
                         enderChestDiamonds,
-                        BalanceType.ENDER_CHEST_BALANCE
+                        DiamondType.ENDER_CHEST
                     )
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
                             PostgresFunction.SET_PLAYER_BALANCE,
                             enderChestDiamonds,
-                            BalanceType.ENDER_CHEST_BALANCE,
+                            DiamondType.ENDER_CHEST,
                             null,
                             "onInventoryClose"
                         )

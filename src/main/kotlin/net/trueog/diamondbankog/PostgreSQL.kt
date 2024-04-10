@@ -13,8 +13,8 @@ import java.util.*
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
-    enum class BalanceType {
-        BANK_BALANCE, INVENTORY_BALANCE, ENDER_CHEST_BALANCE, ALL
+    enum class DiamondType {
+        BANK, INVENTORY, ENDER_CHEST, ALL
     }
 
     @Throws(SQLException::class, ClassNotFoundException::class)
@@ -35,19 +35,19 @@ class PostgreSQL {
         }
     }
 
-    suspend fun setPlayerBalance(uuid: UUID, balance: Int, type: BalanceType): Boolean {
+    suspend fun setPlayerDiamonds(uuid: UUID, balance: Int, type: DiamondType): Boolean {
         try {
             val connection = pool.asSuspending.connect()
 
-            val balanceType = when (type) {
-                BalanceType.BANK_BALANCE -> "bank_diamonds"
-                BalanceType.INVENTORY_BALANCE -> "inventory_diamonds"
-                BalanceType.ENDER_CHEST_BALANCE -> "ender_chest_diamonds"
+            val diamondType = when (type) {
+                DiamondType.BANK -> "bank_diamonds"
+                DiamondType.INVENTORY -> "inventory_diamonds"
+                DiamondType.ENDER_CHEST -> "ender_chest_diamonds"
                 else -> return true
             }
 
             val preparedStatement =
-                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, $balanceType) VALUES('$uuid', $balance) ON CONFLICT (uuid) DO UPDATE SET $balanceType = excluded.$balanceType")
+                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, $diamondType) VALUES('$uuid', $balance) ON CONFLICT (uuid) DO UPDATE SET $diamondType = excluded.$diamondType")
             preparedStatement.await()
         } catch (e: Exception) {
             return true
@@ -55,94 +55,94 @@ class PostgreSQL {
         return false
     }
 
-    suspend fun addToPlayerBalance(uuid: UUID, amount: Int, type: BalanceType): Boolean {
-        val playerBalance = getPlayerBalanceWrapper(uuid, type) ?: return true
+    suspend fun addToPlayerDiamonds(uuid: UUID, amount: Int, type: DiamondType): Boolean {
+        val playerDiamonds = getPlayerDiamondsWrapper(uuid, type) ?: return true
 
-        val error = setPlayerBalance(uuid, playerBalance + amount, type)
+        val error = setPlayerDiamonds(uuid, playerDiamonds + amount, type)
         return error
     }
 
-    suspend fun subtractFromPlayerBalance(uuid: UUID, amount: Int, type: BalanceType): Boolean {
-        val playerBalance = getPlayerBalanceWrapper(uuid, type) ?: return true
+    suspend fun subtractFromPlayerDiamonds(uuid: UUID, amount: Int, type: DiamondType): Boolean {
+        val playerDiamonds = getPlayerDiamondsWrapper(uuid, type) ?: return true
 
-        val error = setPlayerBalance(uuid, playerBalance - amount, type)
+        val error = setPlayerDiamonds(uuid, playerDiamonds - amount, type)
         return error
     }
 
-    private suspend fun getPlayerBalanceWrapper(uuid: UUID, type: BalanceType): Int? {
-        val playerBalance = getPlayerBalance(uuid, type)
+    private suspend fun getPlayerDiamondsWrapper(uuid: UUID, type: DiamondType): Int? {
+        val playerDiamonds = getPlayerDiamonds(uuid, type)
 
         return when (type) {
-            BalanceType.BANK_BALANCE -> playerBalance.bankBalance
-            BalanceType.INVENTORY_BALANCE -> playerBalance.inventoryBalance
-            BalanceType.ENDER_CHEST_BALANCE -> playerBalance.enderChestBalance
-            BalanceType.ALL -> if (playerBalance.bankBalance != null && playerBalance.inventoryBalance != null && playerBalance.enderChestBalance != null) playerBalance.bankBalance + playerBalance.inventoryBalance + playerBalance.enderChestBalance else null
+            DiamondType.BANK -> playerDiamonds.bankDiamonds
+            DiamondType.INVENTORY -> playerDiamonds.inventoryDiamonds
+            DiamondType.ENDER_CHEST -> playerDiamonds.enderChestDiamonds
+            DiamondType.ALL -> if (playerDiamonds.bankDiamonds != null && playerDiamonds.inventoryDiamonds != null && playerDiamonds.enderChestDiamonds != null) playerDiamonds.bankDiamonds + playerDiamonds.inventoryDiamonds + playerDiamonds.enderChestDiamonds else null
         }
     }
 
-    data class PlayerBalance(val bankBalance: Int?, val inventoryBalance: Int?, val enderChestBalance: Int?)
+    data class PlayerDiamonds(val bankDiamonds: Int?, val inventoryDiamonds: Int?, val enderChestDiamonds: Int?)
 
-    suspend fun getPlayerBalance(uuid: UUID, type: BalanceType): PlayerBalance {
-        var bankBalance: Int? = null
-        var inventoryBalance: Int? = null
-        var enderChestBalance: Int? = null
+    suspend fun getPlayerDiamonds(uuid: UUID, type: DiamondType): PlayerDiamonds {
+        var bankDiamonds: Int? = null
+        var inventoryDiamonds: Int? = null
+        var enderChestDiamonds: Int? = null
         try {
             val connection = pool.asSuspending.connect()
 
-            val balanceType = when (type) {
-                BalanceType.BANK_BALANCE -> "bank_diamonds"
-                BalanceType.INVENTORY_BALANCE -> "inventory_diamonds"
-                BalanceType.ENDER_CHEST_BALANCE -> "ender_chest_diamonds"
-                BalanceType.ALL -> "bank_diamonds, inventory_diamonds, ender_chest_diamonds"
+            val diamondType = when (type) {
+                DiamondType.BANK -> "bank_diamonds"
+                DiamondType.INVENTORY -> "inventory_diamonds"
+                DiamondType.ENDER_CHEST -> "ender_chest_diamonds"
+                DiamondType.ALL -> "bank_diamonds, inventory_diamonds, ender_chest_diamonds"
             }
 
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT $balanceType FROM ${Config.postgresTable} WHERE uuid = '$uuid' LIMIT 1")
+                connection.sendPreparedStatement("SELECT $diamondType FROM ${Config.postgresTable} WHERE uuid = '$uuid' LIMIT 1")
             val result = preparedStatement.await()
 
             if (result.rows.size != 0) {
                 val rowData = result.rows[0] as ArrayRowData
 
                 when (type) {
-                    BalanceType.BANK_BALANCE -> {
-                        bankBalance = if (rowData.columns[0] != null) {
+                    DiamondType.BANK -> {
+                        bankDiamonds = if (rowData.columns[0] != null) {
                             rowData.columns[0] as Int
                         } else 0
                     }
 
-                    BalanceType.INVENTORY_BALANCE -> {
-                        inventoryBalance = if (rowData.columns[0] != null) {
+                    DiamondType.INVENTORY -> {
+                        inventoryDiamonds = if (rowData.columns[0] != null) {
                             rowData.columns[0] as Int
                         } else 0
                     }
 
-                    BalanceType.ENDER_CHEST_BALANCE -> {
-                        enderChestBalance = if (rowData.columns[0] != null) {
+                    DiamondType.ENDER_CHEST -> {
+                        enderChestDiamonds = if (rowData.columns[0] != null) {
                             rowData.columns[0] as Int
                         } else 0
                     }
 
-                    BalanceType.ALL -> {
-                        bankBalance = if (rowData.columns[0] != null) {
+                    DiamondType.ALL -> {
+                        bankDiamonds = if (rowData.columns[0] != null) {
                             rowData.columns[0] as Int
                         } else 0
-                        inventoryBalance = if (rowData.columns[1] != null) {
+                        inventoryDiamonds = if (rowData.columns[1] != null) {
                             rowData.columns[1] as Int
                         } else 0
-                        enderChestBalance = if (rowData.columns[2] != null) {
+                        enderChestDiamonds = if (rowData.columns[2] != null) {
                             rowData.columns[2] as Int
                         } else 0
                     }
                 }
             } else {
-                bankBalance = 0
-                inventoryBalance = 0
-                enderChestBalance = 0
+                bankDiamonds = 0
+                inventoryDiamonds = 0
+                enderChestDiamonds = 0
             }
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.info(e.toString())
         }
-        return PlayerBalance(bankBalance, inventoryBalance, enderChestBalance)
+        return PlayerDiamonds(bankDiamonds, inventoryDiamonds, enderChestDiamonds)
     }
 
     suspend fun getBaltop(offset: Int): MutableMap<String?, Int>? {
@@ -154,20 +154,20 @@ class PostgreSQL {
             val baltop = mutableMapOf<String?, Int>()
             result.rows.forEach {
                 val rowData = it as ArrayRowData
-                val bankBalance = if (rowData.columns[1] != null) {
+                val bankDiamonds = if (rowData.columns[1] != null) {
                     rowData.columns[1] as Int
                 } else 0
-                val inventoryBalance = if (rowData.columns[2] != null) {
+                val inventoryDiamonds = if (rowData.columns[2] != null) {
                     rowData.columns[2] as Int
                 } else 0
-                val enderChestBalance = if (rowData.columns[3] != null) {
+                val enderChestDiamonds = if (rowData.columns[3] != null) {
                     rowData.columns[3] as Int
                 } else 0
 
                 val player = Bukkit.getPlayer(UUID.fromString(rowData.columns[0] as String)) ?: Bukkit.getOfflinePlayer(
                     UUID.fromString(rowData.columns[0] as String)
                 )
-                baltop[player.name] = bankBalance + inventoryBalance + enderChestBalance
+                baltop[player.name] = bankDiamonds + inventoryDiamonds + enderChestDiamonds
             }
             return baltop
         } catch (e: Exception) {
