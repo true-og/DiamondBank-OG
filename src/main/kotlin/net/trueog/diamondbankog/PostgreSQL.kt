@@ -23,10 +23,10 @@ class PostgreSQL {
             pool =
                 PostgreSQLConnectionBuilder.createConnectionPool("${Config.postgresUrl}?user=${Config.postgresUser}&password=${Config.postgresPassword}")
             val createTable =
-                pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid TEXT, bank_balance integer, inventory_balance integer, ender_chest_balance integer, unique(uuid))")
+                pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid TEXT, bank_diamonds integer, inventory_diamonds integer, ender_chest_diamonds integer, bank_shards integer, inventory_shards integer, ender_chest_shards integer, unique(uuid))")
             createTable.join()
             val createIndex =
-                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_balance ON ${Config.postgresTable}(bank_balance, inventory_balance, ender_chest_balance)")
+                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_balance ON ${Config.postgresTable}(bank_diamonds, inventory_diamonds, ender_chest_diamonds, bank_shards, inventory_shards, ender_chest_shards)")
             createIndex.join()
         } catch (e: Exception) {
             DiamondBankOG.economyDisabled = true
@@ -40,9 +40,9 @@ class PostgreSQL {
             val connection = pool.asSuspending.connect()
 
             val balanceType = when (type) {
-                BalanceType.BANK_BALANCE -> "bank_balance"
-                BalanceType.INVENTORY_BALANCE -> "inventory_balance"
-                BalanceType.ENDER_CHEST_BALANCE -> "ender_chest_balance"
+                BalanceType.BANK_BALANCE -> "bank_diamonds"
+                BalanceType.INVENTORY_BALANCE -> "inventory_diamonds"
+                BalanceType.ENDER_CHEST_BALANCE -> "ender_chest_diamonds"
                 else -> return true
             }
 
@@ -90,10 +90,10 @@ class PostgreSQL {
             val connection = pool.asSuspending.connect()
 
             val balanceType = when (type) {
-                BalanceType.BANK_BALANCE -> "bank_balance"
-                BalanceType.INVENTORY_BALANCE -> "inventory_balance"
-                BalanceType.ENDER_CHEST_BALANCE -> "ender_chest_balance"
-                BalanceType.ALL -> "bank_balance, inventory_balance, ender_chest_balance"
+                BalanceType.BANK_BALANCE -> "bank_diamonds"
+                BalanceType.INVENTORY_BALANCE -> "inventory_diamonds"
+                BalanceType.ENDER_CHEST_BALANCE -> "ender_chest_diamonds"
+                BalanceType.ALL -> "bank_diamonds, inventory_diamonds, ender_chest_diamonds"
             }
 
             val preparedStatement =
@@ -149,7 +149,7 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT * FROM ${Config.postgresTable} ORDER BY bank_balance DESC, inventory_balance DESC, ender_chest_balance DESC OFFSET $offset LIMIT 10")
+                connection.sendPreparedStatement("SELECT * FROM ${Config.postgresTable} ORDER BY bank_diamonds DESC, inventory_diamonds DESC, ender_chest_diamonds DESC OFFSET $offset LIMIT 10")
             val result = preparedStatement.await()
             val baltop = mutableMapOf<String?, Int>()
             result.rows.forEach {
