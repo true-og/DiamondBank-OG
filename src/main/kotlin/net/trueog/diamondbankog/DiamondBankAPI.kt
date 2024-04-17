@@ -42,7 +42,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     @Suppress("unused")
-    fun payPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Int): CompletableFuture<Boolean> {
+    fun playerPayPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Int): CompletableFuture<Boolean> {
         val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
         if (!sender.hasPlayedBefore()) return GlobalScope.future { true }
         if (!sender.isOnline) return GlobalScope.future { true }
