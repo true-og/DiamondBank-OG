@@ -3,6 +3,7 @@ package net.trueog.diamondbankog
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import net.trueog.diamondbankog.PostgreSQL.*
 import org.bukkit.Bukkit
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -10,24 +11,24 @@ import java.util.concurrent.CompletableFuture
 @OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     @Suppress("unused")
-    fun addToPlayerBankDiamonds(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
-        return GlobalScope.future { postgreSQL.addToPlayerDiamonds(uuid, amount, PostgreSQL.DiamondType.BANK) }
+    fun addToPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+        return GlobalScope.future { postgreSQL.addToPlayerShards(uuid, amount, ShardType.BANK) }
     }
 
     @Suppress("unused")
-    fun subtractFromPlayerBankDiamonds(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+    fun subtractFromPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
         return GlobalScope.future {
-            postgreSQL.subtractFromPlayerDiamonds(
+            postgreSQL.subtractFromPlayerShards(
                 uuid,
                 amount,
-                PostgreSQL.DiamondType.BANK
+                ShardType.BANK
             )
         }
     }
 
     @Suppress("unused")
-    fun getPlayerDiamonds(uuid: UUID, type: PostgreSQL.DiamondType): CompletableFuture<PostgreSQL.GetResponse> {
-        return GlobalScope.future { postgreSQL.getPlayerDiamonds(uuid, type) }
+    fun getPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards> {
+        return GlobalScope.future { postgreSQL.getPlayerShards(uuid, type) }
     }
 
     @Suppress("unused")
@@ -53,40 +54,19 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         return GlobalScope.future {
             Helper.withdrawFromPlayer(senderPlayer, amount) ?: GlobalScope.future { true }
 
-            val error = postgreSQL.addToPlayerDiamonds(
+            val error = postgreSQL.addToPlayerShards(
                 receiver.uniqueId,
                 amount,
-                PostgreSQL.DiamondType.BANK
+                ShardType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    Helper.PostgresFunction.ADD_TO_PLAYER_DIAMONDS, amount, PostgreSQL.DiamondType.BANK,
+                    Helper.PostgresFunction.ADD_TO_PLAYER_DIAMONDS, amount, ShardType.BANK,
                     null, "pay"
                 )
                 true
             } else false
         }
-    }
-
-    @Suppress("unused")
-    fun addToPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
-        return GlobalScope.future { postgreSQL.addToPlayerShards(uuid, amount, PostgreSQL.ShardType.BANK) }
-    }
-
-    @Suppress("unused")
-    fun subtractFromPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
-        return GlobalScope.future {
-            postgreSQL.subtractFromPlayerShards(
-                uuid,
-                amount,
-                PostgreSQL.ShardType.BANK
-            )
-        }
-    }
-
-    @Suppress("unused")
-    fun getPlayerShards(uuid: UUID, type: PostgreSQL.ShardType): CompletableFuture<PostgreSQL.GetResponse> {
-        return GlobalScope.future { postgreSQL.getPlayerShards(uuid, type) }
     }
 }

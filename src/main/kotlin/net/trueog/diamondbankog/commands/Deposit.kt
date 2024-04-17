@@ -7,8 +7,8 @@ import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.PostgresFunction
-import net.trueog.diamondbankog.Helper.withdraw
-import net.trueog.diamondbankog.PostgreSQL.DiamondType
+import net.trueog.diamondbankog.InventoryExtensions.withdraw
+import net.trueog.diamondbankog.PostgreSQL.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -53,18 +53,18 @@ class Deposit : CommandExecutor {
                 return@launch
             }
 
-            val playerDiamonds =
-                DiamondBankOG.postgreSQL.getPlayerDiamonds(sender.uniqueId, DiamondType.INVENTORY)
-            if (playerDiamonds.amountInInventory == null) {
+            val playerShards =
+                DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.INVENTORY)
+            if (playerShards.amountInInventory == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
-            if (playerDiamonds.amountInInventory == 0) {
+            if (playerShards.amountInInventory == 0) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."))
                 return@launch
             }
 
-            var amount = playerDiamonds.amountInInventory
+            var amount = playerShards.amountInInventory
             if (args[0] != "all") {
                 try {
                     amount = args[0].toInt()
@@ -77,30 +77,30 @@ class Deposit : CommandExecutor {
                     return@launch
                 }
 
-                if (amount > playerDiamonds.amountInInventory) {
+                if (amount > playerShards.amountInInventory) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>in your inventory."))
                     return@launch
                 }
             }
 
-            var error = sender.inventory.withdraw(amount, playerDiamonds)
+            var error = sender.inventory.withdraw(amount)
             if (error) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
                 return@launch
             }
 
-            error = DiamondBankOG.postgreSQL.addToPlayerDiamonds(
+            error = DiamondBankOG.postgreSQL.addToPlayerShards(
                 sender.uniqueId,
                 amount,
-                DiamondType.BANK
+                ShardType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
                     PostgresFunction.ADD_TO_PLAYER_DIAMONDS,
                     amount,
-                    DiamondType.BANK,
-                    playerDiamonds,
+                    ShardType.BANK,
+                    playerShards,
                     "deposit"
                 )
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))

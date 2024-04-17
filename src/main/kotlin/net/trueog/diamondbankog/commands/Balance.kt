@@ -5,7 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.PostgreSQL.DiamondType
+import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -45,9 +45,9 @@ class Balance : CommandExecutor {
                     return@launch
                 }
 
-                val balance = DiamondBankOG.postgreSQL.getPlayerDiamonds(
+                val balance = DiamondBankOG.postgreSQL.getPlayerShards(
                     otherPlayer.uniqueId,
-                    DiamondType.ALL
+                    ShardType.ALL
                 )
                 if (balance.amountInBank == null || balance.amountInInventory == null || balance.amountInEnderChest == null) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
@@ -77,9 +77,9 @@ class Balance : CommandExecutor {
                 }
                 otherPlayer
             }
-            val balance = DiamondBankOG.postgreSQL.getPlayerDiamonds(
+            val balance = DiamondBankOG.postgreSQL.getPlayerShards(
                 balancePlayer.uniqueId,
-                DiamondType.ALL
+                ShardType.ALL
             )
             if (balance.amountInBank == null || balance.amountInInventory == null || balance.amountInEnderChest == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))

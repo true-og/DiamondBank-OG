@@ -4,8 +4,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Helper.PostgresFunction
-import net.trueog.diamondbankog.Helper.countDiamonds
-import net.trueog.diamondbankog.PostgreSQL.DiamondType
+import net.trueog.diamondbankog.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.PostgreSQL.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -31,36 +31,36 @@ class Events : Listener {
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
         GlobalScope.launch {
-            val inventoryDiamonds = event.player.inventory.countDiamonds()
-            var error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
+            val inventoryShards = event.player.inventory.countTotal()
+            var error = DiamondBankOG.postgreSQL.setPlayerShards(
                 event.player.uniqueId,
-                inventoryDiamonds,
-                DiamondType.INVENTORY
+                inventoryShards,
+                ShardType.INVENTORY
             )
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
                     PostgresFunction.SET_PLAYER_DIAMONDS,
-                    inventoryDiamonds,
-                    DiamondType.INVENTORY,
+                    inventoryShards,
+                    ShardType.INVENTORY,
                     null,
                     "onPlayerJoin"
                 )
                 return@launch
             }
 
-            val enderChestDiamonds = event.player.enderChest.countDiamonds()
-            error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
+            val enderChestDiamonds = event.player.enderChest.countTotal()
+            error = DiamondBankOG.postgreSQL.setPlayerShards(
                 event.player.uniqueId,
                 enderChestDiamonds,
-                DiamondType.ENDER_CHEST
+                ShardType.ENDER_CHEST
             )
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
                     PostgresFunction.SET_PLAYER_DIAMONDS,
                     enderChestDiamonds,
-                    DiamondType.ENDER_CHEST,
+                    ShardType.ENDER_CHEST,
                     null,
                     "onPlayerJoin"
                 )
@@ -92,18 +92,18 @@ class Events : Listener {
         object : BukkitRunnable() {
             override fun run() {
                 GlobalScope.launch {
-                    val inventoryDiamonds = player.inventory.countDiamonds()
-                    val error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
+                    val inventoryShards = player.inventory.countTotal()
+                    val error = DiamondBankOG.postgreSQL.setPlayerShards(
                         player.uniqueId,
-                        inventoryDiamonds,
-                        DiamondType.INVENTORY
+                        inventoryShards,
+                        ShardType.INVENTORY
                     )
                     if (error) {
                         Helper.handleError(
                             player.uniqueId,
                             PostgresFunction.SET_PLAYER_DIAMONDS,
-                            inventoryDiamonds,
-                            DiamondType.INVENTORY,
+                            inventoryShards,
+                            ShardType.INVENTORY,
                             null,
                             "onEntityPickupItem"
                         )
@@ -134,18 +134,18 @@ class Events : Listener {
         object : BukkitRunnable() {
             override fun run() {
                 GlobalScope.launch {
-                    val inventoryDiamonds = event.player.inventory.countDiamonds()
-                    val error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
+                    val inventoryShards = event.player.inventory.countTotal()
+                    val error = DiamondBankOG.postgreSQL.setPlayerShards(
                         event.player.uniqueId,
-                        inventoryDiamonds,
-                        DiamondType.INVENTORY
+                        inventoryShards,
+                        ShardType.INVENTORY
                     )
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
                             PostgresFunction.SET_PLAYER_DIAMONDS,
-                            inventoryDiamonds,
-                            DiamondType.INVENTORY,
+                            inventoryShards,
+                            ShardType.INVENTORY,
                             null,
                             "onPlayerDropItem"
                         )
@@ -168,18 +168,18 @@ class Events : Listener {
         object : BukkitRunnable() {
             override fun run() {
                 GlobalScope.launch {
-                    val inventoryDiamonds = event.player.inventory.countDiamonds()
-                    var error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
+                    val inventoryShards = event.player.inventory.countTotal()
+                    var error = DiamondBankOG.postgreSQL.setPlayerShards(
                         event.player.uniqueId,
-                        inventoryDiamonds,
-                        DiamondType.INVENTORY
+                        inventoryShards,
+                        ShardType.INVENTORY
                     )
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
                             PostgresFunction.SET_PLAYER_DIAMONDS,
-                            inventoryDiamonds,
-                            DiamondType.INVENTORY,
+                            inventoryShards,
+                            ShardType.INVENTORY,
                             null,
                             "onPlayerJoin"
                         )
@@ -187,18 +187,18 @@ class Events : Listener {
                     }
 
                     if (event.inventory.type != InventoryType.ENDER_CHEST) return@launch
-                    val enderChestDiamonds = event.player.enderChest.countDiamonds()
-                    error = DiamondBankOG.postgreSQL.setPlayerDiamonds(
+                    val enderChestShards = event.player.enderChest.countTotal()
+                    error = DiamondBankOG.postgreSQL.setPlayerShards(
                         event.player.uniqueId,
-                        enderChestDiamonds,
-                        DiamondType.ENDER_CHEST
+                        enderChestShards,
+                        ShardType.ENDER_CHEST
                     )
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
                             PostgresFunction.SET_PLAYER_DIAMONDS,
-                            enderChestDiamonds,
-                            DiamondType.ENDER_CHEST,
+                            enderChestShards,
+                            ShardType.ENDER_CHEST,
                             null,
                             "onInventoryClose"
                         )
