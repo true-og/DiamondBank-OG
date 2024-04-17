@@ -5,7 +5,7 @@ plugins {
     id("eclipse")
 }
 
-group = "net.trueog.diamondbank"
+group = "net.trueog.diamondbankog"
 version = "1.1"
 
 val apiVersion = "1.19"
@@ -13,7 +13,7 @@ val apiVersion = "1.19"
 publishing {
     publications {
         create<MavenPublication>("mavenPublication") {
-            groupId = "net.trueog.diamondbank"
+            groupId = "net.trueog.diamondbankog"
             artifactId = "DiamondBankOG"
             version = version
         }
@@ -48,8 +48,8 @@ dependencies {
     implementation("com.github.christianniehaus:Utilities-OG:e9ebc26c1f")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4")
 
-    implementation("io.sentry:sentry:7.6.0")
-    implementation("io.sentry:sentry-kotlin-extensions:7.6.0")
+    implementation("io.sentry:sentry:7.8.0")
+    implementation("io.sentry:sentry-kotlin-extensions:7.8.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 }
 
