@@ -58,7 +58,8 @@ object InventoryExtensions {
         val removeMap = this.removeItem(ItemStack(Material.DIAMOND_BLOCK, blocksNeeded))
         if (removeMap.isEmpty()) {
             if (change != 0) {
-                val error = this.addBackDiamonds(change)
+                //TODO: Change back to addBackDiamonds
+                val error = this.addBackShards(change)
                 if (error) return -1
             }
             return 0
