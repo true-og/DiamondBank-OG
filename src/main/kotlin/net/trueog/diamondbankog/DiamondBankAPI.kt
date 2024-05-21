@@ -3,7 +3,8 @@ package net.trueog.diamondbankog
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
-import net.trueog.diamondbankog.PostgreSQL.*
+import net.trueog.diamondbankog.PostgreSQL.PlayerShards
+import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 import java.util.*
 import java.util.concurrent.CompletableFuture

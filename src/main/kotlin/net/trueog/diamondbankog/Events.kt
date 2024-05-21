@@ -5,7 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
-import net.trueog.diamondbankog.PostgreSQL.*
+import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler

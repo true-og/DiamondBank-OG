@@ -7,7 +7,7 @@ import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.PostgresFunction
-import net.trueog.diamondbankog.PostgreSQL.*
+import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
