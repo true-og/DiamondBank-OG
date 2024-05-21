@@ -1,6 +1,6 @@
 package net.trueog.diamondbankog
 
-import net.trueog.diamondbankog.PostgreSQL.*
+import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
 import org.bukkit.entity.Player
@@ -9,9 +9,9 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 import kotlin.math.ceil
+import kotlin.math.floor
 
 object InventoryExtensions {
-
     private fun Inventory.withdrawShards(shards: Int): Int {
         val removeMap = this.removeItem(Shard.createItemStack(shards))
         if (removeMap.isNotEmpty()) {
@@ -54,12 +54,14 @@ object InventoryExtensions {
         val blocksNeeded = ceil(shards / 81.0).toInt()
         val remainder = shards % 81
         val change = if (remainder == 0) 0 else 81 - remainder
+        val diamondChange = floor(change / 9.0).toInt()
+        val shardChange = change % 9
 
         val removeMap = this.removeItem(ItemStack(Material.DIAMOND_BLOCK, blocksNeeded))
         if (removeMap.isEmpty()) {
             if (change != 0) {
-                //TODO: Change back to addBackDiamonds
-                val error = this.addBackShards(change)
+                val leftOver = this.addBackDiamonds(diamondChange)
+                val error = this.addBackShards(shardChange + leftOver)
                 if (error) return -1
             }
             return 0
@@ -93,26 +95,25 @@ object InventoryExtensions {
         return false
     }
 
-    private suspend fun Inventory.addBackDiamonds(diamonds: Int): Boolean {
+    private fun Inventory.addBackDiamonds(diamonds: Int): Int {
         val player = this.holder as Player
 
         val addMap = this.addItem(ItemStack(Material.DIAMOND, diamonds))
-        if (addMap.isEmpty()) return false
+        if (addMap.isEmpty()) return 0
 
         val leftOver = addMap[0]!!.amount
 
         if (this.type != InventoryType.SHULKER_BOX) {
-            val error = this.addBackShards(leftOver * 9)
-            return error
+            return leftOver * 9
         }
 
         val inventoryAddMap = player.inventory.addItem(ItemStack(Material.DIAMOND, leftOver))
         if (inventoryAddMap.isNotEmpty()) {
-            val error = this.addBackShards(inventoryAddMap[0]!!.amount * 9)
-            return error
+            return inventoryAddMap[0]!!.amount * 9
         }
+
         player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: The change of $leftOver <aqua>${if (leftOver == 1) "Diamond" else "Diamonds"} <reset> has been added to your inventory."))
-        return false
+        return 0
     }
 
     suspend fun Inventory.withdraw(shards: Int): Boolean {
@@ -140,9 +141,15 @@ object InventoryExtensions {
     }
 
     fun Inventory.countShards(): Int {
-        val inventoryShards = this.all(Material.PRISMARINE_SHARD).values.filter{ it.itemMeta.persistentDataContainer.has(Shard.namespacedKey) }.sumOf { it.amount }
+        val inventoryShards =
+            this.all(Material.PRISMARINE_SHARD).values.filter { it.itemMeta.persistentDataContainer.has(Shard.namespacedKey) }
+                .sumOf { it.amount }
         val shulkerBoxShards = this.all(Material.SHULKER_BOX).values.sumOf { itemStack ->
-            ((itemStack.itemMeta as BlockStateMeta).blockState as ShulkerBox).inventory.all(Material.PRISMARINE_SHARD).values.filter{ it.itemMeta.persistentDataContainer.has(Shard.namespacedKey) }.sumOf { it.amount }
+            ((itemStack.itemMeta as BlockStateMeta).blockState as ShulkerBox).inventory.all(Material.PRISMARINE_SHARD).values.filter {
+                it.itemMeta.persistentDataContainer.has(
+                    Shard.namespacedKey
+                )
+            }.sumOf { it.amount }
         }
         return inventoryShards + shulkerBoxShards
     }
