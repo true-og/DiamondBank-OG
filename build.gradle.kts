@@ -1,6 +1,6 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.9.22"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("org.jetbrains.kotlin.jvm") version "1.9.23"
+	id("io.github.goooler.shadow") version "8.1.8"
     id("maven-publish")
     id("eclipse")
 }
