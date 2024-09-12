@@ -19,7 +19,8 @@ object Helper {
     enum class PostgresFunction(val string: String) {
         SET_PLAYER_BALANCE("setPlayerBalance"),
         ADD_TO_PLAYER_BALANCE("addToPlayerBalance"),
-        SUBTRACT_FROM_PLAYER_BALANCE("subtractFromPlayerBalance")
+        SUBTRACT_FROM_PLAYER_BALANCE("subtractFromPlayerBalance"),
+        MIGRATE_FROM_OLD_DIAMOND_BANK("migrate")
     }
 
     suspend fun withdrawFromPlayer(player: Player, amount: Int): Int? {

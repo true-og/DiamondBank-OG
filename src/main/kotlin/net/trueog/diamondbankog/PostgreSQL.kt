@@ -195,4 +195,23 @@ class PostgreSQL {
         }
         return number
     }
+    suspend fun isRegistered(uuid: UUID): Boolean? {
+        var number: Boolean? = null
+        try {
+            val connection = pool.asSuspending.connect()
+            val preparedStatement =
+                connection.sendPreparedStatement("SELECT EXISTS(SELECT 1 FROM ${Config.postgresTable} WHERE uuid = '${uuid}');")
+            val result = preparedStatement.await()
+
+            if (result.rows.size != 0) {
+                val rowData = result.rows[0] as ArrayRowData
+                number = if (rowData.columns[0] != null) {
+                    rowData.columns[0] as Boolean
+                } else false
+            }
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.info(e.toString())
+        }
+        return number
+    }
 }
