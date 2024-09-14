@@ -47,7 +47,7 @@ class DiamondBankOG : JavaPlugin() {
 
         if (!NBT.preloadApi()) {
            getLogger().warning("NBT-API wasn't initialized properly, disabling the plugin");
-           getPluginLoader().disablePlugin(this);
+           Bukkit.getPluginManager().disablePlugin(this)
            return;
         }
 
