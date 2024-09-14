@@ -44,12 +44,12 @@ class Balancetop : CommandExecutor {
 
             val baltop = DiamondBankOG.postgreSQL.getBaltop(offset)
             if (baltop == null) {
-                sender.sendMessage("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop.")
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                 return@launch
             }
             val numberOfRows = DiamondBankOG.postgreSQL.getNumberOfRows()
             if (numberOfRows == null) {
-                sender.sendMessage("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop.")
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                 return@launch
             }
 
@@ -61,7 +61,7 @@ class Balancetop : CommandExecutor {
                 ("<yellow>---- <gold>Balancetop <yellow>-- <gold>Page <red>$index<gold>/<red>${ceil(numberOfRows / 10.0).toLong()} <yellow>----<reset>")
             baltop.forEach {
                 if (it.key == null) {
-                    sender.sendMessage("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop.")
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                     return@launch
                 }
                 baltopMessage += "\n<red>${baltopMessage.lines().size + (10 * (index - 1))}<reset>. ${if (it.key == sender.name) "<red>" else ""}${it.key}<reset>, ${it.value}"
