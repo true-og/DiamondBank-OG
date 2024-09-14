@@ -41,11 +41,6 @@ repositories {
     maven {
         url = uri("https://jitpack.io")
     }
-
-    maven {
-        name = "CodeMC"
-        url = uri("https://repo.codemc.io/repository/maven-public/")
-    }
 }
 
 dependencies {
@@ -66,7 +61,7 @@ tasks.shadowJar.configure {
     archiveClassifier.set("")
 }
 
-tasks.jar {
+tasks.build {
     dependsOn("shadowJar")
 }
 
