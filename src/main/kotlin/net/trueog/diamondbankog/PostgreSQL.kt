@@ -195,4 +195,20 @@ class PostgreSQL {
         }
         return number
     }
+
+    suspend fun entryExists(uuid: UUID): Boolean {
+        try {
+            val connection = pool.asSuspending.connect()
+            val preparedStatement =
+                connection.sendPreparedStatement("SELECT 1 FROM ${Config.postgresTable} WHERE uuid = '${uuid}';")
+            val result = preparedStatement.await()
+
+            if (result.rows.size == 1) {
+                return true
+            }
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.info(e.toString())
+        }
+        return false
+    }
 }
