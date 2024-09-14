@@ -6,8 +6,8 @@ import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.Helper.countDiamonds
 import net.trueog.diamondbankog.PostgreSQL.BalanceType
-import net.trueog.diamondbankog.PostgreSQL.*
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -17,8 +17,8 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.persistence.PersistentDataType
 import org.bukkit.scheduler.BukkitRunnable
-import de.tr7zw.changeme.nbtapi.*
 
 @OptIn(DelicateCoroutinesApi::class)
 class Events : Listener {
@@ -33,40 +33,35 @@ class Events : Listener {
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
         GlobalScope.launch {
-            val old_balance = NBT.getPersistentData(event.player, {nbt -> nbt.getInteger("diamondbank:balance")});
-            val hasDatabaseEntry: Boolean = try {
-              val result = DiamondBankOG.postgreSQL.isRegistered(event.player.uniqueId)
-              if(result != null) {
-                result
-              }
-              else {
-                false
-              }
-            } catch(e: Exception) {
-              Helper.handleError(event.player.uniqueId, PostgresFunction.MIGRATE_FROM_OLD_DIAMOND_BANK, old_balance, BalanceType.BANK_BALANCE, null, "The Diamond Bank Migration")
-              false
-            }
-            if(old_balance > 0 && event.player.hasPlayedBefore() && !hasDatabaseEntry) {
-                // migrate
-                NBT.modifyPersistentData(event.player, {nbt -> nbt.setInteger("diamondbank:balance", 0)})
-                var error = DiamondBankOG.postgreSQL.setPlayerBalance(
-                    event.player.uniqueId,
-                    old_balance,
-                    BalanceType.BANK_BALANCE
+            if (!DiamondBankOG.postgreSQL.entryExists(event.player.uniqueId)) {
+                val oldBalance = event.player.persistentDataContainer.get(
+                    NamespacedKey.fromString("diamondbank:balance")!!,
+                    PersistentDataType.DOUBLE
                 )
-                if (error) {
-                       Helper.handleError(
-                       event.player.uniqueId,
-                       PostgresFunction.SET_PLAYER_BALANCE,
-                       old_balance,
-                       BalanceType.BANK_BALANCE,
-                       null,
-                       "onPlayerJoin"
-                   )
-                   return@launch
+                if (oldBalance != null) {
+                    val error = DiamondBankOG.postgreSQL.setPlayerBalance(
+                        event.player.uniqueId,
+                        oldBalance.toInt(),
+                        BalanceType.BANK_BALANCE
+                    )
+                    if (error) {
+                        Helper.handleError(
+                            event.player.uniqueId,
+                            PostgresFunction.SET_PLAYER_BALANCE,
+                            oldBalance.toInt(),
+                            BalanceType.BANK_BALANCE,
+                            null,
+                            "onPlayerJoin"
+                        )
+                        return@launch
+                    }
+                    event.player.persistentDataContainer.remove(NamespacedKey.fromString("diamondbank:balance")!!)
+                    event.player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Your old balance has successfully been migrated to DiamondBank-OG!"))
                 }
-                event.player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Your old balance has successfully been migrated to DiamondBank-OG!"))
+
+                // We don't need to set the player bank balance when we don't migrate since an entry will be created with the code below
             }
+
             val inventoryDiamonds = event.player.inventory.countDiamonds()
             var error = DiamondBankOG.postgreSQL.setPlayerBalance(
                 event.player.uniqueId,

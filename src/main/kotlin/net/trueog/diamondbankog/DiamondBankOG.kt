@@ -7,7 +7,6 @@ import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
 import net.trueog.diamondbankog.commands.*
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
-import de.tr7zw.changeme.nbtapi.*
 import java.util.*
 
 class DiamondBankOG : JavaPlugin() {
@@ -43,12 +42,6 @@ class DiamondBankOG : JavaPlugin() {
         if (Config.load()) {
             Bukkit.getPluginManager().disablePlugin(this)
             return
-        }
-
-        if (!NBT.preloadApi()) {
-           getLogger().warning("NBT-API wasn't initialized properly, disabling the plugin");
-           Bukkit.getPluginManager().disablePlugin(this)
-           return;
         }
 
         if (Config.sentryEnabled) {

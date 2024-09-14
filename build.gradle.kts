@@ -56,12 +56,10 @@ dependencies {
     implementation("io.sentry:sentry:7.8.0")
     implementation("io.sentry:sentry-kotlin-extensions:7.8.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("de.tr7zw:item-nbt-api:2.13.2")
 }
 
 tasks.shadowJar {
     minimize()
-    relocate("de.tr7zw.changeme.nbtapi", "net.trueog.diamondbankog")
 }
 
 tasks.shadowJar.configure {
