@@ -65,7 +65,7 @@ class Events : Listener {
                    )
                    return@launch
                 }
-                event.player.sendMessage("Your balance has been migrated to DiamondBank-OG!")
+                event.player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Your old balance has successfully been migrated to DiamondBank-OG!"))
             }
             val inventoryDiamonds = event.player.inventory.countDiamonds()
             var error = DiamondBankOG.postgreSQL.setPlayerBalance(
