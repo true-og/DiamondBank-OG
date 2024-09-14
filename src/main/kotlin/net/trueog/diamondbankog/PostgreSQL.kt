@@ -176,8 +176,8 @@ class PostgreSQL {
         return null
     }
 
-    suspend fun getNumberOfRows(): Int? {
-        var number: Int? = null
+    suspend fun getNumberOfRows(): Long? {
+        var number: Long? = null
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
@@ -187,7 +187,7 @@ class PostgreSQL {
             if (result.rows.size != 0) {
                 val rowData = result.rows[0] as ArrayRowData
                 number = if (rowData.columns[0] != null) {
-                    rowData.columns[0] as Int
+                    rowData.columns[0] as Long
                 } else 0
             }
         } catch (e: Exception) {
