@@ -31,6 +31,14 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     @Suppress("unused")
+    fun getPlayerTotalBalance(uuid: UUID): CompletableFuture<Int> {
+        return GlobalScope.future {
+            val balance = postgreSQL.getPlayerBalance(uuid, PostgreSQL.BalanceType.ALL)
+            balance.bankBalance!! + balance.inventoryBalance!! + balance.enderChestBalance!!
+        }
+    }
+
+    @Suppress("unused")
     fun withdrawFromPlayer(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
         val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
         if (!player.hasPlayedBefore()) return GlobalScope.future { true }
