@@ -61,7 +61,7 @@ tasks.shadowJar.configure {
     archiveClassifier.set("")
 }
 
-tasks.jar {
+tasks.build {
     dependsOn("shadowJar")
 }
 
