@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.0.21"
+    id("org.jetbrains.kotlin.jvm") version "2.1.0"
     id("io.github.goooler.shadow") version "8.1.8"
     id("maven-publish")
     id("eclipse")
@@ -48,8 +48,8 @@ dependencies {
     implementation("com.github.christianniehaus:Utilities-OG:e9ebc26c1f")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4")
 
-    implementation("io.sentry:sentry:7.14.0")
-    implementation("io.sentry:sentry-kotlin-extensions:7.14.0")
+    implementation("io.sentry:sentry:8.8.0")
+    implementation("io.sentry:sentry-kotlin-extensions:8.9.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 }
 

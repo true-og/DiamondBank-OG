@@ -6,3 +6,11 @@ updates:
       interval: "daily"
     ignore:
       - dependency-name: "org.purpurmc.purpur:purpur-api"
+
+  - package-ecosystem: "gradle"
+    directory: "/"
+    target-branch: "shards"
+    schedule:
+      interval: "daily"
+    ignore:
+      - dependency-name: "org.purpurmc.purpur:purpur-api"
