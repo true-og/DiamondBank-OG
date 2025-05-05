@@ -36,7 +36,7 @@ class Balancetop : CommandExecutor {
                 try {
                     index = args[0].toInt()
                 } catch (_: Exception) {
-                    sender.sendMessage("Invalid argument")
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
                     return@launch
                 }
                 offset = 10 * (index - 1)
@@ -44,24 +44,24 @@ class Balancetop : CommandExecutor {
 
             val baltop = DiamondBankOG.postgreSQL.getBaltop(offset)
             if (baltop == null) {
-                sender.sendMessage("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop.")
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                 return@launch
             }
             val numberOfRows = DiamondBankOG.postgreSQL.getNumberOfRows()
             if (numberOfRows == null) {
-                sender.sendMessage("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop.")
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                 return@launch
             }
 
             if (index > ceil(numberOfRows / 10.0)) {
-                sender.sendMessage("The amount of pages only goes up to $numberOfRows")
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The amount of pages only goes up to $numberOfRows."))
                 return@launch
             }
             var baltopMessage =
                 ("<yellow>---- <gold>Balancetop <yellow>-- <gold>Page <red>$index<gold>/<red>${ceil(numberOfRows / 10.0).toLong()} <yellow>----<reset>")
             baltop.forEach {
                 if (it.key == null) {
-                    sender.sendMessage("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop.")
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                     return@launch
                 }
                 baltopMessage += "\n<red>${baltopMessage.lines().size + (10 * (index - 1))}<reset>. ${if (it.key == sender.name) "<red>" else ""}${it.key}<reset>, ${it.value}"
