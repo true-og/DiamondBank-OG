@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.1.0"
+    id("org.jetbrains.kotlin.jvm") version "2.1.21"
     id("io.github.goooler.shadow") version "8.1.8"
     id("maven-publish")
     id("eclipse")
