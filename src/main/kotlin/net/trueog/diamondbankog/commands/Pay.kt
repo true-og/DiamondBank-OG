@@ -63,6 +63,7 @@ class Pay : CommandExecutor {
 
             if (sender.uniqueId == receiver.uniqueId) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot pay yourself."))
+                return@launch
             }
 
             if (!receiver.hasPlayedBefore()) {
