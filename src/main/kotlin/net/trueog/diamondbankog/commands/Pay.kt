@@ -61,6 +61,10 @@ class Pay : CommandExecutor {
                 Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
             }
 
+            if (sender.uniqueId == receiver.uniqueId) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot pay yourself."))
+            }
+
             if (!receiver.hasPlayedBefore()) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist."))
                 return@launch
