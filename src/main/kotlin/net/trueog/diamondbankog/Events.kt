@@ -71,15 +71,16 @@ class Events : Listener {
 
     @EventHandler
     fun onEntityPickupItem(event: EntityPickupItemEvent) {
-        if (DiamondBankOG.economyDisabled) {
-            return
-        }
 
         val worldName = event.entity.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
         val itemType = event.item.itemStack.type
         if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX) return
+
+        if (DiamondBankOG.economyDisabled) {
+            return
+        }
 
         if (DiamondBankOG.blockInventoryFor.contains(event.entity.uniqueId)) {
             event.isCancelled = true
@@ -116,15 +117,15 @@ class Events : Listener {
 
     @EventHandler
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
-        if (DiamondBankOG.economyDisabled) {
-            return
-        }
-
         val worldName = event.player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
         val itemType = event.itemDrop.itemStack.type
         if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX) return
+
+        if (DiamondBankOG.economyDisabled) {
+            return
+        }
 
         if (DiamondBankOG.blockInventoryFor.contains(event.player.uniqueId)) {
             event.isCancelled = true
