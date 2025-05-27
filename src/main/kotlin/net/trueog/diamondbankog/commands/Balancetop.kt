@@ -65,7 +65,7 @@ class Balancetop : CommandExecutor {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                     return@launch
                 }
-                println(it.value)
+
                 val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
                 baltopMessage += "\n<red>${baltopMessage.lines().size + (10 * (index - 1))}<reset>. ${if (it.key == sender.name) "<red>" else ""}${it.key}<reset>, <yellow>$diamonds <aqua>Diamonds"
             }
