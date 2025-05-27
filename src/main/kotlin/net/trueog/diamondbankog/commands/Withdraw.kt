@@ -105,8 +105,16 @@ class Withdraw : CommandExecutor {
                 Shard.namespacedKey) }
                 .sumOf { 64 - it.amount }
 
+            println(diamondAmount)
+            println(leftOverSpaceDiamonds)
+            println(diamondAmount > (emptySlots * 64 + leftOverSpaceDiamonds))
+            println(shardAmount)
+            println(leftOverSpaceShards)
 
-            val emptySlotsAfterDiamonds = emptySlots - ceil(diamondAmount / 64.0)
+            val emptySlotsAfterDiamonds = if (emptySlots != 0) emptySlots - ceil(diamondAmount / 64.0) else 0.0
+            println(shardAmount > (emptySlotsAfterDiamonds * 64 + leftOverSpaceShards))
+            println(emptySlotsAfterDiamonds * 64 + leftOverSpaceShards)
+
             if (diamondAmount > (emptySlots * 64 + leftOverSpaceDiamonds) || shardAmount > (emptySlotsAfterDiamonds * 64 + leftOverSpaceShards)) {
                 val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"}<red>."))
