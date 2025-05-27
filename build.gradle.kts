@@ -1,8 +1,8 @@
 import java.io.ByteArrayOutputStream
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.1.0"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("org.jetbrains.kotlin.jvm") version "2.1.21"
+    id("com.gradleup.shadow") version "8.3.5"
     id("maven-publish")
     id("eclipse")
 }
