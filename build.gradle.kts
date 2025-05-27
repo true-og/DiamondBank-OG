@@ -18,10 +18,10 @@ fun getGitCommitHash(): String {
     return stdout.toString().trim()
 }
 
-group = "net.trueog.diamondbankog"
-version = "1.19-${getGitCommitHash()}"
-
 val apiVersion = "1.19"
+
+group = "net.trueog.diamondbankog"
+version = "$apiVersion-${getGitCommitHash()}"
 
 publishing {
     publications {
