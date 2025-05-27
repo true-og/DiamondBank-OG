@@ -1,5 +1,6 @@
 package net.trueog.diamondbankog
 
+import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
@@ -127,12 +128,39 @@ object InventoryExtensions {
             if (diamondsNotRemoved != 0) {
                 val blocksNotRemoved = this.withdrawDiamondBlocks(diamondsNotRemoved)
                 if (blocksNotRemoved != 0) {
-                    TODO("Warn using Sentry")
+                    Helper.handleError(
+                        player.uniqueId,
+                        PostgresFunction.OTHER,
+                        shards,
+                        ShardType.INVENTORY,
+                        null,
+                        "Inventory.withdraw"
+                    )
+                    return true
                 }
             }
         }
 
-        DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
+        val inventoryShards = player.inventory.countTotal()
+        val error = DiamondBankOG.postgreSQL.setPlayerShards(
+            player.uniqueId,
+            inventoryShards,
+            ShardType.INVENTORY
+        )
+        if (error) {
+            Helper.handleError(
+                player.uniqueId,
+                PostgresFunction.SET_PLAYER_SHARDS,
+                inventoryShards,
+                ShardType.INVENTORY,
+                null,
+                "Inventory.withdraw"
+            )
+            if (this.type == InventoryType.PLAYER) {
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
+            }
+        }
+
         return false
     }
 

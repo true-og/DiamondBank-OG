@@ -31,14 +31,14 @@ class PostgreSQL {
                     pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_$column ON ${Config.postgresTable}($column)")
                 createIndex.join()
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             DiamondBankOG.economyDisabled = true
             DiamondBankOG.plugin.logger.severe("ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?")
             return
         }
     }
 
-    data class PlayerShards(val amountInBank: Int?, val amountInInventory: Int?, val amountInEnderChest: Int?)
+    data class PlayerShards(val shardsInBank: Int?, val shardsInInventory: Int?, val shardsInEnderChest: Int?)
 
     suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
         if (type == ShardType.ALL) return true
@@ -48,7 +48,7 @@ class PostgreSQL {
             val preparedStatement =
                 connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, ${type.string}) VALUES('$uuid', $shards) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}")
             preparedStatement.await()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return true
         }
         return false
@@ -76,10 +76,10 @@ class PostgreSQL {
         val getResponse = getPlayerShards(uuid, type)
 
         return when (type) {
-            ShardType.BANK -> getResponse.amountInBank
-            ShardType.INVENTORY -> getResponse.amountInInventory
-            ShardType.ENDER_CHEST -> getResponse.amountInEnderChest
-            ShardType.ALL -> if (getResponse.amountInBank != null && getResponse.amountInInventory != null && getResponse.amountInEnderChest != null) getResponse.amountInBank + getResponse.amountInInventory + getResponse.amountInEnderChest else null
+            ShardType.BANK -> getResponse.shardsInBank
+            ShardType.INVENTORY -> getResponse.shardsInInventory
+            ShardType.ENDER_CHEST -> getResponse.shardsInEnderChest
+            ShardType.ALL -> if (getResponse.shardsInBank != null && getResponse.shardsInInventory != null && getResponse.shardsInEnderChest != null) getResponse.shardsInBank + getResponse.shardsInInventory + getResponse.shardsInEnderChest else null
         }
     }
 
@@ -94,7 +94,7 @@ class PostgreSQL {
                 connection.sendPreparedStatement("SELECT ${type.string} FROM ${Config.postgresTable} WHERE uuid = '$uuid' LIMIT 1")
             val result = preparedStatement.await()
 
-            if (result.rows.size != 0) {
+            if (result.rows.isNotEmpty()) {
                 val rowData = result.rows[0] as ArrayRowData
 
                 when (type) {
@@ -134,7 +134,7 @@ class PostgreSQL {
                 enderChestShards = 0
             }
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.info(e.toString())
+            DiamondBankOG.plugin.logger.severe(e.toString())
         }
         return PlayerShards(bankShards, inventoryShards, enderChestShards)
     }
@@ -143,7 +143,9 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT * FROM ${Config.postgresTable} ORDER BY bank_diamonds DESC, inventory_diamonds DESC, ender_chest_diamonds DESC OFFSET $offset LIMIT 10")
+                connection.sendPreparedStatement("SELECT uuid, bank_shards, inventory_shards, ender_chest_shards " +
+                        "FROM ( SELECT *, COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) AS total_shards FROM ${Config.postgresTable} ) sub " +
+                        "ORDER BY total_shards DESC OFFSET $offset LIMIT 10")
             val result = preparedStatement.await()
             val baltop = mutableMapOf<String?, Int>()
             result.rows.forEach {
@@ -165,27 +167,27 @@ class PostgreSQL {
             }
             return baltop
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.info(e.toString())
+            DiamondBankOG.plugin.logger.severe(e.toString())
         }
         return null
     }
 
-    suspend fun getNumberOfRows(): Int? {
-        var number: Int? = null
+    suspend fun getNumberOfRows(): Long? {
+        var number: Long? = null
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
                 connection.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${Config.postgresTable}")
             val result = preparedStatement.await()
 
-            if (result.rows.size != 0) {
+            if (result.rows.isNotEmpty()) {
                 val rowData = result.rows[0] as ArrayRowData
                 number = if (rowData.columns[0] != null) {
-                    rowData.columns[0] as Int
+                    rowData.columns[0] as Long
                 } else 0
             }
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.info(e.toString())
+            DiamondBankOG.plugin.logger.severe(e.toString())
         }
         return number
     }

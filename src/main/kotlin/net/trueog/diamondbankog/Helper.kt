@@ -12,32 +12,33 @@ import java.util.*
 
 object Helper {
     enum class PostgresFunction(val string: String) {
-        SET_PLAYER_DIAMONDS("setPlayerDiamonds"),
-        ADD_TO_PLAYER_DIAMONDS("addToPlayerDiamonds"),
-        SUBTRACT_FROM_PLAYER_DIAMONDS("subtractFromPlayerDiamonds")
+        SET_PLAYER_SHARDS("setPlayerShards"),
+        ADD_TO_PLAYER_SHARDS("addToPlayerShards"),
+        SUBTRACT_FROM_PLAYER_SHARDS("subtractFromShards"),
+        OTHER("other")
     }
 
-    suspend fun withdrawFromPlayer(player: Player, amount: Int): Int? {
+    suspend fun withdrawFromPlayer(player: Player, shards: Int): Int? {
         val somethingWentWrongMessage =
             DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong.")
 
         val playerShards = DiamondBankOG.postgreSQL.getPlayerShards(player.uniqueId, ShardType.ALL)
-        if (playerShards.amountInBank == null || playerShards.amountInInventory == null || playerShards.amountInEnderChest == null) {
+        if (playerShards.shardsInBank == null || playerShards.shardsInInventory == null || playerShards.shardsInEnderChest == null) {
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
         // Withdraw everything
-        if (amount == -1) {
+        if (shards == -1) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
                 player.uniqueId,
-                playerShards.amountInBank,
+                playerShards.shardsInBank,
                 ShardType.BANK
             )
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerShards.amountInBank, ShardType.BANK,
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
                     playerShards, "withdrawFromPlayer"
                 )
                 player.sendMessage(somethingWentWrongMessage)
@@ -45,7 +46,7 @@ object Helper {
             }
 
             error = player.inventory.withdraw(
-                playerShards.amountInInventory
+                playerShards.shardsInInventory
             )
             if (error) {
                 player.sendMessage(somethingWentWrongMessage)
@@ -53,48 +54,48 @@ object Helper {
             }
 
             error = player.enderChest.withdraw(
-                playerShards.amountInEnderChest
+                playerShards.shardsInEnderChest
             )
             if (error) {
                 player.sendMessage(somethingWentWrongMessage)
                 return null
             }
-            return playerShards.amountInBank + playerShards.amountInInventory + playerShards.amountInEnderChest
+            return playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest
         }
 
-        if (amount > playerShards.amountInBank + playerShards.amountInInventory + playerShards.amountInEnderChest) {
-            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerShards.amountInBank + playerShards.amountInInventory} <aqua>${if (playerShards.amountInBank + playerShards.amountInInventory == 1) "Diamond" else "Diamonds"}<red>."))
+        if (shards > playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) {
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$shards <aqua>${if (shards == 1) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerShards.shardsInBank + playerShards.shardsInInventory} <aqua>${if (playerShards.shardsInBank + playerShards.shardsInInventory == 1) "Diamond" else "Diamonds"}<red>."))
             return null
         }
 
-        if (amount <= playerShards.amountInBank) {
+        if (shards <= playerShards.shardsInBank) {
             val error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
                 player.uniqueId,
-                amount,
+                shards,
                 ShardType.BANK
             )
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, amount, ShardType.BANK,
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, shards, ShardType.BANK,
                     playerShards, "withdrawFromPlayer"
                 )
                 player.sendMessage(somethingWentWrongMessage)
                 return null
             }
-            return amount
+            return shards
         }
 
-        if (amount <= playerShards.amountInBank + playerShards.amountInInventory) {
+        if (shards <= playerShards.shardsInBank + playerShards.shardsInInventory) {
             var error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
                 player.uniqueId,
-                playerShards.amountInBank,
+                playerShards.shardsInBank,
                 ShardType.BANK
             )
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerShards.amountInBank, ShardType.BANK,
+                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
                     playerShards, "withdrawFromPlayer"
                 )
                 player.sendMessage(somethingWentWrongMessage)
@@ -102,53 +103,53 @@ object Helper {
             }
 
             error = player.inventory.withdraw(
-                amount - playerShards.amountInBank
+                shards - playerShards.shardsInBank
             )
             if (error) {
                 player.sendMessage(somethingWentWrongMessage)
                 return null
             }
-            return amount
+            return shards
         }
 
         var error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
             player.uniqueId,
-            playerShards.amountInBank,
+            playerShards.shardsInBank,
             ShardType.BANK
         )
         if (error) {
             handleError(
                 player.uniqueId,
-                PostgresFunction.SUBTRACT_FROM_PLAYER_DIAMONDS, playerShards.amountInBank, ShardType.BANK,
+                PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
                 playerShards, "withdrawFromPlayer"
             )
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
-        error = player.inventory.withdraw(playerShards.amountInInventory)
+        error = player.inventory.withdraw(playerShards.shardsInInventory)
         if (error) {
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
         error = player.enderChest.withdraw(
-            amount - (playerShards.amountInBank + playerShards.amountInInventory)
+            shards - (playerShards.shardsInBank + playerShards.shardsInInventory)
         )
         if (error) {
             player.sendMessage(somethingWentWrongMessage)
             return null
         }
 
-        return amount
+        return shards
     }
 
     fun handleError(
         uuid: UUID,
         function: PostgresFunction,
-        amount: Int,
+        shards: Int,
         diamondType: ShardType,
-        playerDiamonds: PlayerShards?,
+        playerShards: PlayerShards?,
         inFunction: String
     ) {
         DiamondBankOG.economyDisabled = true
@@ -158,19 +159,19 @@ object Helper {
 
             val sentryEvent = SentryEvent()
             sentryEvent.user = sentryUser
-            sentryEvent.setExtra("Function", "${function.string}(amount = $amount, type = $diamondType)")
-            if (playerDiamonds != null) {
-                if (playerDiamonds.amountInBank != null) sentryEvent.setExtra(
+            sentryEvent.setExtra("Function", "${function.string}(amount = $shards, type = $diamondType)")
+            if (playerShards != null) {
+                if (playerShards.shardsInBank != null) sentryEvent.setExtra(
                     "Bank Balance",
-                    playerDiamonds.amountInBank
+                    playerShards.shardsInBank
                 )
-                if (playerDiamonds.amountInInventory != null) sentryEvent.setExtra(
+                if (playerShards.shardsInInventory != null) sentryEvent.setExtra(
                     "Inventory Balance",
-                    playerDiamonds.amountInInventory
+                    playerShards.shardsInInventory
                 )
-                if (playerDiamonds.amountInEnderChest != null) sentryEvent.setExtra(
+                if (playerShards.shardsInEnderChest != null) sentryEvent.setExtra(
                     "Ender Chest Balance",
-                    playerDiamonds.amountInEnderChest
+                    playerShards.shardsInEnderChest
                 )
             }
 
@@ -184,20 +185,20 @@ object Helper {
             """
             ${function.string} failed in $inFunction
             Player UUID: $uuid
-            Function: ${function.string}(amount = $amount, type = $diamondType)
+            Function: ${function.string}(amount = $shards, type = $diamondType)
             ${
-                if (playerDiamonds != null) {
-                    if (playerDiamonds.amountInBank != null) "Bank Balance: ${playerDiamonds.amountInBank}" else ""
+                if (playerShards != null) {
+                    if (playerShards.shardsInBank != null) "Bank Balance: ${playerShards.shardsInBank}" else ""
                 } else ""
             }
             ${
-                if (playerDiamonds != null) {
-                    if (playerDiamonds.amountInInventory != null) "Inventory Balance: ${playerDiamonds.amountInInventory}" else ""
+                if (playerShards != null) {
+                    if (playerShards.shardsInInventory != null) "Inventory Balance: ${playerShards.shardsInInventory}" else ""
                 } else ""
             }
             ${
-                if (playerDiamonds != null) {
-                    if (playerDiamonds.amountInEnderChest != null) "Ender Chest Balance: ${playerDiamonds.amountInEnderChest}" else ""
+                if (playerShards != null) {
+                    if (playerShards.shardsInEnderChest != null) "Ender Chest Balance: ${playerShards.shardsInEnderChest}" else ""
                 } else ""
             }
         """.trimIndent()

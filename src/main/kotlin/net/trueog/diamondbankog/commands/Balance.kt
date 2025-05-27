@@ -12,6 +12,7 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.util.*
+import kotlin.math.floor
 
 class Balance : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
@@ -49,12 +50,16 @@ class Balance : CommandExecutor {
                     otherPlayer.uniqueId,
                     ShardType.ALL
                 )
-                if (balance.amountInBank == null || balance.amountInInventory == null || balance.amountInEnderChest == null) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
+                if (balance.shardsInBank == null || balance.shardsInInventory == null || balance.shardsInEnderChest == null) {
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get their balance."))
                     return@launch
                 }
-                val totalBalance = balance.amountInBank + balance.amountInInventory + balance.amountInEnderChest
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.amountInBank}<white>, <red>Inventory: <yellow>${balance.amountInInventory}<white>, <red>Ender Chest: <yellow>${balance.amountInEnderChest}<white>)."))
+                val totalBalance = balance.shardsInBank + balance.shardsInInventory + balance.shardsInEnderChest
+                val totalDiamonds = String.format("%.1f", floor((totalBalance / 9.0) * 10) / 10.0)
+                val bankDiamonds = String.format("%.1f", floor((balance.shardsInBank / 9.0) * 10) / 10.0)
+                val inventoryDiamonds = String.format("%.1f", floor((balance.shardsInInventory / 9.0) * 10) / 10.0)
+                val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
+                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>$bankDiamonds<white>, <red>Inventory: <yellow>$inventoryDiamonds<white>, <red>Ender Chest: <yellow>$enderChestDiamonds<white>)."))
                 return@launch
             }
 
@@ -81,12 +86,18 @@ class Balance : CommandExecutor {
                 balancePlayer.uniqueId,
                 ShardType.ALL
             )
-            if (balance.amountInBank == null || balance.amountInInventory == null || balance.amountInEnderChest == null) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
+            if (balance.shardsInBank == null || balance.shardsInInventory == null || balance.shardsInEnderChest == null) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get ${
+                    if (balancePlayer.uniqueId != sender.uniqueId) "their" else "your"} balance."))
                 return@launch
             }
-            val totalBalance = balance.amountInBank + balance.amountInInventory + balance.amountInEnderChest
-            sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: <yellow>$totalBalance <aqua>${if (totalBalance == 1) "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>${balance.amountInBank}<white>, <red>Inventory: <yellow>${balance.amountInInventory}<white>, <red>Ender Chest: <yellow>${balance.amountInEnderChest}<white>)."))
+            val totalBalance = balance.shardsInBank + balance.shardsInInventory + balance.shardsInEnderChest
+            val totalDiamonds = String.format("%.1f", floor((totalBalance / 9.0) * 10) / 10.0)
+            val bankDiamonds = String.format("%.1f", floor((balance.shardsInBank / 9.0) * 10) / 10.0)
+            val inventoryDiamonds = String.format("%.1f", floor((balance.shardsInInventory / 9.0) * 10) / 10.0)
+            val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: " +
+                    "<yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>$bankDiamonds<white>, <red>Inventory: <yellow>$inventoryDiamonds<white>, <red>Ender Chest: <yellow>$enderChestDiamonds<white>)."))
             return@launch
         }
         return true
