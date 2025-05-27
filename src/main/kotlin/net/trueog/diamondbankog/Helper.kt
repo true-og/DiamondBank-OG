@@ -9,6 +9,7 @@ import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.entity.Player
 import java.util.*
+import kotlin.math.floor
 
 object Helper {
     enum class PostgresFunction(val string: String) {
@@ -64,7 +65,9 @@ object Helper {
         }
 
         if (shards > playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) {
-            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$shards <aqua>${if (shards == 1) "Diamond" else "Diamonds"} <red>because you only have <yellow>${playerShards.shardsInBank + playerShards.shardsInInventory} <aqua>${if (playerShards.shardsInBank + playerShards.shardsInInventory == 1) "Diamond" else "Diamonds"}<red>."))
+            val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+            val totalDiamonds = String.format("%.1f", floor(((playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) / 9.0) * 10) / 10.0)
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot use <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <red>in a transaction because you only have <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}<red>."))
             return null
         }
 
