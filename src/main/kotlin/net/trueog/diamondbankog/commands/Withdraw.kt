@@ -57,22 +57,6 @@ class Withdraw : CommandExecutor {
                 return@launch
             }
 
-//            var amount = -1
-//            if (args[0] != "all") {
-//                try {
-//                    amount = args[0].toInt()
-//                    if (args.size == 2) {
-//                        amount += args[1].toInt()
-//                    }
-//                    if (amount < 0) {
-//                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot withdraw a negative amount."))
-//                        return@launch
-//                    }
-//                } catch (_: Exception) {
-//                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument(s)."))
-//                    return@launch
-//                }
-//            }
             var shards = -1
             if (args[0] != "all") {
                 val amount: Float
