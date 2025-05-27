@@ -161,6 +161,7 @@ object InventoryExtensions {
             }
         }
 
+        DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
         return false
     }
 
