@@ -111,6 +111,9 @@ class Pay : CommandExecutor {
                     PostgresFunction.ADD_TO_PLAYER_SHARDS, shards, ShardType.BANK,
                     null, "pay"
                 )
+                DiamondBankOG.economyDisabled = true
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
+                return@launch
             }
 
             val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)

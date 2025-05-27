@@ -129,7 +129,8 @@ class Withdraw : CommandExecutor {
                     "withdraw"
                 )
 
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to withdraw."))
+                DiamondBankOG.economyDisabled = true
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }

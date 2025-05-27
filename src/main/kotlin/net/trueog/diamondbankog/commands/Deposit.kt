@@ -112,7 +112,8 @@ class Deposit : CommandExecutor {
                     playerShards,
                     "deposit"
                 )
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
+                DiamondBankOG.economyDisabled = true
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return@launch
             }
 

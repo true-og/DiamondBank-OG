@@ -19,12 +19,9 @@ object Helper {
     }
 
     suspend fun withdrawFromPlayer(player: Player, shards: Int): Int? {
-        val somethingWentWrongMessage =
-            DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong.")
-
         val playerShards = DiamondBankOG.postgreSQL.getPlayerShards(player.uniqueId, ShardType.ALL)
         if (playerShards.shardsInBank == null || playerShards.shardsInInventory == null || playerShards.shardsInEnderChest == null) {
-            player.sendMessage(somethingWentWrongMessage)
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong."))
             return null
         }
 
@@ -41,7 +38,8 @@ object Helper {
                     PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
                     playerShards, "withdrawFromPlayer"
                 )
-                player.sendMessage(somethingWentWrongMessage)
+                DiamondBankOG.economyDisabled = true
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
 
@@ -49,7 +47,8 @@ object Helper {
                 playerShards.shardsInInventory
             )
             if (error) {
-                player.sendMessage(somethingWentWrongMessage)
+                DiamondBankOG.economyDisabled = true
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
 
@@ -57,7 +56,8 @@ object Helper {
                 playerShards.shardsInEnderChest
             )
             if (error) {
-                player.sendMessage(somethingWentWrongMessage)
+                DiamondBankOG.economyDisabled = true
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
             return playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest
@@ -80,7 +80,8 @@ object Helper {
                     PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, shards, ShardType.BANK,
                     playerShards, "withdrawFromPlayer"
                 )
-                player.sendMessage(somethingWentWrongMessage)
+                DiamondBankOG.economyDisabled = true
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
             return shards
@@ -98,7 +99,8 @@ object Helper {
                     PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
                     playerShards, "withdrawFromPlayer"
                 )
-                player.sendMessage(somethingWentWrongMessage)
+                DiamondBankOG.economyDisabled = true
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
 
@@ -106,7 +108,8 @@ object Helper {
                 shards - playerShards.shardsInBank
             )
             if (error) {
-                player.sendMessage(somethingWentWrongMessage)
+                DiamondBankOG.economyDisabled = true
+                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
             return shards
@@ -123,13 +126,15 @@ object Helper {
                 PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
                 playerShards, "withdrawFromPlayer"
             )
-            player.sendMessage(somethingWentWrongMessage)
+            DiamondBankOG.economyDisabled = true
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
 
         error = player.inventory.withdraw(playerShards.shardsInInventory)
         if (error) {
-            player.sendMessage(somethingWentWrongMessage)
+            DiamondBankOG.economyDisabled = true
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
 
@@ -137,7 +142,8 @@ object Helper {
             shards - (playerShards.shardsInBank + playerShards.shardsInInventory)
         )
         if (error) {
-            player.sendMessage(somethingWentWrongMessage)
+            DiamondBankOG.economyDisabled = true
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
 
