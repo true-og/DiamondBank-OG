@@ -71,24 +71,30 @@ class Events : Listener {
 
     @EventHandler
     fun onEntityPickupItem(event: EntityPickupItemEvent) {
-
-        val worldName = event.entity.world.name
+        val player = event.entity
+        if (player !is Player) return
+        val worldName = player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
+        val itemStack = event.item.itemStack
         val itemType = event.item.itemStack.type
-        if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX) return
-
-        if (DiamondBankOG.economyDisabled) {
+        if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX && !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(
+                Shard.namespacedKey
+            ))
+        ) {
             return
         }
 
-        if (DiamondBankOG.blockInventoryFor.contains(event.entity.uniqueId)) {
+        if (DiamondBankOG.economyDisabled) {
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot pick up any economy-related items while the economy is disabled."))
             event.isCancelled = true
             return
         }
 
-        val player = event.entity
-        if (player !is Player) return
+        if (DiamondBankOG.blockInventoryFor.contains(player.uniqueId)) {
+            event.isCancelled = true
+            return
+        }
 
         object : BukkitRunnable() {
             override fun run() {
@@ -120,10 +126,18 @@ class Events : Listener {
         val worldName = event.player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
+        val itemStack = event.itemDrop.itemStack
         val itemType = event.itemDrop.itemStack.type
-        if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX) return
+        if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX && !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(
+                Shard.namespacedKey
+            ))
+        ) {
+            return
+        }
 
         if (DiamondBankOG.economyDisabled) {
+            event.isCancelled = true
+            event.player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot drop any economy-related items while the economy is disabled."))
             return
         }
 
