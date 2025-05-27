@@ -33,6 +33,9 @@ commands:
   diamondbankreload:
     description: Reload the config
     usage: /diamondbankreload
+  diamondbankhelp:
+    description: DiamondBank help
+    usage: /diamondbankhelp
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials ]

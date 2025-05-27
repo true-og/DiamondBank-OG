@@ -19,6 +19,7 @@ class DiamondBankOG : JavaPlugin() {
             .tags(
                 TagResolver.builder()
                     .resolver(StandardTags.color())
+                    .resolver(StandardTags.decorations())
                     .resolver(StandardTags.reset())
                     .build()
             )
@@ -70,6 +71,7 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("balance")?.setExecutor(Balance())
         this.getCommand("bal")?.setExecutor(Balance())
         this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
+        this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
 
         val diamondBankAPI = DiamondBankAPI(postgreSQL)
         this.server.servicesManager.register(DiamondBankAPI::class.java, diamondBankAPI, this,
