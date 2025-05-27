@@ -92,11 +92,14 @@ class Pay : CommandExecutor {
                 shards = (split[0].toInt() * 9) + split[1].toInt()
             }
 
+            DiamondBankOG.blockInventoryFor.add(sender.uniqueId)
+
             val withdrawnAmount = Helper.withdrawFromPlayer(sender, shards) ?: return@launch
 
             if (withdrawnAmount != shards) {
                 DiamondBankOG.economyDisabled = true
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
+                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }
 
@@ -113,8 +116,11 @@ class Pay : CommandExecutor {
                 )
                 DiamondBankOG.economyDisabled = true
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
+                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }
+
+            DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
 
             val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
 

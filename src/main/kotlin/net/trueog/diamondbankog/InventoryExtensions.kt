@@ -120,7 +120,6 @@ object InventoryExtensions {
     suspend fun Inventory.withdraw(shards: Int): Boolean {
         if (this.holder !is Player) return true
         val player = this.holder as Player
-        DiamondBankOG.blockInventoryFor.add(player.uniqueId)
 
         val notRemoved = this.withdrawShards(shards)
         if (notRemoved != 0) {
@@ -161,7 +160,6 @@ object InventoryExtensions {
             }
         }
 
-        DiamondBankOG.blockInventoryFor.remove(player.uniqueId)
         return false
     }
 
