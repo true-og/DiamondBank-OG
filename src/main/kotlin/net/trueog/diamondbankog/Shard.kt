@@ -8,7 +8,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 object Shard {
-    val namespacedKey get() = NamespacedKey(DiamondBankOG.plugin, "diamondshard")
+    val namespacedKey = NamespacedKey(DiamondBankOG.plugin, "diamondshard")
 
     fun createItemStack(amount: Int): ItemStack {
         val shard = ItemStack(Material.PRISMARINE_SHARD, amount)
