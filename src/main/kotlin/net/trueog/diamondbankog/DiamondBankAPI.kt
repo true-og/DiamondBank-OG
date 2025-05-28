@@ -12,12 +12,16 @@ import java.util.concurrent.CompletableFuture
 @OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     @Suppress("unused")
-    fun addToPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+    fun addToPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean?> {
+        if (DiamondBankOG.economyDisabled) return GlobalScope.future { null }
+
         return GlobalScope.future { postgreSQL.addToPlayerShards(uuid, amount, ShardType.BANK) }
     }
 
     @Suppress("unused")
-    fun subtractFromPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+    fun subtractFromPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean?> {
+        if (DiamondBankOG.economyDisabled) return GlobalScope.future { null }
+
         return GlobalScope.future {
             postgreSQL.subtractFromPlayerShards(
                 uuid,
@@ -28,12 +32,16 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     @Suppress("unused")
-    fun getPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards> {
+    fun getPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards?> {
+        if (DiamondBankOG.economyDisabled) return GlobalScope.future { null }
+
         return GlobalScope.future { postgreSQL.getPlayerShards(uuid, type) }
     }
 
     @Suppress("unused")
-    fun withdrawFromPlayer(uuid: UUID, amount: Int): CompletableFuture<Boolean> {
+    fun withdrawFromPlayer(uuid: UUID, amount: Int): CompletableFuture<Boolean?> {
+        if (DiamondBankOG.economyDisabled) return GlobalScope.future { null }
+
         val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
         if (!player.hasPlayedBefore()) return GlobalScope.future { true }
         if (!player.isOnline) return GlobalScope.future { true }
@@ -43,7 +51,9 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     @Suppress("unused")
-    fun playerPayPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Int): CompletableFuture<Boolean> {
+    fun playerPayPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Int): CompletableFuture<Boolean?> {
+        if (DiamondBankOG.economyDisabled) return GlobalScope.future { null }
+
         val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
         if (!sender.hasPlayedBefore()) return GlobalScope.future { true }
         if (!sender.isOnline) return GlobalScope.future { true }
@@ -63,7 +73,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    Helper.PostgresFunction.ADD_TO_PLAYER_DIAMONDS, amount, ShardType.BANK,
+                    Helper.PostgresFunction.ADD_TO_PLAYER_SHARDS, amount, ShardType.BANK,
                     null, "pay"
                 )
                 true

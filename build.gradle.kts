@@ -1,14 +1,27 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.1.0"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("org.jetbrains.kotlin.jvm") version "2.1.21"
+    id("com.gradleup.shadow") version "8.3.5"
     id("maven-publish")
     id("eclipse")
 }
 
-group = "net.trueog.diamondbankog"
-version = "1.1"
+fun getGitCommitHash(): String {
+    val stdout = ByteArrayOutputStream()
+
+    exec {
+        commandLine("git", "rev-parse", "--short=10", "HEAD")
+        standardOutput = stdout
+    }
+
+    return stdout.toString().trim()
+}
 
 val apiVersion = "1.19"
+
+group = "net.trueog.diamondbankog"
+version = "$apiVersion-${getGitCommitHash()}"
 
 publishing {
     publications {

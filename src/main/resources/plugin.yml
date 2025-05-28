@@ -5,10 +5,10 @@ api-version: '${apiVersion}'
 commands:
   deposit:
     description: Deposit diamonds into your bank
-    usage: /deposit <diamonds> <shards (optional)> or /deposit all
+    usage: /deposit <diamonds> or /deposit all
   withdraw:
     description: Withdraw diamonds from your bank
-    usage: /withdraw <diamonds> <shards (optional)> or /withdraw all
+    usage: /withdraw <diamonds> or /withdraw all
   setbankbalance:
     description: Set the bank balance of a player
     usage: /setbankbalance <player name or player uuid> <shards>
@@ -17,7 +17,7 @@ commands:
     usage: /setbankbal <player name or player uuid> <shards>
   pay:
     description: Pay a player
-    usage: /pay <player name or player uuid> <diamonds> <shards (optional)>
+    usage: /pay <player name or player uuid> <diamonds>
   balancetop:
     description: Show the balancetop
     usage: /balancetop <page number (optional)>
@@ -33,6 +33,9 @@ commands:
   diamondbankreload:
     description: Reload the config
     usage: /diamondbankreload
+  diamondbankhelp:
+    description: DiamondBank help
+    usage: /diamondbankhelp
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials ]

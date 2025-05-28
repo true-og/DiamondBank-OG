@@ -14,6 +14,7 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.util.*
+import kotlin.math.floor
 
 class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
@@ -36,7 +37,7 @@ class Pay : CommandExecutor {
 
             val worldName = sender.world.name
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot use /pay <aqua>Diamonds <red>when in a minigame."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot use /pay when in a minigame."))
                 return@launch
             }
 
@@ -60,45 +61,74 @@ class Pay : CommandExecutor {
                 Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
             }
 
+            if (sender.uniqueId == receiver.uniqueId) {
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot pay yourself."))
+                return@launch
+            }
+
             if (!receiver.hasPlayedBefore()) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist."))
                 return@launch
             }
 
-            var amount = -1
+            var shards = -1
             if (args[1] != "all") {
+                val amount: Float
                 try {
-                    amount = args[1].toInt()
-                    if (amount < 0) {
-                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot pay a negative amount."))
+                    amount = args[1].toFloat()
+                    if (amount <= 0) {
+                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot pay a negative or zero amount."))
                         return@launch
                     }
                 } catch (_: Exception) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
                     return@launch
                 }
+                val split = amount.toString().split(".")
+                if (split[1].length > 1) {
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."))
+                    return@launch
+                }
+                shards = (split[0].toInt() * 9) + split[1].toInt()
             }
 
-            val withdrawnAmount = Helper.withdrawFromPlayer(sender, amount) ?: return@launch
+            DiamondBankOG.blockInventoryFor.add(sender.uniqueId)
+
+            val withdrawnAmount = Helper.withdrawFromPlayer(sender, shards) ?: return@launch
+
+            if (withdrawnAmount != shards) {
+                DiamondBankOG.economyDisabled = true
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
+                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+                return@launch
+            }
 
             val error = DiamondBankOG.postgreSQL.addToPlayerShards(
                 receiver.uniqueId,
-                amount,
+                shards,
                 ShardType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_DIAMONDS, amount, ShardType.BANK,
+                    PostgresFunction.ADD_TO_PLAYER_SHARDS, shards, ShardType.BANK,
                     null, "pay"
                 )
+                DiamondBankOG.economyDisabled = true
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
+                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+                return@launch
             }
 
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully paid <yellow>$withdrawnAmount <aqua>${if (withdrawnAmount == 1) "Diamond" else "Diamonds"} <green>to <red>${receiver.name}<green>."))
+            DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+
+            val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully paid <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"} <green>to <red>${receiver.name}<green>."))
 
             if (receiver.isOnline) {
                 val receiverPlayer = receiver.player ?: return@launch
-                receiverPlayer.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>${sender.name} has paid you <yellow>$withdrawnAmount <aqua>${if (withdrawnAmount == 1) "Diamond" else "Diamonds"}<green>."))
+                receiverPlayer.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>${sender.name} has paid you <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"}<green>."))
             }
         }
         return true

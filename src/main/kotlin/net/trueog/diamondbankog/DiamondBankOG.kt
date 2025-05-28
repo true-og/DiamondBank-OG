@@ -6,6 +6,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
 import net.trueog.diamondbankog.commands.*
 import org.bukkit.Bukkit
+import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 
@@ -18,6 +19,7 @@ class DiamondBankOG : JavaPlugin() {
             .tags(
                 TagResolver.builder()
                     .resolver(StandardTags.color())
+                    .resolver(StandardTags.decorations())
                     .resolver(StandardTags.reset())
                     .build()
             )
@@ -26,14 +28,6 @@ class DiamondBankOG : JavaPlugin() {
         val blockCommandsWithInventoryActionsFor = mutableListOf<UUID>()
         var sentryEnabled: Boolean = false
         var economyDisabled: Boolean = false
-
-        // API
-        @JvmStatic
-        @Suppress("unused")
-        fun getApi(): DiamondBankAPI? {
-            if (!isPostgreSQLInitialised()) return null
-            return DiamondBankAPI(postgreSQL)
-        }
     }
 
     override fun onEnable() {
@@ -50,7 +44,7 @@ class DiamondBankOG : JavaPlugin() {
                     options.dsn = Config.sentryDsn
                 }
                 sentryEnabled = true
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 sentryEnabled = false
                 this.logger.severe("Could not initialise Sentry. The Sentry(-compatible) DSN in your config might be invalid.")
             }
@@ -77,6 +71,11 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("balance")?.setExecutor(Balance())
         this.getCommand("bal")?.setExecutor(Balance())
         this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
+        this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
+
+        val diamondBankAPI = DiamondBankAPI(postgreSQL)
+        this.server.servicesManager.register(DiamondBankAPI::class.java, diamondBankAPI, this,
+            ServicePriority.Normal)
     }
 
     override fun onDisable() {

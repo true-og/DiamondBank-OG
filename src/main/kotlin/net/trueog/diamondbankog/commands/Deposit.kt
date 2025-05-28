@@ -8,11 +8,13 @@ import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
+import net.trueog.diamondbankog.PostgreSQL
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import kotlin.math.floor
 
 class Deposit : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
@@ -53,62 +55,76 @@ class Deposit : CommandExecutor {
                 return@launch
             }
 
-            val playerShards =
-                DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.INVENTORY)
-            if (playerShards.amountInInventory == null) {
+            val playerInventoryShards =
+                DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.INVENTORY).shardsInInventory
+            if (playerInventoryShards == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
-            if (playerShards.amountInInventory == 0) {
+            if (playerInventoryShards == 0) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."))
                 return@launch
             }
 
-            var amount = playerShards.amountInInventory
+            var shards = playerInventoryShards
             if (args[0] != "all") {
+                val amount: Float
                 try {
-                    amount = args[0].toInt()
-                    if (amount < 0) {
-                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot deposit a negative amount."))
+                    amount = args[0].toFloat()
+                    if (amount <= 0) {
+                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot deposit a negative or zero amount."))
                         return@launch
                     }
                 } catch (_: Exception) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
                     return@launch
                 }
+                val split = amount.toString().split(".")
+                if (split[1].length > 1) {
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."))
+                    return@launch
+                }
+                shards = (split[0].toInt() * 9) + split[1].toInt()
 
-                if (amount > playerShards.amountInInventory) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <red>in your inventory."))
+                if (shards > playerInventoryShards) {
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>${args[0]} <aqua>${if (args[0] == "1.0") "Diamond" else "Diamonds"} <red>in your inventory."))
                     return@launch
                 }
             }
 
-            var error = sender.inventory.withdraw(amount)
+            DiamondBankOG.blockInventoryFor.add(sender.uniqueId)
+
+            var error = sender.inventory.withdraw(shards)
             if (error) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
+                DiamondBankOG.economyDisabled = true
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
+                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }
 
             error = DiamondBankOG.postgreSQL.addToPlayerShards(
                 sender.uniqueId,
-                amount,
+                shards,
                 ShardType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_DIAMONDS,
-                    amount,
+                    PostgresFunction.ADD_TO_PLAYER_SHARDS,
+                    shards,
                     ShardType.BANK,
-                    playerShards,
+                    PostgreSQL.PlayerShards(null, playerInventoryShards, null),
                     "deposit"
                 )
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to deposit."))
+                DiamondBankOG.economyDisabled = true
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
                 return@launch
             }
 
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$amount <aqua>${if (amount == 1) "Diamond" else "Diamonds"} <green>into your bank account."))
+            DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+            val diamondsDeposited = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>${if (diamondsDeposited == "1.0") "Diamond" else "Diamonds"} <green>into your bank account."))
         }
         return true
     }
