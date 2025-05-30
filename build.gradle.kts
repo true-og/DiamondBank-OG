@@ -92,3 +92,8 @@ java {
         vendor = JvmVendorSpec.GRAAL_VM
     }
 }
+
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+}
