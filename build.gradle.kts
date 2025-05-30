@@ -38,9 +38,14 @@ tasks.named<ProcessResources>("processResources") {
         "version" to version,
         "apiVersion" to apiVersion,
     )
-
+    inputs.properties(props)
+    filteringCharset = "UTF-8"
     filesMatching("plugin.yml") {
         expand(props)
+    }
+
+    from("LICENSE") {
+        into("/")
     }
 }
 
