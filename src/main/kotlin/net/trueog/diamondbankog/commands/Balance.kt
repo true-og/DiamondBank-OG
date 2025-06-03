@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.commands
 
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
@@ -17,7 +16,7 @@ import kotlin.math.floor
 class Balance : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        GlobalScope.launch {
+        DiamondBankOG.scope.launch {
             if (DiamondBankOG.economyDisabled) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
                 return@launch
@@ -87,8 +86,13 @@ class Balance : CommandExecutor {
                 ShardType.ALL
             )
             if (balance.shardsInBank == null || balance.shardsInInventory == null || balance.shardsInEnderChest == null) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get ${
-                    if (balancePlayer.uniqueId != sender.uniqueId) "their" else "your"} balance."))
+                sender.sendMessage(
+                    DiamondBankOG.mm.deserialize(
+                        "${Config.prefix}<reset>: <red>Something went wrong while trying to get ${
+                            if (balancePlayer.uniqueId != sender.uniqueId) "their" else "your"
+                        } balance."
+                    )
+                )
                 return@launch
             }
             val totalBalance = balance.shardsInBank + balance.shardsInInventory + balance.shardsInEnderChest
@@ -96,8 +100,12 @@ class Balance : CommandExecutor {
             val bankDiamonds = String.format("%.1f", floor((balance.shardsInBank / 9.0) * 10) / 10.0)
             val inventoryDiamonds = String.format("%.1f", floor((balance.shardsInInventory / 9.0) * 10) / 10.0)
             val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: " +
-                    "<yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>$bankDiamonds<white>, <red>Inventory: <yellow>$inventoryDiamonds<white>, <red>Ender Chest: <yellow>$enderChestDiamonds<white>)."))
+            sender.sendMessage(
+                DiamondBankOG.mm.deserialize(
+                    "${Config.prefix}<reset>: <green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: " +
+                            "<yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>$bankDiamonds<white>, <red>Inventory: <yellow>$inventoryDiamonds<white>, <red>Ender Chest: <yellow>$enderChestDiamonds<white>)."
+                )
+            )
             return@launch
         }
         return true

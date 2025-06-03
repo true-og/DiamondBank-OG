@@ -143,9 +143,11 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT uuid, bank_shards, inventory_shards, ender_chest_shards " +
-                        "FROM ( SELECT *, COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) AS total_shards FROM ${Config.postgresTable} ) sub " +
-                        "ORDER BY total_shards DESC OFFSET $offset LIMIT 10")
+                connection.sendPreparedStatement(
+                    "SELECT uuid, bank_shards, inventory_shards, ender_chest_shards " +
+                            "FROM ( SELECT *, COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) AS total_shards FROM ${Config.postgresTable} ) sub " +
+                            "ORDER BY total_shards DESC OFFSET $offset LIMIT 10"
+                )
             val result = preparedStatement.await()
             val baltop = mutableMapOf<String?, Int>()
             result.rows.forEach {

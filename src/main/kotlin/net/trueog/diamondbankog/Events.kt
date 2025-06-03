@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog
 
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
@@ -30,7 +29,7 @@ class Events : Listener {
         val worldName = event.player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
-        GlobalScope.launch {
+        DiamondBankOG.scope.launch {
             val inventoryShards = event.player.inventory.countTotal()
             var error = DiamondBankOG.postgreSQL.setPlayerShards(
                 event.player.uniqueId,
@@ -98,7 +97,7 @@ class Events : Listener {
 
         object : BukkitRunnable() {
             override fun run() {
-                GlobalScope.launch {
+                DiamondBankOG.scope.launch {
                     val inventoryShards = player.inventory.countTotal()
                     val error = DiamondBankOG.postgreSQL.setPlayerShards(
                         player.uniqueId,
@@ -148,7 +147,7 @@ class Events : Listener {
 
         object : BukkitRunnable() {
             override fun run() {
-                GlobalScope.launch {
+                DiamondBankOG.scope.launch {
                     val inventoryShards = event.player.inventory.countTotal()
                     val error = DiamondBankOG.postgreSQL.setPlayerShards(
                         event.player.uniqueId,
@@ -182,7 +181,7 @@ class Events : Listener {
 
         object : BukkitRunnable() {
             override fun run() {
-                GlobalScope.launch {
+                DiamondBankOG.scope.launch {
                     val inventoryShards = event.player.inventory.countTotal()
                     var error = DiamondBankOG.postgreSQL.setPlayerShards(
                         event.player.uniqueId,

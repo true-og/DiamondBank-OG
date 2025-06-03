@@ -1,16 +1,11 @@
 package net.trueog.diamondbankog.commands
 
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.Config
-import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.Helper
+import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
-import net.trueog.diamondbankog.PostgreSQL
 import net.trueog.diamondbankog.PostgreSQL.ShardType
-import net.trueog.diamondbankog.Shard
 import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -23,7 +18,7 @@ import kotlin.math.floor
 class Withdraw : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        GlobalScope.launch {
+        DiamondBankOG.scope.launch {
             if (DiamondBankOG.economyDisabled) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
                 return@launch
@@ -109,10 +104,14 @@ class Withdraw : CommandExecutor {
             val shardAmount = shards % 9
 
             val emptySlots = sender.inventory.storageContents.filter { it == null }.size
-            val leftOverSpaceDiamonds = sender.inventory.storageContents.filterNotNull().filter { it.type == Material.DIAMOND }
-                .sumOf { 64 - it.amount }
-            val leftOverSpaceShards = sender.inventory.storageContents.filterNotNull().filter { it.type == Material.PRISMARINE_SHARD && it.persistentDataContainer.has(
-                Shard.namespacedKey) }
+            val leftOverSpaceDiamonds =
+                sender.inventory.storageContents.filterNotNull().filter { it.type == Material.DIAMOND }
+                    .sumOf { 64 - it.amount }
+            val leftOverSpaceShards = sender.inventory.storageContents.filterNotNull().filter {
+                it.type == Material.PRISMARINE_SHARD && it.persistentDataContainer.has(
+                    Shard.namespacedKey
+                )
+            }
                 .sumOf { 64 - it.amount }
 
             val emptySlotsAfterDiamonds = if (emptySlots != 0) emptySlots - ceil(diamondAmount / 64.0) else 0.0

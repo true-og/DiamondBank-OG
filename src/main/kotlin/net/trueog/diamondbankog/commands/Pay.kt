@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.commands
 
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
@@ -19,7 +18,7 @@ import kotlin.math.floor
 class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        GlobalScope.launch {
+        DiamondBankOG.scope.launch {
             if (DiamondBankOG.economyDisabled) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
                 return@launch
