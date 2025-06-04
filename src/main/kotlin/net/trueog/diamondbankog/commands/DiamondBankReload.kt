@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog.commands
 
-import io.sentry.Sentry
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.PostgreSQL
@@ -15,18 +14,6 @@ class DiamondBankReload : CommandExecutor {
             sender.sendMessage(DiamondBankOG.mm.deserialize("<red>Failed to reload the config. Check the console for more information."))
             Bukkit.getPluginManager().disablePlugin(DiamondBankOG.plugin)
             return true
-        }
-
-        if (Config.sentryEnabled) {
-            try {
-                Sentry.init { options ->
-                    options.dsn = Config.sentryDsn
-                }
-                DiamondBankOG.sentryEnabled = true
-            } catch (e: Exception) {
-                DiamondBankOG.sentryEnabled = false
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Could not initialise Sentry. The Sentry(-compatible) DSN in your config might be invalid."))
-            }
         }
 
         DiamondBankOG.postgreSQL = PostgreSQL()

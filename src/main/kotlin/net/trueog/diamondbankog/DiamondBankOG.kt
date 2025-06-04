@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog
 
-import io.sentry.Sentry
 import kotlinx.coroutines.*
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
@@ -28,7 +27,6 @@ class DiamondBankOG : JavaPlugin() {
             )
             .build()
         val transactionLock = mutableListOf<UUID>()
-        var sentryEnabled: Boolean = false
         var economyDisabled: Boolean = false
     }
 
@@ -38,18 +36,6 @@ class DiamondBankOG : JavaPlugin() {
         if (Config.load()) {
             Bukkit.getPluginManager().disablePlugin(this)
             return
-        }
-
-        if (Config.sentryEnabled) {
-            try {
-                Sentry.init { options ->
-                    options.dsn = Config.sentryDsn
-                }
-                sentryEnabled = true
-            } catch (_: Exception) {
-                sentryEnabled = false
-                this.logger.severe("Could not initialise Sentry. The Sentry(-compatible) DSN in your config might be invalid.")
-            }
         }
 
         postgreSQL = PostgreSQL()

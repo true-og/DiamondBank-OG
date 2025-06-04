@@ -2,10 +2,6 @@
 # MiniMessage-formatted prefix (https://docs.advntr.dev/minimessage/format.html)
 prefix: <dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]
 
-# ---Sentry (or compatible services like GlitchTip)---
-sentryEnabled: false
-sentryDsn: Sentry(-compatible) DSN URL
-
 # ---Postgres---
 postgresUrl: jdbc:postgresql://localhost:5432/diamond
 postgresUser: postgres
