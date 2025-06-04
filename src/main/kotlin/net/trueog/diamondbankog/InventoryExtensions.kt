@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog
 
-import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox

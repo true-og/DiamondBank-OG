@@ -1,9 +1,5 @@
 package net.trueog.diamondbankog
 
-import io.sentry.Sentry
-import io.sentry.SentryEvent
-import io.sentry.protocol.Message
-import io.sentry.protocol.User
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -12,13 +8,6 @@ import java.util.*
 import kotlin.math.floor
 
 object Helper {
-    enum class PostgresFunction(val string: String) {
-        SET_PLAYER_SHARDS("setPlayerShards"),
-        ADD_TO_PLAYER_SHARDS("addToPlayerShards"),
-        SUBTRACT_FROM_PLAYER_SHARDS("subtractFromShards"),
-        OTHER("other")
-    }
-
     suspend fun withdrawFromPlayer(player: Player, shards: Int): Int? {
         val playerShards = DiamondBankOG.postgreSQL.getPlayerShards(player.uniqueId, ShardType.ALL)
         if (playerShards.shardsInBank == null || playerShards.shardsInInventory == null || playerShards.shardsInEnderChest == null) {
