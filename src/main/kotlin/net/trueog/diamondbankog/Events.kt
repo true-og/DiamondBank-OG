@@ -90,7 +90,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.blockInventoryFor.contains(player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.contains(player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -140,7 +140,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.blockInventoryFor.contains(event.player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.contains(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }

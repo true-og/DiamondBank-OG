@@ -29,7 +29,7 @@ class Withdraw : CommandExecutor {
                 return@launch
             }
 
-            if (DiamondBankOG.blockCommandsWithInventoryActionsFor.contains(sender.uniqueId)) {
+            if (DiamondBankOG.transactionLock.contains(sender.uniqueId)) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You are currently blocked from using /withdraw."))
                 return@launch
             }
@@ -75,7 +75,7 @@ class Withdraw : CommandExecutor {
                 shards = (split[0].toInt() * 9) + split[1].toInt()
             }
 
-            DiamondBankOG.blockInventoryFor.add(sender.uniqueId)
+            DiamondBankOG.transactionLock.add(sender.uniqueId)
 
             val playerBankShards =
                 DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.BANK).shardsInBank
@@ -119,7 +119,7 @@ class Withdraw : CommandExecutor {
             if (diamondAmount > (emptySlots * 64 + leftOverSpaceDiamonds) || shardAmount > (emptySlotsAfterDiamonds * 64 + leftOverSpaceShards)) {
                 val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"}<red>."))
-                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+                DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
             }
 
@@ -140,7 +140,7 @@ class Withdraw : CommandExecutor {
 
                 DiamondBankOG.economyDisabled = true
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+                DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
             }
 
@@ -155,7 +155,7 @@ class Withdraw : CommandExecutor {
             if (inventoryShards != (playerInventoryShards + shards)) {
                 DiamondBankOG.economyDisabled = true
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+                DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
             }
 
@@ -175,11 +175,11 @@ class Withdraw : CommandExecutor {
                 )
 
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
-                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+                DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
             }
 
-            DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+            DiamondBankOG.transactionLock.remove(sender.uniqueId)
             val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <green>from your bank account."))
         }

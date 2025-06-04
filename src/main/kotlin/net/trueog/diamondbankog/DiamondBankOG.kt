@@ -27,8 +27,7 @@ class DiamondBankOG : JavaPlugin() {
                     .build()
             )
             .build()
-        val blockInventoryFor = mutableListOf<UUID>()
-        val blockCommandsWithInventoryActionsFor = mutableListOf<UUID>()
+        val transactionLock = mutableListOf<UUID>()
         var sentryEnabled: Boolean = false
         var economyDisabled: Boolean = false
     }

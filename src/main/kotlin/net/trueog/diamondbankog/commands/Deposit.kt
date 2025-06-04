@@ -29,7 +29,7 @@ class Deposit : CommandExecutor {
                 return@launch
             }
 
-            if (DiamondBankOG.blockCommandsWithInventoryActionsFor.contains(sender.uniqueId)) {
+            if (DiamondBankOG.transactionLock.contains(sender.uniqueId)) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You are currently blocked from using /deposit."))
                 return@launch
             }
@@ -91,13 +91,13 @@ class Deposit : CommandExecutor {
                 }
             }
 
-            DiamondBankOG.blockInventoryFor.add(sender.uniqueId)
+            DiamondBankOG.transactionLock.add(sender.uniqueId)
 
             var error = sender.inventory.withdraw(shards)
             if (error) {
                 DiamondBankOG.economyDisabled = true
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+                DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
             }
 
@@ -117,11 +117,11 @@ class Deposit : CommandExecutor {
                 )
                 DiamondBankOG.economyDisabled = true
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+                DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
             }
 
-            DiamondBankOG.blockInventoryFor.remove(sender.uniqueId)
+            DiamondBankOG.transactionLock.remove(sender.uniqueId)
             val diamondsDeposited = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>${if (diamondsDeposited == "1.0") "Diamond" else "Diamonds"} <green>into your bank account."))
         }
