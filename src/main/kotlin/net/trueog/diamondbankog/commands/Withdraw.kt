@@ -76,19 +76,14 @@ class Withdraw : CommandExecutor {
 
             DiamondBankOG.transactionLock.add(sender.uniqueId)
 
-            val playerBankShards =
-                DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.BANK).shardsInBank
-            if (playerBankShards == null) {
+            val playerShards = DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.ALL)
+            if (playerShards.shardsInBank == null || playerShards.shardsInInventory == null) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
                 return@launch
             }
 
-            val playerInventoryShards =
-                DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.INVENTORY).shardsInInventory
-            if (playerInventoryShards == null) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."))
-                return@launch
-            }
+            val playerBankShards = playerShards.shardsInBank
+            val playerInventoryShards = playerShards.shardsInInventory
 
             if (shards == -1) shards = playerBankShards
 
@@ -164,9 +159,8 @@ class Withdraw : CommandExecutor {
                 Helper.handleError(
                     sender.uniqueId,
                     shards,
-                    PostgreSQL.PlayerShards(playerBankShards, null, null)
+                    playerShards
                 )
-
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
                 DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
