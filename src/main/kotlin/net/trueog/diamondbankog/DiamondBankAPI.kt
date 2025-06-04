@@ -11,20 +11,20 @@ import java.util.concurrent.CompletableFuture
 @OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     @Suppress("unused")
-    fun addToPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean?> {
+    fun addToPlayerBankShards(uuid: UUID, shards: Int): CompletableFuture<Boolean?> {
         if (DiamondBankOG.economyDisabled) return DiamondBankOG.scope.future { null }
 
-        return DiamondBankOG.scope.future { postgreSQL.addToPlayerShards(uuid, amount, ShardType.BANK) }
+        return DiamondBankOG.scope.future { postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK) }
     }
 
     @Suppress("unused")
-    fun subtractFromPlayerBankShards(uuid: UUID, amount: Int): CompletableFuture<Boolean?> {
+    fun subtractFromPlayerBankShards(uuid: UUID, shards: Int): CompletableFuture<Boolean?> {
         if (DiamondBankOG.economyDisabled) return DiamondBankOG.scope.future { null }
 
         return DiamondBankOG.scope.future {
             postgreSQL.subtractFromPlayerShards(
                 uuid,
-                amount,
+                shards,
                 ShardType.BANK
             )
         }
@@ -38,7 +38,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     @Suppress("unused")
-    fun withdrawFromPlayer(uuid: UUID, amount: Int): CompletableFuture<Boolean?> {
+    fun withdrawFromPlayer(uuid: UUID, shards: Int): CompletableFuture<Boolean?> {
         if (DiamondBankOG.economyDisabled) return DiamondBankOG.scope.future { null }
 
         val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
@@ -46,11 +46,11 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         if (!player.isOnline) return DiamondBankOG.scope.future { true }
         val playerPlayer = player.player ?: return DiamondBankOG.scope.future { true }
 
-        return DiamondBankOG.scope.future { Helper.withdrawFromPlayer(playerPlayer, amount) == null }
+        return DiamondBankOG.scope.future { Helper.withdrawFromPlayer(playerPlayer, shards) == null }
     }
 
     @Suppress("unused")
-    fun playerPayPlayer(senderUuid: UUID, receiverUuid: UUID, amount: Int): CompletableFuture<Boolean?> {
+    fun playerPayPlayer(senderUuid: UUID, receiverUuid: UUID, shards: Int): CompletableFuture<Boolean?> {
         if (DiamondBankOG.economyDisabled) return DiamondBankOG.scope.future { null }
 
         val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
@@ -62,17 +62,17 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         if (!receiver.hasPlayedBefore()) return DiamondBankOG.scope.future { true }
 
         return DiamondBankOG.scope.future {
-            Helper.withdrawFromPlayer(senderPlayer, amount) ?: DiamondBankOG.scope.future { true }
+            Helper.withdrawFromPlayer(senderPlayer, shards) ?: DiamondBankOG.scope.future { true }
 
             val error = postgreSQL.addToPlayerShards(
                 receiver.uniqueId,
-                amount,
+                shards,
                 ShardType.BANK
             )
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    amount,
+                    shards,
                     null
                 )
                 true
