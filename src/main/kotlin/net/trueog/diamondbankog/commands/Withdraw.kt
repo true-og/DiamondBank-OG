@@ -3,6 +3,7 @@ package net.trueog.diamondbankog.commands
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.*
+import net.trueog.diamondbankog.Helper.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
@@ -123,13 +124,11 @@ class Withdraw : CommandExecutor {
                 ShardType.BANK
             )
             if (error) {
-                Helper.handleError(
+                handleError(
                     sender.uniqueId,
                     shards,
                     PostgreSQL.PlayerShards(playerBankShards, null, null)
                 )
-
-                DiamondBankOG.economyDisabled = true
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
@@ -144,7 +143,11 @@ class Withdraw : CommandExecutor {
 
             val inventoryShards = sender.inventory.countTotal()
             if (inventoryShards != (playerInventoryShards + shards)) {
-                DiamondBankOG.economyDisabled = true
+                handleError(
+                    sender.uniqueId,
+                    shards,
+                    playerShards
+                )
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
@@ -156,7 +159,7 @@ class Withdraw : CommandExecutor {
                 ShardType.INVENTORY
             )
             if (error) {
-                Helper.handleError(
+                handleError(
                     sender.uniqueId,
                     shards,
                     playerShards

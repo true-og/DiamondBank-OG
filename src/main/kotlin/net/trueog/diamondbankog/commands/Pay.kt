@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
+import net.trueog.diamondbankog.Helper.handleError
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -95,7 +96,11 @@ class Pay : CommandExecutor {
             val withdrawnAmount = Helper.withdrawFromPlayer(sender, shards) ?: return@launch
 
             if (withdrawnAmount != shards) {
-                DiamondBankOG.economyDisabled = true
+                handleError(
+                    sender.uniqueId,
+                    shards,
+                    null
+                )
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
@@ -107,7 +112,7 @@ class Pay : CommandExecutor {
                 ShardType.BANK
             )
             if (error) {
-                Helper.handleError(
+                handleError(
                     sender.uniqueId,
                     shards,
                     null

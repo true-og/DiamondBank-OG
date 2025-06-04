@@ -94,7 +94,11 @@ class Deposit : CommandExecutor {
 
             var error = sender.inventory.withdraw(shards)
             if (error) {
-                DiamondBankOG.economyDisabled = true
+                Helper.handleError(
+                    sender.uniqueId,
+                    shards,
+                    PostgreSQL.PlayerShards(null, playerInventoryShards, null)
+                )
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch

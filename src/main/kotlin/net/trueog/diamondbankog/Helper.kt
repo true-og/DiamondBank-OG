@@ -49,7 +49,11 @@ object Helper {
                 playerShards.shardsInEnderChest
             )
             if (error) {
-                DiamondBankOG.economyDisabled = true
+                handleError(
+                    player.uniqueId,
+                    shards,
+                    playerShards
+                )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -96,7 +100,6 @@ object Helper {
                     shards,
                     playerShards
                 )
-                DiamondBankOG.economyDisabled = true
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -105,7 +108,11 @@ object Helper {
                 shards - playerShards.shardsInBank
             )
             if (error) {
-                DiamondBankOG.economyDisabled = true
+                handleError(
+                    player.uniqueId,
+                    shards,
+                    playerShards
+                )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -129,7 +136,11 @@ object Helper {
 
         error = player.inventory.withdraw(playerShards.shardsInInventory)
         if (error) {
-            DiamondBankOG.economyDisabled = true
+            handleError(
+                player.uniqueId,
+                shards,
+                playerShards
+            )
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
@@ -138,7 +149,11 @@ object Helper {
             shards - (playerShards.shardsInBank + playerShards.shardsInInventory)
         )
         if (error) {
-            DiamondBankOG.economyDisabled = true
+            handleError(
+                player.uniqueId,
+                shards,
+                playerShards
+            )
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
