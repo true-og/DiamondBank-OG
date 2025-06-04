@@ -175,6 +175,7 @@ object Helper {
 
         throw EconomyException(
             """
+
             Player UUID: $uuid
             Expected Mutated Shards = $expectedMutatedShards${
                 if (playerShards != null) {
