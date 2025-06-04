@@ -23,14 +23,12 @@ class PostgreSQL {
             pool =
                 PostgreSQLConnectionBuilder.createConnectionPool("${Config.postgresUrl}?user=${Config.postgresUser}&password=${Config.postgresPassword}")
             val createTable =
-                pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid TEXT, bank_shards integer, inventory_shards integer, ender_chest_shards integer, unique(uuid))")
+                pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards integer, inventory_shards integer, ender_chest_shards integer, total_shards INTEGER GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)")
             createTable.join()
 
-            for (column in arrayOf("uuid", "bank_shards", "inventory_shards", "ender_chest_shards")) {
-                val createIndex =
-                    pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_$column ON ${Config.postgresTable}($column)")
-                createIndex.join()
-            }
+            val createTotalShardsIndex =
+                pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_total_shards ON ${Config.postgresTable}(total_shards DESC)")
+            createTotalShardsIndex.join()
         } catch (_: Exception) {
             DiamondBankOG.economyDisabled = true
             DiamondBankOG.plugin.logger.severe("ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?")
@@ -46,7 +44,7 @@ class PostgreSQL {
             val connection = pool.asSuspending.connect()
 
             val preparedStatement =
-                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, ${type.string}) VALUES('$uuid', $shards) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}")
+                connection.sendPreparedStatement("INSERT INTO ${Config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}", listOf(uuid, shards))
             preparedStatement.await()
         } catch (_: Exception) {
             return true
@@ -91,7 +89,7 @@ class PostgreSQL {
             val connection = pool.asSuspending.connect()
 
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT ${type.string} FROM ${Config.postgresTable} WHERE uuid = '$uuid' LIMIT 1")
+                connection.sendPreparedStatement("SELECT ${type.string} FROM ${Config.postgresTable} WHERE uuid = ? LIMIT 1", listOf(uuid))
             val result = preparedStatement.await()
 
             if (result.rows.isNotEmpty()) {
@@ -145,9 +143,8 @@ class PostgreSQL {
             val preparedStatement =
                 connection.sendPreparedStatement(
                     "SELECT uuid, bank_shards, inventory_shards, ender_chest_shards " +
-                            "FROM ( SELECT *, COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) AS total_shards FROM ${Config.postgresTable} ) sub " +
-                            "ORDER BY total_shards DESC OFFSET $offset LIMIT 10"
-                )
+                            "FROM ${Config.postgresTable} " +
+                            "ORDER BY total_shards DESC OFFSET ? LIMIT 10", listOf(offset))
             val result = preparedStatement.await()
             val baltop = mutableMapOf<String?, Int>()
             result.rows.forEach {
@@ -162,9 +159,7 @@ class PostgreSQL {
                     rowData.columns[3] as Int
                 } else 0
 
-                val player = Bukkit.getPlayer(UUID.fromString(rowData.columns[0] as String)) ?: Bukkit.getOfflinePlayer(
-                    UUID.fromString(rowData.columns[0] as String)
-                )
+                val player = Bukkit.getPlayer(rowData.columns[0] as UUID) ?: Bukkit.getOfflinePlayer(rowData.columns[0] as UUID)
                 baltop[player.name] = bankDiamonds + inventoryDiamonds + enderChestDiamonds
             }
             return baltop
