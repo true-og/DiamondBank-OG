@@ -78,7 +78,6 @@ object Helper {
                     shards,
                     playerShards
                 )
-                DiamondBankOG.economyDisabled = true
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -124,7 +123,6 @@ object Helper {
                 shards,
                 playerShards
             )
-            DiamondBankOG.economyDisabled = true
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
