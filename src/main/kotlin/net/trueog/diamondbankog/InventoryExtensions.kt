@@ -129,9 +129,7 @@ object InventoryExtensions {
                 if (blocksNotRemoved != 0) {
                     Helper.handleError(
                         player.uniqueId,
-                        PostgresFunction.OTHER,
                         shards,
-                        ShardType.INVENTORY,
                         null
                     )
                     return true
@@ -148,9 +146,7 @@ object InventoryExtensions {
         if (error) {
             Helper.handleError(
                 player.uniqueId,
-                PostgresFunction.SET_PLAYER_SHARDS,
-                inventoryShards,
-                ShardType.INVENTORY,
+                shards,
                 null
             )
             if (this.type == InventoryType.PLAYER) {

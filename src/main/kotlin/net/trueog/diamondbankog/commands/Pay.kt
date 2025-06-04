@@ -110,10 +110,9 @@ class Pay : CommandExecutor {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_SHARDS, shards, ShardType.BANK,
+                    shards,
                     null
                 )
-                DiamondBankOG.economyDisabled = true
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch

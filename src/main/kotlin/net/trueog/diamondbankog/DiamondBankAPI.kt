@@ -72,7 +72,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    Helper.PostgresFunction.ADD_TO_PLAYER_SHARDS, amount, ShardType.BANK,
+                    amount,
                     null
                 )
                 true

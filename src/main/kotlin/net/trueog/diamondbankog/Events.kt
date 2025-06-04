@@ -39,9 +39,7 @@ class Events : Listener {
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
-                    PostgresFunction.SET_PLAYER_SHARDS,
                     inventoryShards,
-                    ShardType.INVENTORY,
                     null
                 )
                 return@launch
@@ -56,9 +54,7 @@ class Events : Listener {
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
-                    PostgresFunction.SET_PLAYER_SHARDS,
                     enderChestDiamonds,
-                    ShardType.ENDER_CHEST,
                     null
                 )
                 return@launch
@@ -105,9 +101,7 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             player.uniqueId,
-                            PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
-                            ShardType.INVENTORY,
                             null
                         )
                         return@launch
@@ -154,9 +148,7 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
-                            ShardType.INVENTORY,
                             null
                         )
                         return@launch
@@ -187,9 +179,7 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
-                            ShardType.INVENTORY,
                             null
                         )
                         return@launch
@@ -205,9 +195,7 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_SHARDS,
                             enderChestShards,
-                            ShardType.ENDER_CHEST,
                             null
                         )
                         return@launch

@@ -131,9 +131,7 @@ class Withdraw : CommandExecutor {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS,
                     shards,
-                    ShardType.BANK,
                     PostgreSQL.PlayerShards(playerBankShards, null, null)
                 )
 
@@ -166,9 +164,7 @@ class Withdraw : CommandExecutor {
             if (error) {
                 Helper.handleError(
                     sender.uniqueId,
-                    PostgresFunction.ADD_TO_PLAYER_SHARDS,
                     shards,
-                    ShardType.INVENTORY,
                     PostgreSQL.PlayerShards(playerBankShards, null, null)
                 )
 

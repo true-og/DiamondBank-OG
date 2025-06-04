@@ -36,10 +36,9 @@ object Helper {
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
+                    shards,
                     playerShards
                 )
-                DiamondBankOG.economyDisabled = true
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -48,7 +47,11 @@ object Helper {
                 playerShards.shardsInInventory
             )
             if (error) {
-                DiamondBankOG.economyDisabled = true
+                handleError(
+                    player.uniqueId,
+                    shards,
+                    playerShards
+                )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -83,7 +86,7 @@ object Helper {
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, shards, ShardType.BANK,
+                    shards,
                     playerShards
                 )
                 DiamondBankOG.economyDisabled = true
@@ -102,7 +105,7 @@ object Helper {
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
+                    shards,
                     playerShards
                 )
                 DiamondBankOG.economyDisabled = true
@@ -129,7 +132,7 @@ object Helper {
         if (error) {
             handleError(
                 player.uniqueId,
-                PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
+                shards,
                 playerShards
             )
             DiamondBankOG.economyDisabled = true
@@ -163,9 +166,7 @@ object Helper {
      */
     fun handleError(
         uuid: UUID,
-        function: PostgresFunction,
-        shards: Int,
-        diamondType: ShardType,
+        expectedMutatedShards: Int,
         playerShards: PlayerShards?
     ) {
         DiamondBankOG.economyDisabled = true
@@ -173,17 +174,17 @@ object Helper {
         throw EconomyException(
             """
             Player UUID: $uuid
-            Function: ${function.string}(amount = $shards, type = $diamondType)${
+            Expected Mutated Shards = $expectedMutatedShards${
                 if (playerShards != null) {
-                    if (playerShards.shardsInBank != null) "Bank Balance: ${playerShards.shardsInBank}" else ""
+                    if (playerShards.shardsInBank != null) "Player Bank Balance: ${playerShards.shardsInBank}" else ""
                 } else ""
             }${
                 if (playerShards != null) {
-                    if (playerShards.shardsInInventory != null) "Inventory Balance: ${playerShards.shardsInInventory}" else ""
+                    if (playerShards.shardsInInventory != null) "Player Inventory Balance: ${playerShards.shardsInInventory}" else ""
                 } else ""
             }${
                 if (playerShards != null) {
-                    if (playerShards.shardsInEnderChest != null) "Ender Chest Balance: ${playerShards.shardsInEnderChest}" else ""
+                    if (playerShards.shardsInEnderChest != null) "Player Ender Chest Balance: ${playerShards.shardsInEnderChest}" else ""
                 } else ""
             }
         """.trimIndent()
