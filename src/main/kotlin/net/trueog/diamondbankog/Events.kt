@@ -42,8 +42,7 @@ class Events : Listener {
                     PostgresFunction.SET_PLAYER_SHARDS,
                     inventoryShards,
                     ShardType.INVENTORY,
-                    null,
-                    "onPlayerJoin"
+                    null
                 )
                 return@launch
             }
@@ -60,8 +59,7 @@ class Events : Listener {
                     PostgresFunction.SET_PLAYER_SHARDS,
                     enderChestDiamonds,
                     ShardType.ENDER_CHEST,
-                    null,
-                    "onPlayerJoin"
+                    null
                 )
                 return@launch
             }
@@ -110,8 +108,7 @@ class Events : Listener {
                             PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
                             ShardType.INVENTORY,
-                            null,
-                            "onEntityPickupItem"
+                            null
                         )
                         return@launch
                     }
@@ -160,8 +157,7 @@ class Events : Listener {
                             PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
                             ShardType.INVENTORY,
-                            null,
-                            "onPlayerDropItem"
+                            null
                         )
                         return@launch
                     }
@@ -194,8 +190,7 @@ class Events : Listener {
                             PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
                             ShardType.INVENTORY,
-                            null,
-                            "onPlayerJoin"
+                            null
                         )
                         return@launch
                     }
@@ -213,8 +208,7 @@ class Events : Listener {
                             PostgresFunction.SET_PLAYER_SHARDS,
                             enderChestShards,
                             ShardType.ENDER_CHEST,
-                            null,
-                            "onInventoryClose"
+                            null
                         )
                         return@launch
                     }

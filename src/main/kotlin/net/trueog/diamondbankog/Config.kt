@@ -13,6 +13,9 @@ object Config {
     lateinit var postgresPassword: String
     lateinit var postgresTable: String
 
+    /**
+     * @return True if failed
+     */
     fun load(): Boolean {
         val file = File(DiamondBankOG.plugin.dataFolder, "config.yml")
         if (!file.exists()) {

@@ -134,8 +134,7 @@ class Withdraw : CommandExecutor {
                     PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS,
                     shards,
                     ShardType.BANK,
-                    PostgreSQL.PlayerShards(playerBankShards, null, null),
-                    "withdraw"
+                    PostgreSQL.PlayerShards(playerBankShards, null, null)
                 )
 
                 DiamondBankOG.economyDisabled = true
@@ -170,8 +169,7 @@ class Withdraw : CommandExecutor {
                     PostgresFunction.ADD_TO_PLAYER_SHARDS,
                     shards,
                     ShardType.INVENTORY,
-                    PostgreSQL.PlayerShards(playerBankShards, null, null),
-                    "withdraw"
+                    PostgreSQL.PlayerShards(playerBankShards, null, null)
                 )
 
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
