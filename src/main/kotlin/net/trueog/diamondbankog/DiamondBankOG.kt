@@ -1,6 +1,6 @@
 package net.trueog.diamondbankog
 
-import io.sentry.Sentry
+import kotlinx.coroutines.*
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
@@ -12,6 +12,8 @@ import java.util.*
 
 class DiamondBankOG : JavaPlugin() {
     companion object {
+        val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
         lateinit var plugin: DiamondBankOG
         lateinit var postgreSQL: PostgreSQL
         fun isPostgreSQLInitialised() = ::postgreSQL.isInitialized
@@ -24,9 +26,7 @@ class DiamondBankOG : JavaPlugin() {
                     .build()
             )
             .build()
-        val blockInventoryFor = mutableListOf<UUID>()
-        val blockCommandsWithInventoryActionsFor = mutableListOf<UUID>()
-        var sentryEnabled: Boolean = false
+        val transactionLock = mutableListOf<UUID>()
         var economyDisabled: Boolean = false
     }
 
@@ -36,18 +36,6 @@ class DiamondBankOG : JavaPlugin() {
         if (Config.load()) {
             Bukkit.getPluginManager().disablePlugin(this)
             return
-        }
-
-        if (Config.sentryEnabled) {
-            try {
-                Sentry.init { options ->
-                    options.dsn = Config.sentryDsn
-                }
-                sentryEnabled = true
-            } catch (_: Exception) {
-                sentryEnabled = false
-                this.logger.severe("Could not initialise Sentry. The Sentry(-compatible) DSN in your config might be invalid.")
-            }
         }
 
         postgreSQL = PostgreSQL()
@@ -74,11 +62,19 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
 
         val diamondBankAPI = DiamondBankAPI(postgreSQL)
-        this.server.servicesManager.register(DiamondBankAPI::class.java, diamondBankAPI, this,
-            ServicePriority.Normal)
+        this.server.servicesManager.register(
+            DiamondBankAPI::class.java, diamondBankAPI, this,
+            ServicePriority.Normal
+        )
     }
 
     override fun onDisable() {
+        scope.cancel()
+
+        runBlocking {
+            scope.coroutineContext[Job]?.join()
+        }
+
         if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
     }
 

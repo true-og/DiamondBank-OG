@@ -1,9 +1,5 @@
 package net.trueog.diamondbankog
 
-import io.sentry.Sentry
-import io.sentry.SentryEvent
-import io.sentry.protocol.Message
-import io.sentry.protocol.User
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -12,13 +8,6 @@ import java.util.*
 import kotlin.math.floor
 
 object Helper {
-    enum class PostgresFunction(val string: String) {
-        SET_PLAYER_SHARDS("setPlayerShards"),
-        ADD_TO_PLAYER_SHARDS("addToPlayerShards"),
-        SUBTRACT_FROM_PLAYER_SHARDS("subtractFromShards"),
-        OTHER("other")
-    }
-
     suspend fun withdrawFromPlayer(player: Player, shards: Int): Int? {
         val playerShards = DiamondBankOG.postgreSQL.getPlayerShards(player.uniqueId, ShardType.ALL)
         if (playerShards.shardsInBank == null || playerShards.shardsInInventory == null || playerShards.shardsInEnderChest == null) {
@@ -36,10 +25,9 @@ object Helper {
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
-                    playerShards, "withdrawFromPlayer"
+                    shards,
+                    playerShards
                 )
-                DiamondBankOG.economyDisabled = true
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -48,7 +36,11 @@ object Helper {
                 playerShards.shardsInInventory
             )
             if (error) {
-                DiamondBankOG.economyDisabled = true
+                handleError(
+                    player.uniqueId,
+                    shards,
+                    playerShards
+                )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -57,7 +49,11 @@ object Helper {
                 playerShards.shardsInEnderChest
             )
             if (error) {
-                DiamondBankOG.economyDisabled = true
+                handleError(
+                    player.uniqueId,
+                    shards,
+                    playerShards
+                )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -66,7 +62,10 @@ object Helper {
 
         if (shards > playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) {
             val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
-            val totalDiamonds = String.format("%.1f", floor(((playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) / 9.0) * 10) / 10.0)
+            val totalDiamonds = String.format(
+                "%.1f",
+                floor(((playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) / 9.0) * 10) / 10.0
+            )
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot use <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <red>in a transaction because you only have <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}<red>."))
             return null
         }
@@ -80,10 +79,9 @@ object Helper {
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, shards, ShardType.BANK,
-                    playerShards, "withdrawFromPlayer"
+                    shards,
+                    playerShards
                 )
-                DiamondBankOG.economyDisabled = true
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -99,10 +97,9 @@ object Helper {
             if (error) {
                 handleError(
                     player.uniqueId,
-                    PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
-                    playerShards, "withdrawFromPlayer"
+                    shards,
+                    playerShards
                 )
-                DiamondBankOG.economyDisabled = true
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -111,7 +108,11 @@ object Helper {
                 shards - playerShards.shardsInBank
             )
             if (error) {
-                DiamondBankOG.economyDisabled = true
+                handleError(
+                    player.uniqueId,
+                    shards,
+                    playerShards
+                )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                 return null
             }
@@ -126,17 +127,20 @@ object Helper {
         if (error) {
             handleError(
                 player.uniqueId,
-                PostgresFunction.SUBTRACT_FROM_PLAYER_SHARDS, playerShards.shardsInBank, ShardType.BANK,
-                playerShards, "withdrawFromPlayer"
+                shards,
+                playerShards
             )
-            DiamondBankOG.economyDisabled = true
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
 
         error = player.inventory.withdraw(playerShards.shardsInInventory)
         if (error) {
-            DiamondBankOG.economyDisabled = true
+            handleError(
+                player.uniqueId,
+                shards,
+                playerShards
+            )
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
@@ -145,7 +149,11 @@ object Helper {
             shards - (playerShards.shardsInBank + playerShards.shardsInInventory)
         )
         if (error) {
-            DiamondBankOG.economyDisabled = true
+            handleError(
+                player.uniqueId,
+                shards,
+                playerShards
+            )
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
             return null
         }
@@ -153,61 +161,33 @@ object Helper {
         return shards
     }
 
+    class EconomyException(message: String):  Exception(message)
+
+    /**
+     * Handles the error by throwing, implicitly disables the economy
+     */
     fun handleError(
         uuid: UUID,
-        function: PostgresFunction,
-        shards: Int,
-        diamondType: ShardType,
-        playerShards: PlayerShards?,
-        inFunction: String
+        expectedMutatedShards: Int,
+        playerShards: PlayerShards?
     ) {
         DiamondBankOG.economyDisabled = true
-        if (DiamondBankOG.sentryEnabled) {
-            val sentryUser = User()
-            sentryUser.id = uuid.toString()
 
-            val sentryEvent = SentryEvent()
-            sentryEvent.user = sentryUser
-            sentryEvent.setExtra("Function", "${function.string}(amount = $shards, type = $diamondType)")
-            if (playerShards != null) {
-                if (playerShards.shardsInBank != null) sentryEvent.setExtra(
-                    "Bank Balance",
-                    playerShards.shardsInBank
-                )
-                if (playerShards.shardsInInventory != null) sentryEvent.setExtra(
-                    "Inventory Balance",
-                    playerShards.shardsInInventory
-                )
-                if (playerShards.shardsInEnderChest != null) sentryEvent.setExtra(
-                    "Ender Chest Balance",
-                    playerShards.shardsInEnderChest
-                )
-            }
-
-            val message = Message()
-            message.message = "${function.string} failed in $inFunction"
-            sentryEvent.message = message
-
-            Sentry.captureEvent(sentryEvent)
-        }
-        DiamondBankOG.plugin.logger.severe(
+        throw EconomyException(
             """
-            ${function.string} failed in $inFunction
+
             Player UUID: $uuid
-            Function: ${function.string}(amount = $shards, type = $diamondType)
-            ${
+            Expected Mutated Shards = $expectedMutatedShards${
                 if (playerShards != null) {
-                    if (playerShards.shardsInBank != null) "Bank Balance: ${playerShards.shardsInBank}" else ""
+                    if (playerShards.shardsInBank != null) "Player Bank Balance: ${playerShards.shardsInBank}" else ""
                 } else ""
-            }
-            ${
+            }${
                 if (playerShards != null) {
-                    if (playerShards.shardsInInventory != null) "Inventory Balance: ${playerShards.shardsInInventory}" else ""
+                    if (playerShards.shardsInInventory != null) "Player Inventory Balance: ${playerShards.shardsInInventory}" else ""
                 } else ""
-            }
-            ${
+            }${
                 if (playerShards != null) {
-                    if (playerShards.shardsInEnderChest != null) "Ender Chest Balance: ${playerShards.shardsInEnderChest}" else ""
+                    if (playerShards.shardsInEnderChest != null) "Player Ender Chest Balance: ${playerShards.shardsInEnderChest}" else ""
                 } else ""
             }
         """.trimIndent()

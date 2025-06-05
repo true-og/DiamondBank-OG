@@ -1,9 +1,7 @@
 package net.trueog.diamondbankog
 
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
@@ -30,7 +28,7 @@ class Events : Listener {
         val worldName = event.player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
-        GlobalScope.launch {
+        DiamondBankOG.scope.launch {
             val inventoryShards = event.player.inventory.countTotal()
             var error = DiamondBankOG.postgreSQL.setPlayerShards(
                 event.player.uniqueId,
@@ -40,11 +38,8 @@ class Events : Listener {
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
-                    PostgresFunction.SET_PLAYER_SHARDS,
                     inventoryShards,
-                    ShardType.INVENTORY,
-                    null,
-                    "onPlayerJoin"
+                    null
                 )
                 return@launch
             }
@@ -58,11 +53,8 @@ class Events : Listener {
             if (error) {
                 Helper.handleError(
                     event.player.uniqueId,
-                    PostgresFunction.SET_PLAYER_SHARDS,
                     enderChestDiamonds,
-                    ShardType.ENDER_CHEST,
-                    null,
-                    "onPlayerJoin"
+                    null
                 )
                 return@launch
             }
@@ -91,14 +83,14 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.blockInventoryFor.contains(player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.contains(player.uniqueId)) {
             event.isCancelled = true
             return
         }
 
         object : BukkitRunnable() {
             override fun run() {
-                GlobalScope.launch {
+                DiamondBankOG.scope.launch {
                     val inventoryShards = player.inventory.countTotal()
                     val error = DiamondBankOG.postgreSQL.setPlayerShards(
                         player.uniqueId,
@@ -108,11 +100,8 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             player.uniqueId,
-                            PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
-                            ShardType.INVENTORY,
-                            null,
-                            "onEntityPickupItem"
+                            null
                         )
                         return@launch
                     }
@@ -141,14 +130,14 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.blockInventoryFor.contains(event.player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.contains(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }
 
         object : BukkitRunnable() {
             override fun run() {
-                GlobalScope.launch {
+                DiamondBankOG.scope.launch {
                     val inventoryShards = event.player.inventory.countTotal()
                     val error = DiamondBankOG.postgreSQL.setPlayerShards(
                         event.player.uniqueId,
@@ -158,11 +147,8 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
-                            ShardType.INVENTORY,
-                            null,
-                            "onPlayerDropItem"
+                            null
                         )
                         return@launch
                     }
@@ -182,7 +168,7 @@ class Events : Listener {
 
         object : BukkitRunnable() {
             override fun run() {
-                GlobalScope.launch {
+                DiamondBankOG.scope.launch {
                     val inventoryShards = event.player.inventory.countTotal()
                     var error = DiamondBankOG.postgreSQL.setPlayerShards(
                         event.player.uniqueId,
@@ -192,11 +178,8 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_SHARDS,
                             inventoryShards,
-                            ShardType.INVENTORY,
-                            null,
-                            "onPlayerJoin"
+                            null
                         )
                         return@launch
                     }
@@ -211,11 +194,8 @@ class Events : Listener {
                     if (error) {
                         Helper.handleError(
                             event.player.uniqueId,
-                            PostgresFunction.SET_PLAYER_SHARDS,
                             enderChestShards,
-                            ShardType.ENDER_CHEST,
-                            null,
-                            "onInventoryClose"
+                            null
                         )
                         return@launch
                     }

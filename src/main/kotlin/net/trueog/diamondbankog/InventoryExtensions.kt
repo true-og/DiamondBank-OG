@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog
 
-import net.trueog.diamondbankog.Helper.PostgresFunction
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
@@ -129,11 +128,8 @@ object InventoryExtensions {
                 if (blocksNotRemoved != 0) {
                     Helper.handleError(
                         player.uniqueId,
-                        PostgresFunction.OTHER,
                         shards,
-                        ShardType.INVENTORY,
-                        null,
-                        "Inventory.withdraw"
+                        null
                     )
                     return true
                 }
@@ -149,11 +145,8 @@ object InventoryExtensions {
         if (error) {
             Helper.handleError(
                 player.uniqueId,
-                PostgresFunction.SET_PLAYER_SHARDS,
-                inventoryShards,
-                ShardType.INVENTORY,
-                null,
-                "Inventory.withdraw"
+                shards,
+                null
             )
             if (this.type == InventoryType.PLAYER) {
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))

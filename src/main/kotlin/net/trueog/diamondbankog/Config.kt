@@ -2,17 +2,17 @@ package net.trueog.diamondbankog
 
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
-import kotlin.properties.Delegates
 
 object Config {
     lateinit var prefix: String
-    var sentryEnabled by Delegates.notNull<Boolean>()
-    lateinit var sentryDsn: String
     lateinit var postgresUrl: String
     lateinit var postgresUser: String
     lateinit var postgresPassword: String
     lateinit var postgresTable: String
 
+    /**
+     * @return True if failed
+     */
     fun load(): Boolean {
         val file = File(DiamondBankOG.plugin.dataFolder, "config.yml")
         if (!file.exists()) {
@@ -25,20 +25,6 @@ object Config {
             prefix = config.get("prefix") as String
         } catch (_: Exception) {
             DiamondBankOG.plugin.logger.severe("Failed to parse config option \"prefix\" as a string")
-            return true
-        }
-
-        try {
-            sentryEnabled = config.get("sentryEnabled") as Boolean
-        } catch (_: Exception) {
-            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"sentryEnabled\" as a boolean")
-            return true
-        }
-
-        try {
-            sentryDsn = config.get("sentryDsn") as String
-        } catch (_: Exception) {
-            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"sentryDsn\" as a string")
             return true
         }
 
