@@ -2,7 +2,7 @@ import java.io.BufferedReader
 
 plugins {
     kotlin("jvm") version "2.1.21"
-    id("com.gradleup.shadow") version "8.3.5"
+    id("com.gradleup.shadow") version "8.3.6"
     eclipse
 }
 
@@ -25,6 +25,7 @@ version = "$apiVersion-$commitHash"
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
     maven {
         url = uri("https://repo.purpurmc.org/snapshots")
     }
@@ -42,7 +43,7 @@ dependencies {
 }
 
 tasks.build {
-    dependsOn("shadowJar")
+    dependsOn(tasks.shadowJar)
 }
 
 tasks.jar {
@@ -54,9 +55,8 @@ tasks.shadowJar {
     minimize()
 }
 
-val targetJavaVersion = 17
 kotlin {
-    jvmToolchain(targetJavaVersion)
+    jvmToolchain(17)
 }
 
 tasks.named<ProcessResources>("processResources") {
@@ -77,7 +77,7 @@ tasks.named<ProcessResources>("processResources") {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+        languageVersion = JavaLanguageVersion.of(17)
         vendor = JvmVendorSpec.GRAAL_VM
     }
 }
