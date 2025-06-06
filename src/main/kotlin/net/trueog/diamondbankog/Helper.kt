@@ -161,7 +161,7 @@ object Helper {
         return shards
     }
 
-    class EconomyException(message: String):  Exception(message)
+    class EconomyException(message: String) : Exception(message)
 
     /**
      * Handles the error by throwing, implicitly disables the economy

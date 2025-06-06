@@ -2,7 +2,6 @@ package net.trueog.diamondbankog
 
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.PostgreSQL.ShardType
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
 import org.bukkit.entity.Player
