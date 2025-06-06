@@ -92,6 +92,7 @@ class Withdraw : CommandExecutor {
                 val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                 val bankDiamonds = String.format("%.1f", floor((playerBankShards / 9.0) * 10) / 10.0)
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>$bankDiamonds <aqua>${if (bankDiamonds == "1.0") "Diamond" else "Diamonds"}<red>."))
+                DiamondBankOG.transactionLock.remove(sender.uniqueId)
                 return@launch
             }
 
