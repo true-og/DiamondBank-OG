@@ -60,8 +60,6 @@ object InventoryExtensions {
     private suspend fun Inventory.withdrawDiamondBlocks(shards: Int, player: Player? = null): Int {
         val blocksNeeded = ceil(shards / 81.0).toInt()
         val remainder = shards % 81
-        println(shards)
-        println(remainder)
         val change = if (remainder == 0) 0 else 81 - remainder
         val diamondChange = floor(change / 9.0).toInt()
         val shardChange = change % 9
@@ -79,9 +77,6 @@ object InventoryExtensions {
             }
             return 0
         }
-
-        println(removeMap[0]!!.amount)
-        println(change)
 
         return removeMap[0]!!.amount * 9 * 9 - change
     }
@@ -148,7 +143,7 @@ object InventoryExtensions {
     }
 
     suspend fun Inventory.withdraw(shards: Int): Boolean {
-        if (this.holder !is Player && this.type != InventoryType.SHULKER_BOX) return true
+        if (this.holder !is Player) return true
         val player = this.holder as Player
 
         val shardsNotRemoved = this.withdrawShards(shards)
@@ -163,7 +158,7 @@ object InventoryExtensions {
                         val error = blockState.inventory.shulkerWithdraw(shardsNotRemovedBlocks, player)
                         blockStateMeta.blockState = blockState
                         it.itemMeta = blockStateMeta
-                        return error
+                        error
                     }
 
                     if (error) {
@@ -179,29 +174,29 @@ object InventoryExtensions {
         }
 
         if (this.type == InventoryType.PLAYER) {
-            Bukkit.getScheduler().runTask(DiamondBankOG.plugin, Runnable {
-                object : BukkitRunnable() {
-                    override fun run() {
-                        DiamondBankOG.scope.launch {
-                            val inventoryShards = player.inventory.countTotal()
-                            val error = DiamondBankOG.postgreSQL.setPlayerShards(
+            // Double transaction lock so the lock only gets released when both the original function and the runnable have exited
+            DiamondBankOG.transactionLock.add(player.uniqueId)
+            object : BukkitRunnable() {
+                override fun run() {
+                    DiamondBankOG.scope.launch {
+                        val inventoryShards = player.inventory.countTotal()
+                        val error = DiamondBankOG.postgreSQL.setPlayerShards(
+                            player.uniqueId,
+                            inventoryShards,
+                            ShardType.INVENTORY
+                        )
+                        if (error) {
+                            Helper.handleError(
                                 player.uniqueId,
-                                inventoryShards,
-                                ShardType.INVENTORY
+                                shards,
+                                null
                             )
-                            player.sendMessage("recounted! $inventoryShards")
-                            if (error) {
-                                Helper.handleError(
-                                    player.uniqueId,
-                                    shards,
-                                    null
-                                )
-                                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
-                            }
+                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
                         }
+                        DiamondBankOG.transactionLock.remove(player.uniqueId)
                     }
-                }.runTaskLater(DiamondBankOG.plugin, 1L)
-            })
+                }
+            }.runTaskLater(DiamondBankOG.plugin, 1L)
         }
 
         return false
