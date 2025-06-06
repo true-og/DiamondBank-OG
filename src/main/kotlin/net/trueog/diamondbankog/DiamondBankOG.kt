@@ -61,6 +61,9 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
         this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
 
+        this.getCommand("enableeconomy")?.setExecutor(EnableEconomy())
+        this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
+
         val diamondBankAPI = DiamondBankAPI(postgreSQL)
         this.server.servicesManager.register(
             DiamondBankAPI::class.java, diamondBankAPI, this,
