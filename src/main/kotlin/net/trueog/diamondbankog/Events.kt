@@ -9,7 +9,9 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityPickupItemEvent
+import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerDropItemEvent
@@ -18,10 +20,10 @@ import org.bukkit.scheduler.BukkitRunnable
 
 @OptIn(DelicateCoroutinesApi::class)
 class Events : Listener {
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (DiamondBankOG.economyDisabled) {
-            event.player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
+            event.player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."))
             return
         }
 
@@ -61,7 +63,7 @@ class Events : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onEntityPickupItem(event: EntityPickupItemEvent) {
         val player = event.entity
         if (player !is Player) return
@@ -69,7 +71,7 @@ class Events : Listener {
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
         val itemStack = event.item.itemStack
-        val itemType = event.item.itemStack.type
+        val itemType = itemStack.type
         if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX && !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(
                 Shard.namespacedKey
             ))
@@ -83,7 +85,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.contains(player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.isLocked(player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -110,13 +112,13 @@ class Events : Listener {
         }.runTaskLater(DiamondBankOG.plugin, 1)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
         val worldName = event.player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
         val itemStack = event.itemDrop.itemStack
-        val itemType = event.itemDrop.itemStack.type
+        val itemType = itemStack.type
         if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX && !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(
                 Shard.namespacedKey
             ))
@@ -130,7 +132,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.contains(event.player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -157,9 +159,64 @@ class Events : Listener {
         }.runTaskLater(DiamondBankOG.plugin, 1)
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onInventoryMoveItem(event: InventoryClickEvent) {
+        val player = event.whoClicked
+        if (player !is Player) return
+        val worldName = player.world.name
+        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+
+        if (event.inventory.type == InventoryType.CRAFTING) return
+
+        val itemStack = event.currentItem
+        if (itemStack == null) return
+        val itemType = itemStack.type
+
+        if (itemType != Material.DIAMOND && itemType != Material.DIAMOND_BLOCK && itemType != Material.SHULKER_BOX && !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(
+                Shard.namespacedKey
+            ))
+        ) {
+            return
+        }
+
+        if (DiamondBankOG.economyDisabled) {
+            event.isCancelled = true
+            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot move any economy-related items while the economy is disabled."))
+            return
+        }
+
+        if (DiamondBankOG.transactionLock.isLocked(player.uniqueId)) {
+            event.isCancelled = true
+            return
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onBlockPlace(event: BlockPlaceEvent) {
+        val worldName = event.player.world.name
+        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+
+        if (event.block.type != Material.DIAMOND_BLOCK && event.block.type != Material.SHULKER_BOX) return
+
+        if (DiamondBankOG.economyDisabled) {
+            event.isCancelled = true
+            event.player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot place any economy-related items while the economy is disabled."))
+            return
+        }
+
+        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
+            event.isCancelled = true
+            return
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     fun onInventoryClose(event: InventoryCloseEvent) {
         if (DiamondBankOG.economyDisabled) {
+            return
+        }
+
+        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
             return
         }
 

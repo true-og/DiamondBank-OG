@@ -36,6 +36,12 @@ commands:
   diamondbankhelp:
     description: DiamondBank help
     usage: /diamondbankhelp
+  enableeconomy:
+    description: Enable the economy
+    usage: /enableeconomy
+  disableeconomy:
+    description: Disable the economy
+    usage: /disableeconomy
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials ]

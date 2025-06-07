@@ -7,6 +7,7 @@ import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.handleError
 import net.trueog.diamondbankog.PostgreSQL.ShardType
+import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -18,19 +19,14 @@ import kotlin.math.floor
 class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        DiamondBankOG.scope.launch {
+        DiamondBankOG.scope.launch launch@{
             if (DiamondBankOG.economyDisabled) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."))
                 return@launch
             }
 
             if (sender !is Player) {
                 sender.sendMessage("You can only execute this command as a player.")
-                return@launch
-            }
-
-            if (DiamondBankOG.transactionLock.contains(sender.uniqueId)) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You are currently blocked from using /pay."))
                 return@launch
             }
 
@@ -91,38 +87,51 @@ class Pay : CommandExecutor {
                 shards = (split[0].toInt() * 9) + split[1].toInt()
             }
 
-            DiamondBankOG.transactionLock.add(sender.uniqueId)
+            when (val result = DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
+                val notRemoved = Helper.withdrawFromPlayer(sender, shards)
+                if (notRemoved != 0) {
+                    if (notRemoved <= -1) {
+                        handleError(
+                            sender.uniqueId,
+                            shards,
+                            null
+                        )
+                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
+                        return@tryWithLockSuspend true
+                    }
+                    val notRemovedDiamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+                    shards -= notRemoved
+                    val diamondsContinuing = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <#FFA500>Something went wrong while trying to remove <yellow>$notRemovedDiamonds <aqua>${if (notRemovedDiamonds == "1.0") "Diamond" else "Diamonds"}<#FFA500> from your inventory and/or ender chest, proceeding with <yellow>$diamondsContinuing <aqua>${if (diamondsContinuing == "1.0") "Diamond" else "Diamonds"}<#FFA500>."))
+                }
 
-            val withdrawnAmount = Helper.withdrawFromPlayer(sender, shards) ?: return@launch
-
-            if (withdrawnAmount != shards) {
-                handleError(
-                    sender.uniqueId,
+                val error = DiamondBankOG.postgreSQL.addToPlayerShards(
+                    receiver.uniqueId,
                     shards,
-                    null
+                    ShardType.BANK
                 )
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                DiamondBankOG.transactionLock.remove(sender.uniqueId)
-                return@launch
-            }
+                if (error) {
+                    handleError(
+                        sender.uniqueId,
+                        shards,
+                        null
+                    )
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
+                    return@tryWithLockSuspend true
+                }
+                false
+            }) {
+                is TransactionLock.LockResult.Acquired -> {
+                    if (result.result) {
+                        return@launch
+                    }
+                }
 
-            val error = DiamondBankOG.postgreSQL.addToPlayerShards(
-                receiver.uniqueId,
-                shards,
-                ShardType.BANK
-            )
-            if (error) {
-                handleError(
-                    sender.uniqueId,
-                    shards,
-                    null
-                )
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                DiamondBankOG.transactionLock.remove(sender.uniqueId)
-                return@launch
+                TransactionLock.LockResult.Failed -> {
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You are currently blocked from using /pay."))
+                    return@launch
+                }
             }
-
-            DiamondBankOG.transactionLock.remove(sender.uniqueId)
 
             val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
 

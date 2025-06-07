@@ -18,7 +18,7 @@ class Balance : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         DiamondBankOG.scope.launch {
             if (DiamondBankOG.economyDisabled) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled because of a severe error. Please notify a staff member."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."))
                 return@launch
             }
 
@@ -85,7 +85,7 @@ class Balance : CommandExecutor {
                 balancePlayer.uniqueId,
                 ShardType.ALL
             )
-            if (balance.shardsInBank == null || balance.shardsInInventory == null || balance.shardsInEnderChest == null) {
+            if (balance.isNeededShardTypeNull(ShardType.ALL)) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
                         "${Config.prefix}<reset>: <red>Something went wrong while trying to get ${
@@ -95,7 +95,7 @@ class Balance : CommandExecutor {
                 )
                 return@launch
             }
-            val totalBalance = balance.shardsInBank + balance.shardsInInventory + balance.shardsInEnderChest
+            val totalBalance = balance.shardsInBank!! + balance.shardsInInventory!! + balance.shardsInEnderChest!!
             val totalDiamonds = String.format("%.1f", floor((totalBalance / 9.0) * 10) / 10.0)
             val bankDiamonds = String.format("%.1f", floor((balance.shardsInBank / 9.0) * 10) / 10.0)
             val inventoryDiamonds = String.format("%.1f", floor((balance.shardsInInventory / 9.0) * 10) / 10.0)

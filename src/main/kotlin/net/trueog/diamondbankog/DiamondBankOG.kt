@@ -8,7 +8,6 @@ import net.trueog.diamondbankog.commands.*
 import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
-import java.util.*
 
 class DiamondBankOG : JavaPlugin() {
     companion object {
@@ -26,7 +25,8 @@ class DiamondBankOG : JavaPlugin() {
                     .build()
             )
             .build()
-        val transactionLock = mutableListOf<UUID>()
+
+        val transactionLock = TransactionLock()
         var economyDisabled: Boolean = false
     }
 
@@ -61,6 +61,9 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
         this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
 
+        this.getCommand("enableeconomy")?.setExecutor(EnableEconomy())
+        this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
+
         val diamondBankAPI = DiamondBankAPI(postgreSQL)
         this.server.servicesManager.register(
             DiamondBankAPI::class.java, diamondBankAPI, this,
@@ -69,6 +72,8 @@ class DiamondBankOG : JavaPlugin() {
     }
 
     override fun onDisable() {
+        transactionLock.removeAllLocks()
+
         scope.cancel()
 
         runBlocking {
