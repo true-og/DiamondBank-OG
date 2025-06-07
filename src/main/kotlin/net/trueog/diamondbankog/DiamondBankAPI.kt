@@ -148,7 +148,6 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
     /**
      * WARNING: blocking, if the player has a transaction lock applied this function will wait until its released
-     * PlayerShards is always null if DiamondBankError is not null
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.OtherException
      */
@@ -168,7 +167,6 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     /**
-     * PlayerShards is always null if DiamondBankError is not null
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
      * @throws DiamondBankException.OtherException
