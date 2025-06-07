@@ -85,7 +85,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.contains(player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.isLocked(player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -132,7 +132,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.contains(event.player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -185,7 +185,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.contains(player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.isLocked(player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -204,7 +204,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.contains(event.player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -216,7 +216,7 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.contains(event.player.uniqueId)) {
+        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
             return
         }
 

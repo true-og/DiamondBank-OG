@@ -85,7 +85,7 @@ class Balance : CommandExecutor {
                 balancePlayer.uniqueId,
                 ShardType.ALL
             )
-            if (balance.shardsInBank == null || balance.shardsInInventory == null || balance.shardsInEnderChest == null) {
+            if (balance.isNeededShardTypeNull(ShardType.ALL)) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
                         "${Config.prefix}<reset>: <red>Something went wrong while trying to get ${
@@ -95,7 +95,7 @@ class Balance : CommandExecutor {
                 )
                 return@launch
             }
-            val totalBalance = balance.shardsInBank + balance.shardsInInventory + balance.shardsInEnderChest
+            val totalBalance = balance.shardsInBank!! + balance.shardsInInventory!! + balance.shardsInEnderChest!!
             val totalDiamonds = String.format("%.1f", floor((totalBalance / 9.0) * 10) / 10.0)
             val bankDiamonds = String.format("%.1f", floor((balance.shardsInBank / 9.0) * 10) / 10.0)
             val inventoryDiamonds = String.format("%.1f", floor((balance.shardsInInventory / 9.0) * 10) / 10.0)

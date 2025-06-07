@@ -8,16 +8,18 @@ import java.util.*
 import kotlin.math.floor
 
 object Helper {
-    suspend fun withdrawFromPlayer(player: Player, shards: Int): Int? {
+    /**
+     * @return The amount of not removed shards, -1 if error
+     */
+    suspend fun withdrawFromPlayer(player: Player, shards: Int): Int {
         val playerShards = DiamondBankOG.postgreSQL.getPlayerShards(player.uniqueId, ShardType.ALL)
         if (playerShards.shardsInBank == null || playerShards.shardsInInventory == null || playerShards.shardsInEnderChest == null) {
-            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong."))
-            return null
+            return -1
         }
 
         // Withdraw everything
         if (shards == -1) {
-            var error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
+            val error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
                 player.uniqueId,
                 playerShards.shardsInBank,
                 ShardType.BANK
@@ -29,35 +31,17 @@ object Helper {
                     playerShards
                 )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                return null
+                return -1
             }
 
-            error = player.inventory.withdraw(
+            val notRemovedInventory = player.inventory.withdraw(
                 playerShards.shardsInInventory
             )
-            if (error) {
-                handleError(
-                    player.uniqueId,
-                    shards,
-                    playerShards
-                )
-                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                return null
-            }
 
-            error = player.enderChest.withdraw(
+            val notRemovedEnderChest = player.enderChest.withdraw(
                 playerShards.shardsInEnderChest
             )
-            if (error) {
-                handleError(
-                    player.uniqueId,
-                    shards,
-                    playerShards
-                )
-                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                return null
-            }
-            return playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest
+            return notRemovedInventory + notRemovedEnderChest
         }
 
         if (shards > playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) {
@@ -67,7 +51,7 @@ object Helper {
                 floor(((playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) / 9.0) * 10) / 10.0
             )
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot use <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <red>in a transaction because you only have <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}<red>."))
-            return null
+            return -1
         }
 
         if (shards <= playerShards.shardsInBank) {
@@ -83,13 +67,13 @@ object Helper {
                     playerShards
                 )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                return null
+                return -1
             }
-            return shards
+            return 0
         }
 
         if (shards <= playerShards.shardsInBank + playerShards.shardsInInventory) {
-            var error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
+            val error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
                 player.uniqueId,
                 playerShards.shardsInBank,
                 ShardType.BANK
@@ -101,25 +85,16 @@ object Helper {
                     playerShards
                 )
                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                return null
+                return -1
             }
 
-            error = player.inventory.withdraw(
+            val notRemoved = player.inventory.withdraw(
                 shards - playerShards.shardsInBank
             )
-            if (error) {
-                handleError(
-                    player.uniqueId,
-                    shards,
-                    playerShards
-                )
-                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-                return null
-            }
-            return shards
+            return notRemoved
         }
 
-        var error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
+        val error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(
             player.uniqueId,
             playerShards.shardsInBank,
             ShardType.BANK
@@ -131,34 +106,16 @@ object Helper {
                 playerShards
             )
             player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-            return null
+            return -1
         }
 
-        error = player.inventory.withdraw(playerShards.shardsInInventory)
-        if (error) {
-            handleError(
-                player.uniqueId,
-                shards,
-                playerShards
-            )
-            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-            return null
-        }
+        val notRemovedInventory = player.inventory.withdraw(playerShards.shardsInInventory)
 
-        error = player.enderChest.withdraw(
+        val notRemovedEnderChest = player.enderChest.withdraw(
             shards - (playerShards.shardsInBank + playerShards.shardsInInventory)
         )
-        if (error) {
-            handleError(
-                player.uniqueId,
-                shards,
-                playerShards
-            )
-            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
-            return null
-        }
 
-        return shards
+        return notRemovedInventory + notRemovedEnderChest
     }
 
     class EconomyException(message: String) : Exception(message)
@@ -179,15 +136,15 @@ object Helper {
             Player UUID: $uuid
             Expected Mutated Shards = $expectedMutatedShards${
                 if (playerShards != null) {
-                    if (playerShards.shardsInBank != null) "Player Bank Balance: ${playerShards.shardsInBank}" else ""
+                    if (playerShards.shardsInBank != -1) "Player Bank Balance: ${playerShards.shardsInBank}" else ""
                 } else ""
             }${
                 if (playerShards != null) {
-                    if (playerShards.shardsInInventory != null) "Player Inventory Balance: ${playerShards.shardsInInventory}" else ""
+                    if (playerShards.shardsInInventory != -1) "Player Inventory Balance: ${playerShards.shardsInInventory}" else ""
                 } else ""
             }${
                 if (playerShards != null) {
-                    if (playerShards.shardsInEnderChest != null) "Player Ender Chest Balance: ${playerShards.shardsInEnderChest}" else ""
+                    if (playerShards.shardsInEnderChest != -1) "Player Ender Chest Balance: ${playerShards.shardsInEnderChest}" else ""
                 } else ""
             }
         """.trimIndent()

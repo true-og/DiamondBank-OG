@@ -17,21 +17,7 @@ object InventoryExtensions {
     private fun Inventory.withdrawShards(shards: Int): Int {
         val removeMap = this.removeItem(Shard.createItemStack(shards))
         if (removeMap.isNotEmpty()) {
-            var toBeRemoved = removeMap[0]!!.amount
-
-            val itemStacks = this.contents.filterNotNull().filter { it.type == Material.SHULKER_BOX }
-            for (itemStack in itemStacks) {
-                val shulkerBlockState = (itemStack.itemMeta as BlockStateMeta)
-                val shulkerBox = shulkerBlockState.blockState as ShulkerBox
-                val shulkerRemoveMap = shulkerBox.inventory.removeItem(Shard.createItemStack(toBeRemoved))
-
-                shulkerBlockState.blockState = shulkerBox
-                itemStack.itemMeta = shulkerBlockState
-
-                toBeRemoved -= if (shulkerRemoveMap.isEmpty()) toBeRemoved else toBeRemoved - shulkerRemoveMap[0]!!.amount
-                if (toBeRemoved == 0) break
-            }
-            return toBeRemoved
+            return removeMap[0]!!.amount
         }
         return 0
     }
@@ -141,79 +127,83 @@ object InventoryExtensions {
         return 0
     }
 
-    suspend fun Inventory.withdraw(shards: Int): Boolean {
-        if (this.holder !is Player) return true
+    /**
+     * @return The amount of not removed shards, -1 if error
+     */
+    suspend fun Inventory.withdraw(shards: Int): Int {
+        if (this.holder !is Player) return -1
         val player = this.holder as Player
 
-        val shardsNotRemoved = this.withdrawShards(shards)
-        if (shardsNotRemoved != 0) {
-            val shardsNotRemovedDiamonds = this.withdrawDiamonds(shardsNotRemoved)
-            if (shardsNotRemovedDiamonds != 0) {
-                val shardsNotRemovedBlocks = this.withdrawDiamondBlocks(shardsNotRemovedDiamonds)
-                if (shardsNotRemovedBlocks != 0) {
-                    val error = this.all(Material.SHULKER_BOX).values.any {
-                        val blockStateMeta = it.itemMeta as BlockStateMeta
-                        val blockState = blockStateMeta.blockState as ShulkerBox
-                        val error = blockState.inventory.shulkerWithdraw(shardsNotRemovedBlocks, player)
-                        blockStateMeta.blockState = blockState
-                        it.itemMeta = blockStateMeta
-                        error
-                    }
+        var notRemoved = shards
 
-                    if (error) {
-                        Helper.handleError(
-                            player.uniqueId,
-                            shards,
-                            null
-                        )
-                        return true
+        notRemoved = this.withdrawShards(notRemoved)
+        if (notRemoved != 0) {
+            notRemoved = this.withdrawDiamonds(notRemoved)
+            if (notRemoved != 0) {
+                notRemoved = this.withdrawDiamondBlocks(notRemoved)
+                if (notRemoved != 0) {
+                    val shulkerBoxes = this.all(Material.SHULKER_BOX).values
+
+                    notRemoved = if (shulkerBoxes.isNotEmpty()) {
+                        this.all(Material.SHULKER_BOX).values.fold(notRemoved) { notRemovedShulkersGlobal, it ->
+                            val blockStateMeta = it.itemMeta as BlockStateMeta
+                            val blockState = blockStateMeta.blockState as ShulkerBox
+                            val notRemoved = blockState.inventory.shulkerWithdraw(notRemovedShulkersGlobal, player)
+                            blockStateMeta.blockState = blockState
+                            it.itemMeta = blockStateMeta
+                            notRemoved
+                        }
+                    } else {
+                        notRemoved
                     }
                 }
             }
         }
 
         if (this.type == InventoryType.PLAYER) {
-            // Double transaction lock so the lock only gets released when both the original function and the runnable have exited
-            DiamondBankOG.transactionLock.add(player.uniqueId)
             object : BukkitRunnable() {
                 override fun run() {
                     DiamondBankOG.scope.launch {
-                        val inventoryShards = player.inventory.countTotal()
-                        val error = DiamondBankOG.postgreSQL.setPlayerShards(
-                            player.uniqueId,
-                            inventoryShards,
-                            ShardType.INVENTORY
-                        )
-                        if (error) {
-                            Helper.handleError(
+                        DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
+                            val inventoryShards = player.inventory.countTotal()
+                            val error = DiamondBankOG.postgreSQL.setPlayerShards(
                                 player.uniqueId,
-                                shards,
-                                null
+                                inventoryShards,
+                                ShardType.INVENTORY
                             )
-                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
+                            if (error) {
+                                Helper.handleError(
+                                    player.uniqueId,
+                                    shards,
+                                    null
+                                )
+                                player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
+                            }
                         }
-                        DiamondBankOG.transactionLock.remove(player.uniqueId)
                     }
                 }
             }.runTaskLater(DiamondBankOG.plugin, 1L)
         }
 
-        return false
+        return notRemoved
     }
 
-    suspend fun Inventory.shulkerWithdraw(shards: Int, player: Player): Boolean {
+    /**
+     * @return The amount of not removed shards
+     */
+    suspend fun Inventory.shulkerWithdraw(shards: Int, player: Player): Int {
         val shardsNotRemoved = this.withdrawShards(shards)
         if (shardsNotRemoved != 0) {
             val shardsNotRemovedDiamonds = this.withdrawDiamonds(shardsNotRemoved, player)
             if (shardsNotRemovedDiamonds != 0) {
                 val shardsNotRemovedBlocks = this.withdrawDiamondBlocks(shardsNotRemovedDiamonds, player)
                 if (shardsNotRemovedBlocks != 0) {
-                    return true
+                    return shardsNotRemovedBlocks
                 }
             }
         }
 
-        return false
+        return 0
     }
 
     fun Inventory.countTotal(): Int {

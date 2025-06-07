@@ -36,8 +36,40 @@ class PostgreSQL {
         }
     }
 
-    data class PlayerShards(val shardsInBank: Int?, val shardsInInventory: Int?, val shardsInEnderChest: Int?)
+    data class PlayerShards(val shardsInBank: Int?, val shardsInInventory: Int?, val shardsInEnderChest: Int?) {
+        fun isNeededShardTypeNull(type: ShardType): Boolean {
+            when (type) {
+                ShardType.BANK -> {
+                    if (this.shardsInBank == null) {
+                        return true
+                    }
+                }
 
+                ShardType.INVENTORY -> {
+                    if (this.shardsInInventory == null) {
+                        return true
+                    }
+                }
+
+                ShardType.ENDER_CHEST -> {
+                    if (this.shardsInEnderChest == null) {
+                        return true
+                    }
+                }
+
+                ShardType.ALL -> {
+                    if (this.shardsInBank == null || this.shardsInInventory == null || this.shardsInEnderChest == null) {
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+    }
+
+    /**
+     * @return True if failed
+     */
     suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
         if (type == ShardType.ALL) return true
         try {
@@ -55,6 +87,9 @@ class PostgreSQL {
         return false
     }
 
+    /**
+     * @return True if failed
+     */
     suspend fun addToPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
         if (type == ShardType.ALL) return true
 
@@ -64,6 +99,9 @@ class PostgreSQL {
         return error
     }
 
+    /**
+     * @return True if failed
+     */
     suspend fun subtractFromPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
         if (type == ShardType.ALL) return true
 
@@ -140,6 +178,7 @@ class PostgreSQL {
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
         }
+
         return PlayerShards(bankShards, inventoryShards, enderChestShards)
     }
 
