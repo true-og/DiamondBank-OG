@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.Helper.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.command.Command
@@ -126,11 +127,13 @@ class Withdraw : CommandExecutor {
                     return@tryWithLockSuspend true
                 }
 
-                if (diamondAmount > 0) {
-                    sender.inventory.addItem(ItemStack(Material.DIAMOND, diamondAmount))
-                }
-                if (shardAmount > 0) {
-                    sender.inventory.addItem(Shard.createItemStack(shardAmount))
+                runOnMainThread {
+                    if (diamondAmount > 0) {
+                        sender.inventory.addItem(ItemStack(Material.DIAMOND, diamondAmount))
+                    }
+                    if (shardAmount > 0) {
+                        sender.inventory.addItem(Shard.createItemStack(shardAmount))
+                    }
                 }
 
                 val inventoryShards = sender.inventory.countTotal()
