@@ -4,9 +4,12 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import org.bukkit.Bukkit
+import org.bukkit.OfflinePlayer
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import java.util.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -26,20 +29,51 @@ class Balancetop : CommandExecutor {
 
             if (args == null) return@launch
             if (args.size > 1) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Please (only) optionally provide the page number."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Please (only) optionally provide the page number or the name or UUID of the player you want to see the position of."))
                 return@launch
             }
 
             var offset = 0
             var index = 1
+            var player: OfflinePlayer? = null
             if (args.size == 1) {
                 try {
                     index = args[0].toInt()
+                    offset = 10 * (index - 1)
                 } catch (_: Exception) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
+                    player = try {
+                        Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
+                    } catch (_: Exception) {
+                        Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
+                    }
+                    if (!player.hasPlayedBefore()) {
+                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist or hasn't joined this server before."))
+                        return@launch
+                    }
+                }
+            }
+
+            if (player != null) {
+                val baltopWithUuid = DiamondBankOG.postgreSQL.getBaltopWithUuid(player.uniqueId)
+                if (baltopWithUuid == null) {
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                     return@launch
                 }
-                offset = 10 * (index - 1)
+
+                var baltopMessage =
+                    "<yellow>---- <gold>Balancetop <yellow>----<reset>"
+                baltopWithUuid.first.forEach {
+                    if (it.key == null) {
+                        sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
+                        return@launch
+                    }
+
+                    val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
+                    baltopMessage += "\n<red>${baltopMessage.lines().size + baltopWithUuid.second}<reset>. ${if (it.key == player.name) "<red>" else ""}${it.key}<reset>, <yellow>$diamonds <aqua>Diamonds"
+                }
+                sender.sendMessage(DiamondBankOG.mm.deserialize(baltopMessage))
+                return@launch
+
             }
 
             val baltop = DiamondBankOG.postgreSQL.getBaltop(offset)

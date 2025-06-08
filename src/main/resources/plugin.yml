@@ -20,10 +20,10 @@ commands:
     usage: /pay <player name or player uuid> <diamonds>
   balancetop:
     description: Show the balancetop
-    usage: /balancetop <page number (optional)>
+    usage: /balancetop <page number (optional)> or /balancetop <player name or player uuid>
   baltop:
     description: Show the balancetop
-    usage: /baltop <page number (optional)>
+    usage: /baltop <page number (optional)> or /baltop <player name or player uuid>
   balance:
     description: Get your or someone else's balance
     usage: /balance or /balance <player name or player uuid>

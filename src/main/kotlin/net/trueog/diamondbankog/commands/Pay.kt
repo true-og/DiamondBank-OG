@@ -62,7 +62,7 @@ class Pay : CommandExecutor {
             }
 
             if (!receiver.hasPlayedBefore()) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist or hasn't joined this server before."))
                 return@launch
             }
 
