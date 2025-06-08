@@ -87,7 +87,15 @@ class Balancetop : CommandExecutor {
             }
 
             if (index > ceil(numberOfRows / 10.0)) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The amount of pages only goes up to and including ${ceil(numberOfRows / 10.0).toLong()}."))
+                sender.sendMessage(
+                    DiamondBankOG.mm.deserialize(
+                        "${Config.prefix}<reset>: <red>The amount of pages only goes up to and including ${
+                            ceil(
+                                numberOfRows / 10.0
+                            ).toLong()
+                        }."
+                    )
+                )
                 return@launch
             }
             var baltopMessage =
