@@ -60,16 +60,18 @@ class Balancetop : CommandExecutor {
                     return@launch
                 }
 
+                val (baltop, offset) = baltopWithUuid
+
                 var baltopMessage =
                     "<yellow>---- <gold>Balancetop <yellow>----<reset>"
-                baltopWithUuid.first.forEach {
+                baltop.forEach {
                     if (it.key == null) {
                         sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                         return@launch
                     }
 
                     val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
-                    baltopMessage += "\n<red>${baltopMessage.lines().size + baltopWithUuid.second}<reset>. ${if (it.key == player.name) "<red>" else ""}${it.key}<reset>, <yellow>$diamonds <aqua>Diamonds"
+                    baltopMessage += "\n<red>${baltopMessage.lines().size + offset}<reset>. ${if (it.key == player.name) "<red>" else ""}${it.key}<reset>, <yellow>$diamonds <aqua>Diamonds"
                 }
                 sender.sendMessage(DiamondBankOG.mm.deserialize(baltopMessage))
                 return@launch
