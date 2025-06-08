@@ -73,7 +73,6 @@ class Balancetop : CommandExecutor {
                 }
                 sender.sendMessage(DiamondBankOG.mm.deserialize(baltopMessage))
                 return@launch
-
             }
 
             val baltop = DiamondBankOG.postgreSQL.getBaltop(offset)
@@ -88,7 +87,7 @@ class Balancetop : CommandExecutor {
             }
 
             if (index > ceil(numberOfRows / 10.0)) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The amount of pages only goes up to $numberOfRows."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>The amount of pages only goes up to and including ${ceil(numberOfRows / 10.0).toLong()}."))
                 return@launch
             }
             var baltopMessage =
