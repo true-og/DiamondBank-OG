@@ -78,6 +78,8 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("enableeconomy")?.setExecutor(EnableEconomy())
         this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
 
+        Shard.createCraftingRecipes()
+
         val diamondBankAPI = DiamondBankAPI(postgreSQL)
         this.server.servicesManager.register(
             DiamondBankAPI::class.java, diamondBankAPI, this,
