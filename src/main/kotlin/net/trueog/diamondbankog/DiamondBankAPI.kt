@@ -2,6 +2,7 @@ package net.trueog.diamondbankog
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.future.future
+import net.trueog.diamondbankog.Helper.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock.LockResult
@@ -45,11 +46,18 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
     /**
      * WARNING: blocking, if the player has a transaction lock applied this function will wait until its released
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun blockingAddToPlayerBankShards(uuid: UUID, shards: Int): CompletableFuture<Unit> {
+    fun blockingAddToPlayerBankShards(
+        uuid: UUID,
+        shards: Int,
+        transactionReason: String,
+        notes: String
+    ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
         return DiamondBankOG.scope.future {
             DiamondBankOG.transactionLock.withLockSuspend(uuid) {
@@ -57,18 +65,41 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 if (error) {
                     throw DiamondBankException.OtherException
                 }
-                null
+
+                val transactionLogError = DiamondBankOG.postgreSQL.insertTransactionLog(
+                    uuid,
+                    shards,
+                    null,
+                    transactionReason,
+                    notes
+                )
+                if (transactionLogError) {
+                    handleError(
+                        uuid,
+                        shards,
+                        null,
+                        null,
+                        true
+                    )
+                }
             }
         }
     }
 
     /**
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun addToPlayerBankShards(uuid: UUID, shards: Int): CompletableFuture<Unit> {
+    fun addToPlayerBankShards(
+        uuid: UUID,
+        shards: Int,
+        transactionReason: String,
+        notes: String
+    ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -77,7 +108,23 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 if (error) {
                     throw DiamondBankException.OtherException
                 }
-                null
+
+                val transactionLogError = DiamondBankOG.postgreSQL.insertTransactionLog(
+                    uuid,
+                    shards,
+                    null,
+                    transactionReason,
+                    notes
+                )
+                if (transactionLogError) {
+                    handleError(
+                        uuid,
+                        shards,
+                        null,
+                        null,
+                        true
+                    )
+                }
             }) {
                 is LockResult.Acquired -> {
                     result.result
@@ -92,11 +139,18 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
     /**
      * WARNING: blocking, if the player has a transaction lock applied this function will wait until its released
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun blockingSubtractFromPlayerBankShards(uuid: UUID, shards: Int): CompletableFuture<Unit> {
+    fun blockingSubtractFromPlayerBankShards(
+        uuid: UUID,
+        shards: Int,
+        transactionReason: String,
+        notes: String
+    ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -109,18 +163,41 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 if (error) {
                     throw DiamondBankException.OtherException
                 }
-                null
+
+                val transactionLogError = DiamondBankOG.postgreSQL.insertTransactionLog(
+                    uuid,
+                    shards,
+                    null,
+                    transactionReason,
+                    notes
+                )
+                if (transactionLogError) {
+                    handleError(
+                        uuid,
+                        shards,
+                        null,
+                        null,
+                        true
+                    )
+                }
             }
         }
     }
 
     /**
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun subtractFromPlayerBankShards(uuid: UUID, shards: Int): CompletableFuture<Unit> {
+    fun subtractFromPlayerBankShards(
+        uuid: UUID,
+        shards: Int,
+        transactionReason: String,
+        notes: String
+    ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -133,7 +210,23 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 if (error) {
                     throw DiamondBankException.OtherException
                 }
-                null
+
+                val transactionLogError = DiamondBankOG.postgreSQL.insertTransactionLog(
+                    uuid,
+                    shards,
+                    null,
+                    transactionReason,
+                    notes
+                )
+                if (transactionLogError) {
+                    handleError(
+                        uuid,
+                        shards,
+                        null,
+                        null,
+                        true
+                    )
+                }
             }) {
                 is LockResult.Acquired -> {
                     result.result
@@ -196,13 +289,20 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
     /**
      * WARNING: blocking, if the player has a transaction lock applied this function will wait until its released
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun blockingWithdrawFromPlayer(uuid: UUID, shards: Int): CompletableFuture<Unit> {
+    fun blockingWithdrawFromPlayer(
+        uuid: UUID,
+        shards: Int,
+        transactionReason: String,
+        notes: String
+    ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -214,19 +314,37 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
                 val notRemoved = Helper.withdrawFromPlayer(playerPlayer, shards)
                 if (notRemoved != 0) {
-                    Helper.handleError(
+                    handleError(
                         uuid,
                         shards,
                         null
                     )
                     throw DiamondBankException.OtherException
                 }
-                null
+
+                val transactionLogError = DiamondBankOG.postgreSQL.insertTransactionLog(
+                    uuid,
+                    shards,
+                    null,
+                    transactionReason,
+                    notes
+                )
+                if (transactionLogError) {
+                    handleError(
+                        uuid,
+                        shards,
+                        null,
+                        null,
+                        true
+                    )
+                }
             }
         }
     }
 
     /**
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
@@ -234,7 +352,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun withdrawFromPlayer(uuid: UUID, shards: Int): CompletableFuture<Unit> {
+    fun withdrawFromPlayer(uuid: UUID, shards: Int, transactionReason: String, notes: String): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -246,14 +364,30 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
                 val notRemoved = Helper.withdrawFromPlayer(playerPlayer, shards)
                 if (notRemoved != 0) {
-                    Helper.handleError(
+                    handleError(
                         uuid,
                         shards,
                         null
                     )
                     throw DiamondBankException.OtherException
                 }
-                null
+
+                val transactionLogError = DiamondBankOG.postgreSQL.insertTransactionLog(
+                    uuid,
+                    shards,
+                    null,
+                    transactionReason,
+                    notes
+                )
+                if (transactionLogError) {
+                    handleError(
+                        uuid,
+                        shards,
+                        null,
+                        null,
+                        true
+                    )
+                }
             }) {
                 is LockResult.Acquired -> {
                     result.result
@@ -268,13 +402,21 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
     /**
      * WARNING: blocking, if the player has a transaction lock applied this function will wait until its released
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun blockingPlayerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Int): CompletableFuture<Unit> {
+    fun blockingPlayerPayPlayer(
+        payerUuid: UUID,
+        receiverUuid: UUID,
+        shards: Int,
+        transactionReason: String,
+        notes: String
+    ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -289,7 +431,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
                 val notRemoved = Helper.withdrawFromPlayer(senderPlayer, shards)
                 if (notRemoved != 0) {
-                    Helper.handleError(
+                    handleError(
                         payerUuid,
                         shards,
                         null
@@ -303,19 +445,37 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                     ShardType.BANK
                 )
                 if (error) {
-                    Helper.handleError(
+                    handleError(
                         sender.uniqueId,
                         shards,
                         null
                     )
                     throw DiamondBankException.OtherException
                 }
-                null
+
+                val transactionLogError = DiamondBankOG.postgreSQL.insertTransactionLog(
+                    payerUuid,
+                    shards,
+                    receiverUuid,
+                    transactionReason,
+                    notes
+                )
+                if (transactionLogError) {
+                    handleError(
+                        payerUuid,
+                        shards,
+                        null,
+                        receiverUuid,
+                        true
+                    )
+                }
             }
         }
     }
 
     /**
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
@@ -323,7 +483,13 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Int): CompletableFuture<Unit> {
+    fun playerPayPlayer(
+        payerUuid: UUID,
+        receiverUuid: UUID,
+        shards: Int,
+        transactionReason: String,
+        notes: String
+    ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -338,7 +504,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
 
                 val notRemoved = Helper.withdrawFromPlayer(senderPlayer, shards)
                 if (notRemoved != 0) {
-                    Helper.handleError(
+                    handleError(
                         payerUuid,
                         shards,
                         null
@@ -352,14 +518,30 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                     ShardType.BANK
                 )
                 if (error) {
-                    Helper.handleError(
+                    handleError(
                         sender.uniqueId,
                         shards,
                         null
                     )
                     throw DiamondBankException.OtherException
                 }
-                null
+
+                val transactionLogError = DiamondBankOG.postgreSQL.insertTransactionLog(
+                    payerUuid,
+                    shards,
+                    receiverUuid,
+                    transactionReason,
+                    notes
+                )
+                if (transactionLogError) {
+                    handleError(
+                        payerUuid,
+                        shards,
+                        null,
+                        receiverUuid,
+                        true
+                    )
+                }
             }) {
                 is LockResult.Acquired -> {
                     result.result

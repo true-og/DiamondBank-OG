@@ -178,6 +178,23 @@ class Withdraw : CommandExecutor {
 
             val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <green>from your bank account."))
+
+            val error = DiamondBankOG.postgreSQL.insertTransactionLog(
+                sender.uniqueId,
+                shards,
+                null,
+                "Withdraw",
+                null
+            )
+            if (error) {
+                handleError(
+                    sender.uniqueId,
+                    shards,
+                    null,
+                    null,
+                    true
+                )
+            }
         }
         return true
     }

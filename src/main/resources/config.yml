@@ -7,3 +7,5 @@ postgresUrl: jdbc:postgresql://localhost:5432/diamond
 postgresUser: postgres
 postgresPassword: postgresPassword
 postgresTable: diamond
+postgresLogTable: diamond_log
+postgresLogLimit: 500

@@ -74,7 +74,7 @@ class Balance : CommandExecutor {
                 sender
             } else {
                 if (!sender.hasPermission("diamondbank-og.balance.others")) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command in that way."))
                     return@launch
                 }
 
