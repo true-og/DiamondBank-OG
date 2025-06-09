@@ -199,7 +199,7 @@ object InventoryExtensions {
                             if (error) {
                                 Helper.handleError(
                                     player.uniqueId,
-                                    shards,
+                                    inventoryShards,
                                     null
                                 )
                                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
