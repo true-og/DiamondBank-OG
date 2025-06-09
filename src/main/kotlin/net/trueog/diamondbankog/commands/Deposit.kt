@@ -4,7 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.Helper
+import net.trueog.diamondbankog.Helper.handleError
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -86,11 +86,13 @@ class Deposit : CommandExecutor {
                 }
             }
 
+            val originalShards = shards
+
             when (val result = DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
                 val notRemoved = sender.inventory.withdraw(shards)
                 if (notRemoved != 0) {
                     if (notRemoved <= -1) {
-                        Helper.handleError(
+                        handleError(
                             sender.uniqueId,
                             shards,
                             PlayerShards(-1, playerInventoryShards, -1)
@@ -110,7 +112,7 @@ class Deposit : CommandExecutor {
                     ShardType.BANK
                 )
                 if (error) {
-                    Helper.handleError(
+                    handleError(
                         sender.uniqueId,
                         shards,
                         PlayerShards(-1, playerInventoryShards, -1)
@@ -134,6 +136,23 @@ class Deposit : CommandExecutor {
 
             val diamondsDeposited = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>${if (diamondsDeposited == "1.0") "Diamond" else "Diamonds"} <green>into your bank account."))
+
+            val error = DiamondBankOG.postgreSQL.insertTransactionLog(
+                sender.uniqueId,
+                shards,
+                null,
+                "Deposit",
+                if (shards != originalShards) "Could not withdraw $originalShards shards, continued with $shards" else null
+            )
+            if (error) {
+                handleError(
+                    sender.uniqueId,
+                    shards,
+                    null,
+                    null,
+                    true
+                )
+            }
         }
         return true
     }

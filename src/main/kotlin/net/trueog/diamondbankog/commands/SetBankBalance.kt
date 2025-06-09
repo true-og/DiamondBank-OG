@@ -4,11 +4,13 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.Helper.handleError
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 import java.util.*
 
 class SetBankBalance : CommandExecutor {
@@ -52,13 +54,30 @@ class SetBankBalance : CommandExecutor {
                 return@launch
             }
 
-            val error =
+            var error =
                 DiamondBankOG.postgreSQL.setPlayerShards(player.uniqueId, balance, ShardType.BANK)
             if (error) {
                 sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to set that player's balance."))
                 return@launch
             }
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully set the balance of <red>${player.name} <green>to <yellow>$balance <aqua>${if (balance == 1) "Shard" else "Shards"}<green>."))
+
+            error = DiamondBankOG.postgreSQL.insertTransactionLog(
+                player.uniqueId,
+                balance,
+                null,
+                "Set Bank Balance",
+                "Bank Balance set by ${if (sender is Player) "${sender.uniqueId}" else "console"}"
+            )
+            if (error) {
+                handleError(
+                    player.uniqueId,
+                    balance,
+                    null,
+                    null,
+                    true
+                )
+            }
         }
         return true
     }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.Helper.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.command.Command
@@ -126,11 +127,13 @@ class Withdraw : CommandExecutor {
                     return@tryWithLockSuspend true
                 }
 
-                if (diamondAmount > 0) {
-                    sender.inventory.addItem(ItemStack(Material.DIAMOND, diamondAmount))
-                }
-                if (shardAmount > 0) {
-                    sender.inventory.addItem(Shard.createItemStack(shardAmount))
+                runOnMainThread {
+                    if (diamondAmount > 0) {
+                        sender.inventory.addItem(ItemStack(Material.DIAMOND, diamondAmount))
+                    }
+                    if (shardAmount > 0) {
+                        sender.inventory.addItem(Shard.createItemStack(shardAmount))
+                    }
                 }
 
                 val inventoryShards = sender.inventory.countTotal()
@@ -175,6 +178,23 @@ class Withdraw : CommandExecutor {
 
             val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <green>from your bank account."))
+
+            val error = DiamondBankOG.postgreSQL.insertTransactionLog(
+                sender.uniqueId,
+                shards,
+                null,
+                "Withdraw",
+                null
+            )
+            if (error) {
+                handleError(
+                    sender.uniqueId,
+                    shards,
+                    null,
+                    null,
+                    true
+                )
+            }
         }
         return true
     }

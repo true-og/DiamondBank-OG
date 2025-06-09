@@ -62,7 +62,7 @@ class Pay : CommandExecutor {
             }
 
             if (!receiver.hasPlayedBefore()) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist or hasn't joined this server before."))
                 return@launch
             }
 
@@ -87,6 +87,8 @@ class Pay : CommandExecutor {
                 shards = (split[0].toInt() * 9) + split[1].toInt()
             }
 
+            val originalShards = shards
+
             when (val result = DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
                 val notRemoved = Helper.withdrawFromPlayer(sender, shards)
                 if (notRemoved != 0) {
@@ -94,7 +96,8 @@ class Pay : CommandExecutor {
                         handleError(
                             sender.uniqueId,
                             shards,
-                            null
+                            null,
+                            receiver.uniqueId
                         )
                         sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                         return@tryWithLockSuspend true
@@ -114,7 +117,8 @@ class Pay : CommandExecutor {
                     handleError(
                         sender.uniqueId,
                         shards,
-                        null
+                        null,
+                        receiver.uniqueId
                     )
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."))
                     return@tryWithLockSuspend true
@@ -140,6 +144,23 @@ class Pay : CommandExecutor {
             if (receiver.isOnline) {
                 val receiverPlayer = receiver.player ?: return@launch
                 receiverPlayer.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>${sender.name} has paid you <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"}<green>."))
+            }
+
+            val error = DiamondBankOG.postgreSQL.insertTransactionLog(
+                sender.uniqueId,
+                shards,
+                receiver.uniqueId,
+                "Pay",
+                if (shards != originalShards) "Could not withdraw $originalShards shards, continued with $shards" else null
+            )
+            if (error) {
+                handleError(
+                    sender.uniqueId,
+                    shards,
+                    null,
+                    receiver.uniqueId,
+                    true
+                )
             }
         }
         return true

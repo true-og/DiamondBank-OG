@@ -58,7 +58,15 @@ class Balance : CommandExecutor {
                 val bankDiamonds = String.format("%.1f", floor((balance.shardsInBank / 9.0) * 10) / 10.0)
                 val inventoryDiamonds = String.format("%.1f", floor((balance.shardsInInventory / 9.0) * 10) / 10.0)
                 val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
-                sender.sendMessage(DiamondBankOG.mm.deserialize("<green>Balance of <red>${otherPlayer.name}<green>: <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>$bankDiamonds<white>, <red>Inventory: <yellow>$inventoryDiamonds<white>, <red>Ender Chest: <yellow>$enderChestDiamonds<white>)."))
+                sender.sendMessage(
+                    DiamondBankOG.mm.deserialize(
+                        "<green>Balance of <red>${otherPlayer.name}<green>:\n" +
+                                "Bank: <yellow>$bankDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
+                                "<green>Inventory: <yellow>$inventoryDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
+                                "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
+                                "<bold><green>Total: <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}"
+                    )
+                )
                 return@launch
             }
 
@@ -66,7 +74,7 @@ class Balance : CommandExecutor {
                 sender
             } else {
                 if (!sender.hasPermission("diamondbank-og.balance.others")) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command in that way."))
                     return@launch
                 }
 
@@ -102,8 +110,11 @@ class Balance : CommandExecutor {
             val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <green>Balance${if (balancePlayer.uniqueId != sender.uniqueId) " of <red>${balancePlayer.name}" else ""}<green>: " +
-                            "<yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"} <white>(<red>Bank: <yellow>$bankDiamonds<white>, <red>Inventory: <yellow>$inventoryDiamonds<white>, <red>Ender Chest: <yellow>$enderChestDiamonds<white>)."
+                    "${Config.prefix}<reset>: <green>${if (balancePlayer.uniqueId == sender.uniqueId) "Your Balance" else "Balance of <red>${balancePlayer.name}"}<green>:\n" +
+                            "Bank: <yellow>$bankDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
+                            "<green>Inventory: <yellow>$inventoryDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
+                            "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
+                            "<bold><green>Total: <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}"
                 )
             )
             return@launch

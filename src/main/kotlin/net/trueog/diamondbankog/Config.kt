@@ -2,6 +2,7 @@ package net.trueog.diamondbankog
 
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
+import kotlin.properties.Delegates
 
 object Config {
     lateinit var prefix: String
@@ -9,6 +10,8 @@ object Config {
     lateinit var postgresUser: String
     lateinit var postgresPassword: String
     lateinit var postgresTable: String
+    lateinit var postgresLogTable: String
+    var postgresLogLimit by Delegates.notNull<Int>()
 
     /**
      * @return True if failed
@@ -53,6 +56,24 @@ object Config {
             postgresTable = config.get("postgresTable") as String
         } catch (_: Exception) {
             DiamondBankOG.plugin.logger.severe("Failed to parse config option \"postgresTable\" as a string")
+            return true
+        }
+
+        try {
+            postgresLogTable = config.get("postgresLogTable") as String
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"postgresLogTable\" as a string")
+            return true
+        }
+
+        try {
+            postgresLogLimit = config.get("postgresLogLimit") as Int
+            if (postgresLogLimit < 1) {
+                DiamondBankOG.plugin.logger.severe("\"postgresLogLimit\" cannot be less than 1")
+                return true
+            }
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"postgresLogLimit\" as an unsigned integer")
             return true
         }
 

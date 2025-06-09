@@ -36,7 +36,6 @@ repositories {
 
 dependencies {
     compileOnly("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT")
-    implementation("com.github.christianniehaus:Utilities-OG:e9ebc26c1f")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib")

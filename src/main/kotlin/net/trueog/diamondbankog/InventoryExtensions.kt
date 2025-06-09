@@ -1,6 +1,7 @@
 package net.trueog.diamondbankog
 
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
@@ -14,8 +15,11 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 object InventoryExtensions {
-    private fun Inventory.withdrawShards(shards: Int): Int {
-        val removeMap = this.removeItem(Shard.createItemStack(shards))
+    private suspend fun Inventory.withdrawShards(shards: Int): Int {
+        val removeMap = runOnMainThread {
+            this.removeItem(Shard.createItemStack(shards))
+        }
+
         if (removeMap.isNotEmpty()) {
             return removeMap[0]!!.amount
         }
@@ -27,7 +31,10 @@ object InventoryExtensions {
         val remainder = shards % 9
         val change = if (remainder == 0) 0 else 9 - remainder
 
-        val removeMap = this.removeItem(ItemStack(Material.DIAMOND, diamondsNeeded))
+        val removeMap = runOnMainThread {
+            this.removeItem(ItemStack(Material.DIAMOND, diamondsNeeded))
+        }
+
         if (removeMap.isEmpty()) {
             if (change != 0) {
                 val error = if (player != null) {
@@ -49,7 +56,10 @@ object InventoryExtensions {
         val diamondChange = floor(change / 9.0).toInt()
         val shardChange = change % 9
 
-        val removeMap = this.removeItem(ItemStack(Material.DIAMOND_BLOCK, blocksNeeded))
+        val removeMap = runOnMainThread {
+            this.removeItem(ItemStack(Material.DIAMOND_BLOCK, blocksNeeded))
+        }
+
         if (removeMap.isEmpty()) {
             if (change != 0) {
                 val leftOver = if (player != null) {
@@ -69,7 +79,10 @@ object InventoryExtensions {
     private suspend fun Inventory.addBackShards(shards: Int): Boolean {
         val player = this.holder as Player
 
-        val addMap = this.addItem(Shard.createItemStack(shards))
+        val addMap = runOnMainThread {
+            this.addItem(Shard.createItemStack(shards))
+        }
+
         if (addMap.isEmpty()) return false
 
         val leftOver = addMap[0]!!.amount
@@ -83,12 +96,17 @@ object InventoryExtensions {
      * ONLY USE FOR INVENTORIES THAT DO NOT HAVE A HOLDER (for example shulker boxes)
      */
     private suspend fun Inventory.addBackShards(shards: Int, player: Player): Boolean {
-        val addMap = this.addItem(Shard.createItemStack(shards))
-        if (addMap.isEmpty()) return false
+        val result = runOnMainThread {
+            val addMap = this.addItem(Shard.createItemStack(shards))
+            if (addMap.isEmpty()) return@runOnMainThread null
 
-        val leftOver = addMap[0]!!.amount
+            val leftOver = addMap[0]!!.amount
 
-        val inventoryAddMap = player.inventory.addItem(Shard.createItemStack(leftOver))
+            Pair(player.inventory.addItem(Shard.createItemStack(leftOver)), leftOver)
+        }
+        if (result == null) return false
+        val (inventoryAddMap, leftOver) = result
+
         if (inventoryAddMap.isNotEmpty()) {
             val inventoryLeftOver = inventoryAddMap[0]!!.amount
             val error = DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, inventoryLeftOver, ShardType.BANK)
@@ -100,8 +118,10 @@ object InventoryExtensions {
         return false
     }
 
-    private fun Inventory.addBackDiamonds(diamonds: Int): Int {
-        val addMap = this.addItem(ItemStack(Material.DIAMOND, diamonds))
+    private suspend fun Inventory.addBackDiamonds(diamonds: Int): Int {
+        val addMap = runOnMainThread {
+            this.addItem(ItemStack(Material.DIAMOND, diamonds))
+        }
         if (addMap.isEmpty()) return 0
 
         val leftOver = addMap[0]!!.amount
@@ -112,13 +132,18 @@ object InventoryExtensions {
     /**
      * ONLY USE FOR INVENTORIES THAT DO NOT HAVE A HOLDER (for example shulker boxes)
      */
-    private fun Inventory.addBackDiamonds(diamonds: Int, player: Player): Int {
-        val addMap = this.addItem(ItemStack(Material.DIAMOND, diamonds))
-        if (addMap.isEmpty()) return 0
+    private suspend fun Inventory.addBackDiamonds(diamonds: Int, player: Player): Int {
+        val result = runOnMainThread {
+            val addMap = this.addItem(ItemStack(Material.DIAMOND, diamonds))
+            if (addMap.isEmpty()) return@runOnMainThread null
 
-        val leftOver = addMap[0]!!.amount
+            val leftOver = addMap[0]!!.amount
 
-        val inventoryAddMap = player.inventory.addItem(ItemStack(Material.DIAMOND, leftOver))
+            Pair(player.inventory.addItem(ItemStack(Material.DIAMOND, leftOver)), leftOver)
+        }
+        if (result == null) return 0
+        val (inventoryAddMap, leftOver) = result
+
         if (inventoryAddMap.isNotEmpty()) {
             return inventoryAddMap[0]!!.amount * 9
         }

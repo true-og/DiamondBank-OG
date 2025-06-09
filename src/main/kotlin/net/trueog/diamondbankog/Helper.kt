@@ -121,20 +121,24 @@ object Helper {
     class EconomyException(message: String) : Exception(message)
 
     /**
-     * Handles the error by throwing, implicitly disables the economy
+     * Handles the error by throwing, disables the economy unless you specify it shouldn't
      */
     fun handleError(
         uuid: UUID,
         expectedMutatedShards: Int,
-        playerShards: PlayerShards?
+        playerShards: PlayerShards?,
+        otherUuid: UUID? = null,
+        dontDisableEconomy: Boolean = false
     ) {
-        DiamondBankOG.economyDisabled = true
+        if (!dontDisableEconomy) DiamondBankOG.economyDisabled = true
 
         throw EconomyException(
             """
 
             Player UUID: $uuid
-            Expected Mutated Shards = $expectedMutatedShards${
+            ${
+                if (otherUuid != null) "Other Player UUID: $otherUuid" else ""
+            }Expected Mutated Shards = $expectedMutatedShards${
                 if (playerShards != null) {
                     if (playerShards.shardsInBank != -1) "Player Bank Balance: ${playerShards.shardsInBank}" else ""
                 } else ""

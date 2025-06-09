@@ -25,10 +25,40 @@ class PostgreSQL {
             val createTable =
                 pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards INTEGER, inventory_shards INTEGER, ender_chest_shards INTEGER, total_shards INTEGER GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)")
             createTable.join()
-
             val createTotalShardsIndex =
                 pool.sendPreparedStatement("CREATE INDEX IF NOT EXISTS idx_total_shards ON ${Config.postgresTable}(total_shards DESC)")
             createTotalShardsIndex.join()
+
+            val createLogTable =
+                pool.sendPreparedStatement("CREATE TABLE IF NOT EXISTS ${Config.postgresLogTable}(id SERIAL PRIMARY KEY, player_uuid UUID NOT NULL, transferred_shards INTEGER NOT NULL, player_to_uuid UUID, transaction_reason TEXT, notes TEXT, timestamp TIMESTAMPTZ DEFAULT NOW())")
+            createLogTable.join()
+            // @formatter:off
+            val createFunction =
+                pool.sendPreparedStatement(
+                    "CREATE OR REPLACE FUNCTION fifo_limit_trigger() RETURNS TRIGGER AS $$" +
+                        "DECLARE " +
+                           "max_rows CONSTANT INTEGER := ${Config.postgresLogLimit};" +
+                        "BEGIN " +
+                            "DELETE FROM ${Config.postgresLogTable} " +
+                             "WHERE id <= (" +
+                                  "SELECT id FROM ${Config.postgresLogTable} " +
+                                   "ORDER BY id DESC " +
+                                   "OFFSET max_rows LIMIT 1" +
+                             ");" +
+                        "RETURN NEW;" +
+                        "END;" +
+                        "$$ LANGUAGE plpgsql;"
+                )
+            // @formatter:on
+            createFunction.join()
+            val createTrigger =
+                pool.sendPreparedStatement(
+                    "CREATE OR REPLACE TRIGGER fifo_limit_trigger\n" +
+                            "AFTER INSERT ON ${Config.postgresLogTable}\n" +
+                            "FOR EACH STATEMENT\n" +
+                            "EXECUTE FUNCTION fifo_limit_trigger();"
+                )
+            createTrigger.join()
         } catch (_: Exception) {
             DiamondBankOG.economyDisabled = true
             DiamondBankOG.plugin.logger.severe("ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?")
@@ -187,29 +217,72 @@ class PostgreSQL {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "SELECT uuid, bank_shards, inventory_shards, ender_chest_shards " +
+                    "SELECT uuid, total_shards " +
                             "FROM ${Config.postgresTable} " +
-                            "ORDER BY total_shards DESC OFFSET ? LIMIT 10", listOf(offset)
+                            "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 10", listOf(offset)
                 )
             val result = preparedStatement.await()
             val baltop = mutableMapOf<String?, Int>()
             result.rows.forEach {
                 val rowData = it as ArrayRowData
-                val bankDiamonds = if (rowData.columns[1] != null) {
+                val totalShards = if (rowData.columns[1] != null) {
                     rowData.columns[1] as Int
-                } else 0
-                val inventoryDiamonds = if (rowData.columns[2] != null) {
-                    rowData.columns[2] as Int
-                } else 0
-                val enderChestDiamonds = if (rowData.columns[3] != null) {
-                    rowData.columns[3] as Int
                 } else 0
 
                 val player =
                     Bukkit.getPlayer(rowData.columns[0] as UUID) ?: Bukkit.getOfflinePlayer(rowData.columns[0] as UUID)
-                baltop[player.name] = bankDiamonds + inventoryDiamonds + enderChestDiamonds
+                val playerName = player.name ?: player.uniqueId.toString()
+                baltop[playerName] = totalShards
             }
             return baltop
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.severe(e.toString())
+        }
+        return null
+    }
+
+    /**
+     * @return Pair with as the first value a map with the player name and total balance and as the second value the offset
+     */
+    suspend fun getBaltopWithUuid(uuid: UUID): Pair<MutableMap<String?, Int>, Long>? {
+        try {
+            val connection = pool.asSuspending.connect()
+            // @formatter:off
+            val preparedStatement =
+                connection.sendPreparedStatement(
+                    "WITH ranked AS (" +
+                                "SELECT " +
+                                "uuid, total_shards, ROW_NUMBER() OVER (ORDER BY total_shards DESC, uuid DESC) AS rn " +
+                                "FROM ${Config.postgresTable}" +
+                            "), " +
+                            "target AS (" +
+                                "SELECT rn, ((rn - 1) / 10) * 10 AS page_offset FROM ranked WHERE uuid = ?), " +
+                                "paged AS (" +
+                                    "SELECT ranked.*, target.page_offset FROM ranked JOIN target ON true " +
+                                    "WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 10"+
+                                ") " +
+                            "SELECT uuid, total_shards, page_offset FROM paged ORDER BY rn", listOf(uuid)
+                )
+            // @formatter:on
+            val result = preparedStatement.await()
+            val baltop = mutableMapOf<String?, Int>()
+            var offset = 0L
+            result.rows.forEach {
+                val rowData = it as ArrayRowData
+                val totalShards = if (rowData.columns[1] != null) {
+                    rowData.columns[1] as Int
+                } else 0
+
+                offset = if (rowData.columns[2] != null) {
+                    rowData.columns[2] as Long
+                } else 0L
+
+                val player =
+                    Bukkit.getPlayer(rowData.columns[0] as UUID) ?: Bukkit.getOfflinePlayer(rowData.columns[0] as UUID)
+                val playerName = player.name ?: player.uniqueId.toString()
+                baltop[playerName] = totalShards
+            }
+            return Pair(baltop, offset)
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
         }
@@ -234,5 +307,31 @@ class PostgreSQL {
             DiamondBankOG.plugin.logger.severe(e.toString())
         }
         return number
+    }
+
+    /**
+     * @return True if failed
+     */
+    suspend fun insertTransactionLog(
+        playerUuid: UUID,
+        transferredShards: Int,
+        playerToUuid: UUID?,
+        transactionReason: String,
+        notes: String?
+    ): Boolean {
+        try {
+            val connection = pool.asSuspending.connect()
+
+            val preparedStatement =
+                connection.sendPreparedStatement(
+                    "INSERT INTO ${Config.postgresLogTable}(player_uuid, transferred_shards, player_to_uuid, transaction_reason, notes) " +
+                            "VALUES(?, ?, ?, ?, ?)",
+                    listOf(playerUuid, transferredShards, playerToUuid, transactionReason, notes)
+                )
+            preparedStatement.await()
+        } catch (_: Exception) {
+            return true
+        }
+        return false
     }
 }
