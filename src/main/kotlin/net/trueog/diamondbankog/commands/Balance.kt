@@ -63,10 +63,10 @@ class Balance : CommandExecutor {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
                         "<green>Balance of ${getPrefix(otherPlayer.uniqueId)}${otherPlayer.name}<reset><green>:\n" +
-                                "Bank: <yellow>$bankDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                                "<green>Inventory: <yellow>$inventoryDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                                "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                                "<bold><green>Total: <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}"
+                                "Bank: <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}\n" +
+                                "<green>Inventory: <yellow>$inventoryDiamonds <aqua>Diamond${if (inventoryDiamonds != "1.0") "s" else ""}\n" +
+                                "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>Diamond${if (enderChestDiamonds != "1.0") "s" else ""}\n" +
+                                "<bold><green>Total: <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}"
                     )
                 )
                 return@launch
@@ -119,10 +119,10 @@ class Balance : CommandExecutor {
                             )
                         }${balancePlayer.name}"
                     }<reset><green>:\n" +
-                            "Bank: <yellow>$bankDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                            "<green>Inventory: <yellow>$inventoryDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                            "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                            "<bold><green>Total: <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}"
+                            "Bank: <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}\n" +
+                            "<green>Inventory: <yellow>$inventoryDiamonds <aqua>Diamond${if (inventoryDiamonds != "1.0") "s" else ""}\n" +
+                            "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>Diamond${if (enderChestDiamonds != "1.0") "s" else ""}\n" +
+                            "<bold><green>Total: <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}"
                 )
             )
             return@launch

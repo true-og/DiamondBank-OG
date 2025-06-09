@@ -148,7 +148,7 @@ object InventoryExtensions {
             return inventoryAddMap[0]!!.amount * 9
         }
 
-        player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: The change of $leftOver <aqua>${if (leftOver == 1) "Diamond" else "Diamonds"} <reset>has been added to your inventory."))
+        player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: The change of $leftOver <aqua>Diamond${if (leftOver != 1) "s" else ""} <reset>has been added to your inventory."))
         return 0
     }
 

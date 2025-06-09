@@ -86,7 +86,7 @@ class Withdraw : CommandExecutor {
                 if (shards > playerBankShards) {
                     val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                     val bankDiamonds = String.format("%.1f", floor((playerBankShards / 9.0) * 10) / 10.0)
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <red>because your bank only contains <yellow>$bankDiamonds <aqua>${if (bankDiamonds == "1.0") "Diamond" else "Diamonds"}<red>."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <red>because your bank only contains <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}<red>."))
                     return@tryWithLockSuspend true
                 }
 
@@ -107,7 +107,7 @@ class Withdraw : CommandExecutor {
 
                 if (diamondAmount > (emptySlots * 64 + leftOverSpaceDiamonds) || shardAmount > (emptySlotsAfterDiamonds * 64 + leftOverSpaceShards)) {
                     val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"}<red>."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""}<red>."))
                     return@tryWithLockSuspend true
                 }
 
@@ -176,7 +176,7 @@ class Withdraw : CommandExecutor {
             }
 
             val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>${if (diamonds == "1.0") "Diamond" else "Diamonds"} <green>from your bank account."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <green>from your bank account."))
 
             val error = DiamondBankOG.postgreSQL.insertTransactionLog(
                 sender.uniqueId,
