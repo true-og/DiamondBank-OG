@@ -1,6 +1,7 @@
 package net.trueog.diamondbankog
 
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
@@ -197,7 +198,7 @@ object InventoryExtensions {
                                 ShardType.INVENTORY
                             )
                             if (error) {
-                                Helper.handleError(
+                                handleError(
                                     player.uniqueId,
                                     inventoryShards,
                                     null

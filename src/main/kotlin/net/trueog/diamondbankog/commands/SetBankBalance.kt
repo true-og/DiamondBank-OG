@@ -4,7 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.Helper.handleError
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit

@@ -2,7 +2,7 @@ package net.trueog.diamondbankog
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.future.future
-import net.trueog.diamondbankog.Helper.handleError
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock.LockResult
@@ -312,7 +312,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 if (!player.isOnline) throw DiamondBankException.PlayerNotOnlineException
                 val playerPlayer = player.player ?: throw DiamondBankException.InvalidPlayerException
 
-                val notRemoved = Helper.withdrawFromPlayer(playerPlayer, shards)
+                val notRemoved = WithdrawHelper.withdrawFromPlayer(playerPlayer, shards)
                 if (notRemoved != 0) {
                     handleError(
                         uuid,
@@ -362,7 +362,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 if (!player.isOnline) throw DiamondBankException.PlayerNotOnlineException
                 val playerPlayer = player.player ?: throw DiamondBankException.InvalidPlayerException
 
-                val notRemoved = Helper.withdrawFromPlayer(playerPlayer, shards)
+                val notRemoved = WithdrawHelper.withdrawFromPlayer(playerPlayer, shards)
                 if (notRemoved != 0) {
                     handleError(
                         uuid,
@@ -429,7 +429,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
                 if (!receiver.hasPlayedBefore()) throw DiamondBankException.InvalidPlayerException
 
-                val notRemoved = Helper.withdrawFromPlayer(senderPlayer, shards)
+                val notRemoved = WithdrawHelper.withdrawFromPlayer(senderPlayer, shards)
                 if (notRemoved != 0) {
                     handleError(
                         payerUuid,
@@ -502,7 +502,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
                 val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
                 if (!receiver.hasPlayedBefore()) throw DiamondBankException.InvalidPlayerException
 
-                val notRemoved = Helper.withdrawFromPlayer(senderPlayer, shards)
+                val notRemoved = WithdrawHelper.withdrawFromPlayer(senderPlayer, shards)
                 if (notRemoved != 0) {
                     handleError(
                         payerUuid,

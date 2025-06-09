@@ -4,11 +4,11 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.Helper
-import net.trueog.diamondbankog.Helper.handleError
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock
+import net.trueog.diamondbankog.WithdrawHelper
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -91,7 +91,7 @@ class Pay : CommandExecutor {
             val originalShards = shards
 
             when (val result = DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                val notRemoved = Helper.withdrawFromPlayer(sender, shards)
+                val notRemoved = WithdrawHelper.withdrawFromPlayer(sender, shards)
                 if (notRemoved != 0) {
                     if (notRemoved <= -1) {
                         handleError(

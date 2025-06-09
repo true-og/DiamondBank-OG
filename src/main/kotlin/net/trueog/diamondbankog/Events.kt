@@ -2,6 +2,7 @@ package net.trueog.diamondbankog
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
@@ -38,7 +39,7 @@ class Events : Listener {
                 ShardType.INVENTORY
             )
             if (error) {
-                Helper.handleError(
+                handleError(
                     event.player.uniqueId,
                     inventoryShards,
                     null
@@ -53,7 +54,7 @@ class Events : Listener {
                 ShardType.ENDER_CHEST
             )
             if (error) {
-                Helper.handleError(
+                handleError(
                     event.player.uniqueId,
                     enderChestDiamonds,
                     null
@@ -100,7 +101,7 @@ class Events : Listener {
                         ShardType.INVENTORY
                     )
                     if (error) {
-                        Helper.handleError(
+                        handleError(
                             player.uniqueId,
                             inventoryShards,
                             null
@@ -147,7 +148,7 @@ class Events : Listener {
                         ShardType.INVENTORY
                     )
                     if (error) {
-                        Helper.handleError(
+                        handleError(
                             event.player.uniqueId,
                             inventoryShards,
                             null
@@ -233,7 +234,7 @@ class Events : Listener {
                         ShardType.INVENTORY
                     )
                     if (error) {
-                        Helper.handleError(
+                        handleError(
                             event.player.uniqueId,
                             inventoryShards,
                             null
@@ -249,7 +250,7 @@ class Events : Listener {
                         ShardType.ENDER_CHEST
                     )
                     if (error) {
-                        Helper.handleError(
+                        handleError(
                             event.player.uniqueId,
                             enderChestShards,
                             null
