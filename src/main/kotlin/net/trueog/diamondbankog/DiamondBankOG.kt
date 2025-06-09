@@ -88,13 +88,13 @@ class DiamondBankOG : JavaPlugin() {
     }
 
     override fun onDisable() {
-        transactionLock.removeAllLocks()
-
         scope.cancel()
 
         runBlocking {
             scope.coroutineContext[Job]?.join()
         }
+
+        transactionLock.removeAllLocks()
 
         if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
     }
