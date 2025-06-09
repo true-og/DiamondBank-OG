@@ -15,8 +15,10 @@ import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
+import org.bukkit.event.inventory.PrepareItemCraftEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -260,5 +262,17 @@ class Events : Listener {
                 }
             }
         }.runTaskLater(DiamondBankOG.plugin, 1)
+    }
+
+    @EventHandler
+    fun onPrepareItemCraft(event: PrepareItemCraftEvent) {
+        val resultType = event.recipe?.result?.type
+        if (resultType != Material.PRISMARINE && resultType != Material.DARK_PRISMARINE && resultType != Material.SEA_LANTERN) {
+            return
+        }
+        if (!event.inventory.any { it?.itemMeta?.persistentDataContainer?.has(Shard.namespacedKey) == true }) {
+            return
+        }
+        event.inventory.result = ItemStack(Material.AIR)
     }
 }
