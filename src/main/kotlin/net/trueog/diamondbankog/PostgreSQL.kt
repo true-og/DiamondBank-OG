@@ -218,7 +218,7 @@ class PostgreSQL {
                 connection.sendPreparedStatement(
                     "SELECT uuid, total_shards " +
                             "FROM ${Config.postgresTable} " +
-                            "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 10", listOf(offset)
+                            "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 9", listOf(offset)
                 )
             val result = preparedStatement.await()
             val baltop = mutableMapOf<UUID?, Int>()
@@ -255,10 +255,10 @@ class PostgreSQL {
                                 "FROM ${Config.postgresTable}" +
                             "), " +
                             "target AS (" +
-                                "SELECT rn, ((rn - 1) / 10) * 10 AS page_offset FROM ranked WHERE uuid = ?), " +
+                                "SELECT rn, ((rn - 1) / 9) * 9 AS page_offset FROM ranked WHERE uuid = ?), " +
                                 "paged AS (" +
                                     "SELECT ranked.*, target.page_offset FROM ranked JOIN target ON true " +
-                                    "WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 10"+
+                                    "WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 9"+
                                 ") " +
                             "SELECT uuid, total_shards, page_offset FROM paged ORDER BY rn", listOf(uuid)
                 )

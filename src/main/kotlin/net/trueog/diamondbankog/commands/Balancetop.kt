@@ -40,7 +40,7 @@ class Balancetop : CommandExecutor {
             if (args.size == 1) {
                 try {
                     index = args[0].toInt()
-                    offset = 10 * (index - 1)
+                    offset = 9 * (index - 1)
                 } catch (_: Exception) {
                     player = try {
                         Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
@@ -98,12 +98,12 @@ class Balancetop : CommandExecutor {
                 return@launch
             }
 
-            if (index > ceil(numberOfRows / 10.0)) {
+            if (index > ceil(numberOfRows / 9.0)) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
                         "${Config.prefix}<reset>: <red>The amount of pages only goes up to and including ${
                             ceil(
-                                numberOfRows / 10.0
+                                numberOfRows / 9.0
                             ).toLong()
                         }."
                     )
@@ -111,7 +111,7 @@ class Balancetop : CommandExecutor {
                 return@launch
             }
             var baltopMessage =
-                "${Config.prefix} <aqua>Top Balances <#2ec2ae>(Page $index/${ceil(numberOfRows / 10.0).toLong()})<aqua>:<reset>"
+                "${Config.prefix} <aqua>Top Balances <#2ec2ae>(Page $index/${ceil(numberOfRows / 9.0).toLong()})<aqua>:<reset>"
             baltop.forEach {
                 val uuid = it.key
                 if (uuid == null) {
@@ -124,7 +124,7 @@ class Balancetop : CommandExecutor {
                 val playerName = player.name ?: player.uniqueId.toString()
 
                 val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
-                baltopMessage += "\n<green>${baltopMessage.lines().size + (10 * (index - 1))}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
+                baltopMessage += "\n<green>${baltopMessage.lines().size + (9 * (index - 1))}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
                     getPrefix(
                         uuid
                     )
