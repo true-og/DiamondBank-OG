@@ -101,8 +101,7 @@ class Withdraw : CommandExecutor {
                     it.type == Material.PRISMARINE_SHARD && it.persistentDataContainer.has(
                         Shard.namespacedKey
                     )
-                }
-                    .sumOf { 64 - it.amount }
+                }.sumOf { 64 - it.amount }
 
                 val emptySlotsAfterDiamonds = if (emptySlots != 0) emptySlots - ceil(diamondAmount / 64.0) else 0.0
 

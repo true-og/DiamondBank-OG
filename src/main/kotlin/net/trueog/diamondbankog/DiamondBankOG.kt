@@ -70,6 +70,8 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("baltop")?.setExecutor(Balancetop())
         this.getCommand("balance")?.setExecutor(Balance())
         this.getCommand("bal")?.setExecutor(Balance())
+        this.getCommand("compress")?.setExecutor(Compress())
+
         this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
         this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
 

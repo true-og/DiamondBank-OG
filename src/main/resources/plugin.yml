@@ -42,6 +42,9 @@ commands:
   disableeconomy:
     description: Disable the economy
     usage: /disableeconomy
+  compress:
+    description: Compresses every Diamond-related item into the highest value form
+    usage: /compress
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials ]
