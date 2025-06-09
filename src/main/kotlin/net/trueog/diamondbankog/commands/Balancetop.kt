@@ -4,6 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.command.Command
@@ -63,15 +64,24 @@ class Balancetop : CommandExecutor {
                 val (baltop, offset) = baltopWithUuid
 
                 var baltopMessage =
-                    "<yellow>---- <gold>Balancetop <yellow>----<reset>"
+                    "${Config.prefix} <aqua>Top Balances:<reset>"
                 baltop.forEach {
-                    if (it.key == null) {
+                    val uuid = it.key
+                    if (uuid == null) {
                         sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                         return@launch
                     }
 
+                    val player =
+                        Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+                    val playerName = player.name ?: player.uniqueId.toString()
+
                     val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
-                    baltopMessage += "\n<red>${baltopMessage.lines().size + offset}<reset>. ${if (it.key == player.name) "<red>" else ""}${it.key}<reset>, <yellow>$diamonds <aqua>Diamonds"
+                    baltopMessage += "\n<green>${baltopMessage.lines().size + offset}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
+                        getPrefix(
+                            uuid
+                        )
+                    }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
                 }
                 sender.sendMessage(DiamondBankOG.mm.deserialize(baltopMessage))
                 return@launch
@@ -101,15 +111,24 @@ class Balancetop : CommandExecutor {
                 return@launch
             }
             var baltopMessage =
-                "<yellow>---- <gold>Balancetop <yellow>-- <gold>Page <red>$index<gold>/<red>${ceil(numberOfRows / 10.0).toLong()} <yellow>----<reset>"
+                "${Config.prefix} <aqua>Top Balances <#2ec2ae>(Page $index/${ceil(numberOfRows / 10.0).toLong()})<aqua>:<reset>"
             baltop.forEach {
-                if (it.key == null) {
+                val uuid = it.key
+                if (uuid == null) {
                     sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."))
                     return@launch
                 }
 
+                val player =
+                    Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+                val playerName = player.name ?: player.uniqueId.toString()
+
                 val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
-                baltopMessage += "\n<red>${baltopMessage.lines().size + (10 * (index - 1))}<reset>. ${if (it.key == sender.name) "<red>" else ""}${it.key}<reset>, <yellow>$diamonds <aqua>Diamonds"
+                baltopMessage += "\n<green>${baltopMessage.lines().size + (10 * (index - 1))}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
+                    getPrefix(
+                        uuid
+                    )
+                }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
             }
 
             sender.sendMessage(DiamondBankOG.mm.deserialize(baltopMessage))
