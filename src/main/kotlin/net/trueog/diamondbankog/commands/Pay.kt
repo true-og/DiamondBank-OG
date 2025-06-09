@@ -6,6 +6,7 @@ import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.Helper
 import net.trueog.diamondbankog.Helper.handleError
+import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.Bukkit
@@ -139,11 +140,27 @@ class Pay : CommandExecutor {
 
             val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
 
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully paid <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"} <green>to <red>${receiver.name}<green>."))
+            sender.sendMessage(
+                DiamondBankOG.mm.deserialize(
+                    "${Config.prefix}<reset>: <green>Successfully paid <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"} <green>to ${
+                        getPrefix(
+                            receiver.uniqueId
+                        )
+                    } ${receiver.name}<reset><green>."
+                )
+            )
 
             if (receiver.isOnline) {
                 val receiverPlayer = receiver.player ?: return@launch
-                receiverPlayer.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>${sender.name} has paid you <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"}<green>."))
+                receiverPlayer.sendMessage(
+                    DiamondBankOG.mm.deserialize(
+                        "${Config.prefix}<reset>: <green>${
+                            getPrefix(
+                                sender.uniqueId
+                            )
+                        } ${sender.name}<reset> <green>has paid you <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"}<green>."
+                    )
+                )
             }
 
             val error = DiamondBankOG.postgreSQL.insertTransactionLog(

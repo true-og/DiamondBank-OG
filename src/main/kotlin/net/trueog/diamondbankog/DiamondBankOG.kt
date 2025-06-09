@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
+import net.luckperms.api.LuckPerms
 import net.trueog.diamondbankog.commands.*
 import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
@@ -15,12 +16,14 @@ class DiamondBankOG : JavaPlugin() {
 
         lateinit var plugin: DiamondBankOG
         lateinit var postgreSQL: PostgreSQL
+        lateinit var luckPerms: LuckPerms
         fun isPostgreSQLInitialised() = ::postgreSQL.isInitialized
         var mm = MiniMessage.builder()
             .tags(
                 TagResolver.builder()
                     .resolver(StandardTags.color())
                     .resolver(StandardTags.decorations())
+                    .resolver(StandardTags.rainbow())
                     .resolver(StandardTags.reset())
                     .build()
             )
@@ -46,6 +49,15 @@ class DiamondBankOG : JavaPlugin() {
             Bukkit.getPluginManager().disablePlugin(this)
             return
         }
+
+        val luckPermsProvider = Bukkit.getServicesManager().getRegistration(LuckPerms::class.java)
+        if (luckPermsProvider == null) {
+            this.logger.severe("Luckperms API is null, quitting...")
+            Bukkit.getPluginManager().disablePlugin(this)
+            return
+        }
+        luckPerms = luckPermsProvider.provider
+
 
         this.server.pluginManager.registerEvents(Events(), this)
 
