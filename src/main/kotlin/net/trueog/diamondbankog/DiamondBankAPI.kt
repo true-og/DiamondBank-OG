@@ -51,6 +51,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.OtherException::class)
     @Suppress("unused")
     fun blockingAddToPlayerBankShards(
         uuid: UUID,
@@ -93,6 +94,11 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        DiamondBankException.OtherException::class
+    )
     @Suppress("unused")
     fun addToPlayerBankShards(
         uuid: UUID,
@@ -144,6 +150,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.OtherException::class)
     @Suppress("unused")
     fun blockingSubtractFromPlayerBankShards(
         uuid: UUID,
@@ -191,6 +198,11 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        DiamondBankException.OtherException::class
+    )
     @Suppress("unused")
     fun subtractFromPlayerBankShards(
         uuid: UUID,
@@ -244,6 +256,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.OtherException::class)
     @Suppress("unused")
     fun blockingGetPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
@@ -264,6 +277,11 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        DiamondBankException.OtherException::class
+    )
     @Suppress("unused")
     fun getPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
@@ -291,6 +309,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.OtherException::class)
     @Suppress("unused")
     fun getBaltop(offset: Int): CompletableFuture<Map<UUID?, Int>> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
@@ -313,6 +332,10 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.PlayerNotOnlineException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class, DiamondBankException.InvalidPlayerException::class,
+        DiamondBankException.PlayerNotOnlineException::class, DiamondBankException.OtherException::class
+    )
     @Suppress("unused")
     fun blockingWithdrawFromPlayer(
         uuid: UUID,
@@ -368,6 +391,13 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.InvalidPlayerException::class,
+        DiamondBankException.PlayerNotOnlineException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        DiamondBankException.OtherException::class
+    )
     @Suppress("unused")
     fun withdrawFromPlayer(uuid: UUID, shards: Int, transactionReason: String, notes: String): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
@@ -426,6 +456,10 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.PlayerNotOnlineException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class, DiamondBankException.InvalidPlayerException::class,
+        DiamondBankException.PlayerNotOnlineException::class, DiamondBankException.OtherException::class
+    )
     @Suppress("unused")
     fun blockingPlayerPayPlayer(
         payerUuid: UUID,
@@ -499,6 +533,13 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws DiamondBankException.OtherException
      */
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.InvalidPlayerException::class,
+        DiamondBankException.PlayerNotOnlineException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        DiamondBankException.OtherException::class
+    )
     @Suppress("unused")
     fun playerPayPlayer(
         payerUuid: UUID,
