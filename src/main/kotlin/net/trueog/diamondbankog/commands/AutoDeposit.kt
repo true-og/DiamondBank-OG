@@ -24,6 +24,11 @@ class AutoDeposit : CommandExecutor {
             return true
         }
 
+        if (!sender.hasPermission("diamondbank-og.deposit")) {
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command."))
+            return true
+        }
+
         if (DiamondBankOG.redis.getValue("diamondbankog:${sender.uniqueId}:autodeposit") == "true") {
             DiamondBankOG.redis.setValue("diamondbankog:${sender.uniqueId}:autodeposit", "false")
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully turned auto-deposit <red>off<green>."))

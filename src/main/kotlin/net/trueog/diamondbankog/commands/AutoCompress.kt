@@ -24,6 +24,11 @@ class AutoCompress : CommandExecutor {
             return true
         }
 
+        if (!sender.hasPermission("diamondbank-og.compress")) {
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to use this command."))
+            return true
+        }
+
         if (DiamondBankOG.redis.getValue("diamondbankog:${sender.uniqueId}:autocompress") == "true") {
             DiamondBankOG.redis.setValue("diamondbankog:${sender.uniqueId}:autocompress", "false")
             sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully turned auto-compress <red>off<green>."))
