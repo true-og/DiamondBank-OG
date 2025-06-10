@@ -45,6 +45,12 @@ commands:
   compress:
     description: Compresses every Diamond-related item into the highest value form
     usage: /compress
+  autocompress:
+    description: Toggles auto-compress, automatically compresses all Diamond currency items in your inventory into the highest value form to save space, mutually exclusive with auto-deposit
+    usage: /autocompress
+  autodeposit:
+    description: Toggles auto-deposit, automatically deposits picked up Diamond currency items, mutually exclusive with auto-compress
+    usage: /autodeposit
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials ]

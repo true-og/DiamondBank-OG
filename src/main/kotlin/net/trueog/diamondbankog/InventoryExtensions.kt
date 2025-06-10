@@ -240,7 +240,7 @@ object InventoryExtensions {
 
     fun Inventory.countShards(): Int {
         val inventoryShards =
-            this.all(Material.PRISMARINE_SHARD).values.filter { it.itemMeta.persistentDataContainer.has(Shard.namespacedKey) }
+            this.all(Material.PRISMARINE_SHARD).values.filter { it.persistentDataContainer.has(Shard.namespacedKey) }
                 .sumOf { it.amount }
         return inventoryShards
     }

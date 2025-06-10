@@ -6,6 +6,8 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
 import net.luckperms.api.LuckPerms
 import net.trueog.diamondbankog.commands.*
+import net.trueog.diamondbankog.commands.AutoCompress
+import net.trueog.diamondbankog.commands.AutoDeposit
 import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
@@ -16,6 +18,7 @@ class DiamondBankOG : JavaPlugin() {
 
         lateinit var plugin: DiamondBankOG
         lateinit var postgreSQL: PostgreSQL
+        lateinit var redis: Redis
         lateinit var luckPerms: LuckPerms
         fun isPostgreSQLInitialised() = ::postgreSQL.isInitialized
         var mm = MiniMessage.builder()
@@ -50,6 +53,13 @@ class DiamondBankOG : JavaPlugin() {
             return
         }
 
+        redis = Redis()
+        if (redis.testConnection()) {
+            logger.severe("Could not connect to Redis")
+            Bukkit.getPluginManager().disablePlugin(this)
+            return
+        }
+
         val luckPermsProvider = Bukkit.getServicesManager().getRegistration(LuckPerms::class.java)
         if (luckPermsProvider == null) {
             this.logger.severe("Luckperms API is null, quitting...")
@@ -71,6 +81,8 @@ class DiamondBankOG : JavaPlugin() {
         this.getCommand("balance")?.setExecutor(Balance())
         this.getCommand("bal")?.setExecutor(Balance())
         this.getCommand("compress")?.setExecutor(Compress())
+        this.getCommand("autocompress")?.setExecutor(AutoCompress())
+        this.getCommand("autodeposit")?.setExecutor(AutoDeposit())
 
         this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
         this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
@@ -95,6 +107,8 @@ class DiamondBankOG : JavaPlugin() {
         }
 
         transactionLock.removeAllLocks()
+
+        redis.shutdown()
 
         if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
     }

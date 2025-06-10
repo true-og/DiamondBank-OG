@@ -12,6 +12,7 @@ object Config {
     lateinit var postgresTable: String
     lateinit var postgresLogTable: String
     var postgresLogLimit by Delegates.notNull<Int>()
+    lateinit var redisUrl: String
 
     /**
      * @return True if failed
@@ -74,6 +75,13 @@ object Config {
             }
         } catch (_: Exception) {
             DiamondBankOG.plugin.logger.severe("Failed to parse config option \"postgresLogLimit\" as an unsigned integer")
+            return true
+        }
+
+        try {
+            redisUrl = config.get("redisUrl") as String
+        } catch (_: Exception) {
+            DiamondBankOG.plugin.logger.severe("Failed to parse config option \"redisUrl\" as a string")
             return true
         }
 

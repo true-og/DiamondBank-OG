@@ -38,6 +38,7 @@ dependencies {
     compileOnly("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT")
     compileOnly("net.luckperms:api:5.4")
 
+    implementation("io.lettuce:lettuce-core:6.7.1.RELEASE")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 }

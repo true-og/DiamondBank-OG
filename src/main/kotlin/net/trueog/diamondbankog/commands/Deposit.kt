@@ -31,7 +31,7 @@ class Deposit : CommandExecutor {
 
             val worldName = sender.world.name
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot use /deposit <aqua>Diamonds <red>when in a minigame."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot use /deposit when in a minigame."))
                 return@launch
             }
 
