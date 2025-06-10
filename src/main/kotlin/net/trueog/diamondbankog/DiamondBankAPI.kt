@@ -288,6 +288,23 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
     }
 
     /**
+     * @throws DiamondBankException.EconomyDisabledException
+     * @throws DiamondBankException.OtherException
+     */
+    @Suppress("unused")
+    fun getBaltop(offset: Int): CompletableFuture<Map<UUID?, Int>> {
+        if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
+
+        return DiamondBankOG.scope.future {
+            val baltop = postgreSQL.getBaltop(offset)
+            if (baltop == null) {
+                throw DiamondBankException.OtherException
+            }
+            baltop
+        }
+    }
+
+    /**
      * WARNING: blocking, if the player has a transaction lock applied this function will wait until its released
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
