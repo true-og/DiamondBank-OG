@@ -211,7 +211,7 @@ class PostgreSQL {
         return PlayerShards(bankShards, inventoryShards, enderChestShards)
     }
 
-    suspend fun getBaltop(offset: Int): MutableMap<UUID?, Int>? {
+    suspend fun getBaltop(offset: Int): Map<UUID?, Int>? {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
@@ -243,7 +243,7 @@ class PostgreSQL {
     /**
      * @return Pair with as the first value a map with the player name and total balance and as the second value the offset
      */
-    suspend fun getBaltopWithUuid(uuid: UUID): Pair<MutableMap<UUID?, Int>, Long>? {
+    suspend fun getBaltopWithUuid(uuid: UUID): Pair<Map<UUID?, Int>, Long>? {
         try {
             val connection = pool.asSuspending.connect()
             // @formatter:off
