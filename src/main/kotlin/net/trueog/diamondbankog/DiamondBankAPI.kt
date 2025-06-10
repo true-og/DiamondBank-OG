@@ -245,7 +245,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun blockingGetPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards?> {
+    fun blockingGetPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -265,7 +265,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.OtherException
      */
     @Suppress("unused")
-    fun getPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards?> {
+    fun getPlayerShards(uuid: UUID, type: ShardType): CompletableFuture<PlayerShards> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
