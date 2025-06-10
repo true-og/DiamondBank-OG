@@ -43,6 +43,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 }
 
+configurations.all {
+    exclude(group = "io.projectreactor")
+}
+
 tasks.build {
     dependsOn(tasks.shadowJar)
 }
