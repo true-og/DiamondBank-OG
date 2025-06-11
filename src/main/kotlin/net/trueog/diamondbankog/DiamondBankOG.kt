@@ -106,6 +106,10 @@ class DiamondBankOG : JavaPlugin() {
     }
 
     override fun onDisable() {
+        redis.shutdown()
+
+        if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
+
         scope.cancel()
 
         runBlocking {
@@ -113,10 +117,6 @@ class DiamondBankOG : JavaPlugin() {
         }
 
         transactionLock.removeAllLocks()
-
-        redis.shutdown()
-
-        if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
     }
 
 }
