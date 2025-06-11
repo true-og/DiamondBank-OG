@@ -57,7 +57,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         uuid: UUID,
         shards: Int,
         transactionReason: String,
-        notes: String
+        notes: String?
     ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
         return DiamondBankOG.scope.future {
@@ -104,7 +104,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         uuid: UUID,
         shards: Int,
         transactionReason: String,
-        notes: String
+        notes: String?
     ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
@@ -156,7 +156,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         uuid: UUID,
         shards: Int,
         transactionReason: String,
-        notes: String
+        notes: String?
     ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
@@ -208,7 +208,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         uuid: UUID,
         shards: Int,
         transactionReason: String,
-        notes: String
+        notes: String?
     ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
@@ -341,7 +341,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         uuid: UUID,
         shards: Int,
         transactionReason: String,
-        notes: String
+        notes: String?
     ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
@@ -399,7 +399,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         DiamondBankException.OtherException::class
     )
     @Suppress("unused")
-    fun withdrawFromPlayer(uuid: UUID, shards: Int, transactionReason: String, notes: String): CompletableFuture<Unit> {
+    fun withdrawFromPlayer(uuid: UUID, shards: Int, transactionReason: String, notes: String?): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
@@ -466,7 +466,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         receiverUuid: UUID,
         shards: Int,
         transactionReason: String,
-        notes: String
+        notes: String?
     ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
@@ -546,7 +546,7 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         receiverUuid: UUID,
         shards: Int,
         transactionReason: String,
-        notes: String
+        notes: String?
     ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
