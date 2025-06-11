@@ -1,6 +1,7 @@
 package net.trueog.diamondbankog
 
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
@@ -148,7 +149,7 @@ object InventoryExtensions {
             return inventoryAddMap[0]!!.amount * 9
         }
 
-        player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: The change of $leftOver <aqua>${if (leftOver == 1) "Diamond" else "Diamonds"} <reset>has been added to your inventory."))
+        player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: The change of $leftOver <aqua>Diamond${if (leftOver != 1) "s" else ""} <reset>has been added to your inventory."))
         return 0
     }
 
@@ -197,9 +198,9 @@ object InventoryExtensions {
                                 ShardType.INVENTORY
                             )
                             if (error) {
-                                Helper.handleError(
+                                handleError(
                                     player.uniqueId,
-                                    shards,
+                                    inventoryShards,
                                     null
                                 )
                                 player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."))
@@ -239,7 +240,7 @@ object InventoryExtensions {
 
     fun Inventory.countShards(): Int {
         val inventoryShards =
-            this.all(Material.PRISMARINE_SHARD).values.filter { it.itemMeta.persistentDataContainer.has(Shard.namespacedKey) }
+            this.all(Material.PRISMARINE_SHARD).values.filter { it.persistentDataContainer.has(Shard.namespacedKey) }
                 .sumOf { it.amount }
         return inventoryShards
     }

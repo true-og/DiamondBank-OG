@@ -4,7 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.Helper.handleError
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -31,7 +31,7 @@ class Deposit : CommandExecutor {
 
             val worldName = sender.world.name
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot use /deposit <aqua>Diamonds <red>when in a minigame."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You cannot use /deposit when in a minigame."))
                 return@launch
             }
 
@@ -81,7 +81,7 @@ class Deposit : CommandExecutor {
                 shards = (split[0].toInt() * 9) + split[1].toInt()
 
                 if (shards > playerInventoryShards) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>${args[0]} <aqua>${if (args[0] == "1.0") "Diamond" else "Diamonds"} <red>in your inventory."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have <yellow>${args[0]} <aqua>Diamond${if (args[0] != "1.0") "s" else ""} <red>in your inventory."))
                     return@launch
                 }
             }
@@ -103,7 +103,7 @@ class Deposit : CommandExecutor {
                     val notRemovedDiamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                     shards -= notRemoved
                     val diamondsContinuing = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <#FFA500>Something went wrong while trying to remove <yellow>$notRemovedDiamonds <aqua>${if (notRemovedDiamonds == "1.0") "Diamond" else "Diamonds"}<#FFA500> from your inventory, proceeding with <yellow>$diamondsContinuing <aqua>${if (diamondsContinuing == "1.0") "Diamond" else "Diamonds"}<#FFA500>."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <#FFA500>Something went wrong while trying to remove <yellow>$notRemovedDiamonds <aqua>Diamond${if (notRemovedDiamonds != "1.0") "s" else ""}<#FFA500> from your inventory, proceeding with <yellow>$diamondsContinuing <aqua>Diamond${if (diamondsContinuing != "1.0") "s" else ""}<#FFA500>."))
                 }
 
                 val error = DiamondBankOG.postgreSQL.addToPlayerShards(
@@ -135,7 +135,7 @@ class Deposit : CommandExecutor {
             }
 
             val diamondsDeposited = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>${if (diamondsDeposited == "1.0") "Diamond" else "Diamonds"} <green>into your bank account."))
+            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>Diamond${if (diamondsDeposited != "1.0") "s" else ""} <green>into your bank account."))
 
             val error = DiamondBankOG.postgreSQL.insertTransactionLog(
                 sender.uniqueId,

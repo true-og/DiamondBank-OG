@@ -6,7 +6,6 @@ import com.github.jasync.sql.db.pool.ConnectionPool
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnection
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
 import kotlinx.coroutines.future.await
-import org.bukkit.Bukkit
 import java.sql.SQLException
 import java.util.*
 
@@ -212,27 +211,27 @@ class PostgreSQL {
         return PlayerShards(bankShards, inventoryShards, enderChestShards)
     }
 
-    suspend fun getBaltop(offset: Int): MutableMap<String?, Int>? {
+    suspend fun getBaltop(offset: Int): Map<UUID?, Int>? {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
                 connection.sendPreparedStatement(
                     "SELECT uuid, total_shards " +
                             "FROM ${Config.postgresTable} " +
-                            "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 10", listOf(offset)
+                            "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 9", listOf(offset)
                 )
             val result = preparedStatement.await()
-            val baltop = mutableMapOf<String?, Int>()
+            val baltop = mutableMapOf<UUID?, Int>()
             result.rows.forEach {
                 val rowData = it as ArrayRowData
+                val uuid = if (rowData.columns[0] != null) {
+                    rowData.columns[0] as UUID
+                } else null
                 val totalShards = if (rowData.columns[1] != null) {
                     rowData.columns[1] as Int
                 } else 0
 
-                val player =
-                    Bukkit.getPlayer(rowData.columns[0] as UUID) ?: Bukkit.getOfflinePlayer(rowData.columns[0] as UUID)
-                val playerName = player.name ?: player.uniqueId.toString()
-                baltop[playerName] = totalShards
+                baltop[uuid] = totalShards
             }
             return baltop
         } catch (e: Exception) {
@@ -244,7 +243,7 @@ class PostgreSQL {
     /**
      * @return Pair with as the first value a map with the player name and total balance and as the second value the offset
      */
-    suspend fun getBaltopWithUuid(uuid: UUID): Pair<MutableMap<String?, Int>, Long>? {
+    suspend fun getBaltopWithUuid(uuid: UUID): Pair<Map<UUID?, Int>, Long>? {
         try {
             val connection = pool.asSuspending.connect()
             // @formatter:off
@@ -256,19 +255,22 @@ class PostgreSQL {
                                 "FROM ${Config.postgresTable}" +
                             "), " +
                             "target AS (" +
-                                "SELECT rn, ((rn - 1) / 10) * 10 AS page_offset FROM ranked WHERE uuid = ?), " +
+                                "SELECT rn, ((rn - 1) / 9) * 9 AS page_offset FROM ranked WHERE uuid = ?), " +
                                 "paged AS (" +
                                     "SELECT ranked.*, target.page_offset FROM ranked JOIN target ON true " +
-                                    "WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 10"+
+                                    "WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 9"+
                                 ") " +
                             "SELECT uuid, total_shards, page_offset FROM paged ORDER BY rn", listOf(uuid)
                 )
             // @formatter:on
             val result = preparedStatement.await()
-            val baltop = mutableMapOf<String?, Int>()
+            val baltop = mutableMapOf<UUID?, Int>()
             var offset = 0L
             result.rows.forEach {
                 val rowData = it as ArrayRowData
+                val uuid = if (rowData.columns[0] != null) {
+                    rowData.columns[0] as UUID
+                } else null
                 val totalShards = if (rowData.columns[1] != null) {
                     rowData.columns[1] as Int
                 } else 0
@@ -277,10 +279,7 @@ class PostgreSQL {
                     rowData.columns[2] as Long
                 } else 0L
 
-                val player =
-                    Bukkit.getPlayer(rowData.columns[0] as UUID) ?: Bukkit.getOfflinePlayer(rowData.columns[0] as UUID)
-                val playerName = player.name ?: player.uniqueId.toString()
-                baltop[playerName] = totalShards
+                baltop[uuid] = totalShards
             }
             return Pair(baltop, offset)
         } catch (e: Exception) {

@@ -29,5 +29,6 @@ diamondbank-og.balancetop\
 diamondbank-og.deposit\
 diamondbank-og.withdraw\
 diamondbank-og.pay\
+diamondbank-og.compress\
 diamondbank-og.setbankbalance\
 diamondbank-og.admin

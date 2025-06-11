@@ -2,7 +2,11 @@ package net.trueog.diamondbankog
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.AutoCompress.compress
+import net.trueog.diamondbankog.AutoDeposit.deposit
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -14,8 +18,10 @@ import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
+import org.bukkit.event.inventory.PrepareItemCraftEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -38,7 +44,7 @@ class Events : Listener {
                 ShardType.INVENTORY
             )
             if (error) {
-                Helper.handleError(
+                handleError(
                     event.player.uniqueId,
                     inventoryShards,
                     null
@@ -53,7 +59,7 @@ class Events : Listener {
                 ShardType.ENDER_CHEST
             )
             if (error) {
-                Helper.handleError(
+                handleError(
                     event.player.uniqueId,
                     enderChestDiamonds,
                     null
@@ -90,22 +96,35 @@ class Events : Listener {
             return
         }
 
+        if (DiamondBankOG.redis.getValue("diamondbankog:${player.uniqueId}:autocompress") == "true") {
+            compress(player)
+        }
+
+        if (DiamondBankOG.redis.getValue("diamondbankog:${player.uniqueId}:autodeposit") == "true") {
+            deposit(player, event.item)
+        }
+
         object : BukkitRunnable() {
             override fun run() {
                 DiamondBankOG.scope.launch {
-                    val inventoryShards = player.inventory.countTotal()
-                    val error = DiamondBankOG.postgreSQL.setPlayerShards(
-                        player.uniqueId,
-                        inventoryShards,
-                        ShardType.INVENTORY
-                    )
-                    if (error) {
-                        Helper.handleError(
+                    DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
+                        val inventoryShards = runOnMainThread {
+                            player.inventory.countTotal()
+                        }
+
+                        val error = DiamondBankOG.postgreSQL.setPlayerShards(
                             player.uniqueId,
                             inventoryShards,
-                            null
+                            ShardType.INVENTORY
                         )
-                        return@launch
+                        if (error) {
+                            handleError(
+                                player.uniqueId,
+                                inventoryShards,
+                                null
+                            )
+                            return@withLockSuspend
+                        }
                     }
                 }
             }
@@ -140,19 +159,23 @@ class Events : Listener {
         object : BukkitRunnable() {
             override fun run() {
                 DiamondBankOG.scope.launch {
-                    val inventoryShards = event.player.inventory.countTotal()
-                    val error = DiamondBankOG.postgreSQL.setPlayerShards(
-                        event.player.uniqueId,
-                        inventoryShards,
-                        ShardType.INVENTORY
-                    )
-                    if (error) {
-                        Helper.handleError(
+                    DiamondBankOG.transactionLock.withLockSuspend(event.player.uniqueId) {
+                        val inventoryShards = runOnMainThread {
+                            event.player.inventory.countTotal()
+                        }
+                        val error = DiamondBankOG.postgreSQL.setPlayerShards(
                             event.player.uniqueId,
                             inventoryShards,
-                            null
+                            ShardType.INVENTORY
                         )
-                        return@launch
+                        if (error) {
+                            handleError(
+                                event.player.uniqueId,
+                                inventoryShards,
+                                null
+                            )
+                            return@withLockSuspend
+                        }
                     }
                 }
             }
@@ -216,48 +239,73 @@ class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
+        val player = event.player
+        if (player !is Player) return
+
+        if (DiamondBankOG.transactionLock.isLocked(player.uniqueId)) {
             return
         }
 
-        val worldName = event.player.world.name
+        val worldName = player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+
+        if (DiamondBankOG.redis.getValue("diamondbankog:${player.uniqueId}:autocompress") == "true") {
+            compress(player)
+        }
 
         object : BukkitRunnable() {
             override fun run() {
                 DiamondBankOG.scope.launch {
-                    val inventoryShards = event.player.inventory.countTotal()
-                    var error = DiamondBankOG.postgreSQL.setPlayerShards(
-                        event.player.uniqueId,
-                        inventoryShards,
-                        ShardType.INVENTORY
-                    )
-                    if (error) {
-                        Helper.handleError(
-                            event.player.uniqueId,
+                    DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
+                        val (inventoryShards, enderChestShards) = runOnMainThread {
+                            Pair(
+                                player.inventory.countTotal(),
+                                if (event.inventory.type == InventoryType.ENDER_CHEST) player.enderChest.countTotal() else null
+                            )
+                        }
+                        var error = DiamondBankOG.postgreSQL.setPlayerShards(
+                            player.uniqueId,
                             inventoryShards,
-                            null
+                            ShardType.INVENTORY
                         )
-                        return@launch
-                    }
+                        if (error) {
+                            handleError(
+                                player.uniqueId,
+                                inventoryShards,
+                                null
+                            )
+                            return@withLockSuspend
+                        }
 
-                    if (event.inventory.type != InventoryType.ENDER_CHEST) return@launch
-                    val enderChestShards = event.player.enderChest.countTotal()
-                    error = DiamondBankOG.postgreSQL.setPlayerShards(
-                        event.player.uniqueId,
-                        enderChestShards,
-                        ShardType.ENDER_CHEST
-                    )
-                    if (error) {
-                        Helper.handleError(
-                            event.player.uniqueId,
+                        if (enderChestShards == null) return@withLockSuspend
+                        error = DiamondBankOG.postgreSQL.setPlayerShards(
+                            player.uniqueId,
                             enderChestShards,
-                            null
+                            ShardType.ENDER_CHEST
                         )
-                        return@launch
+                        if (error) {
+                            handleError(
+                                player.uniqueId,
+                                enderChestShards,
+                                null
+                            )
+                            return@withLockSuspend
+                        }
                     }
                 }
             }
         }.runTaskLater(DiamondBankOG.plugin, 1)
+    }
+
+    @EventHandler
+    fun onPrepareItemCraft(event: PrepareItemCraftEvent) {
+        val resultType = event.recipe?.result?.type
+        if (resultType != Material.PRISMARINE && resultType != Material.DARK_PRISMARINE && resultType != Material.SEA_LANTERN) {
+            return
+        }
+        if (!event.inventory.any { it?.persistentDataContainer?.has(Shard.namespacedKey) == true }) {
+            return
+        }
+        event.inventory.result = ItemStack(Material.AIR)
     }
 }

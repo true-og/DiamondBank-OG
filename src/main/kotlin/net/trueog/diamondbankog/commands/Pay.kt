@@ -4,10 +4,11 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.Helper
-import net.trueog.diamondbankog.Helper.handleError
+import net.trueog.diamondbankog.ErrorHandler.handleError
+import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock
+import net.trueog.diamondbankog.WithdrawHelper
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -90,7 +91,7 @@ class Pay : CommandExecutor {
             val originalShards = shards
 
             when (val result = DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                val notRemoved = Helper.withdrawFromPlayer(sender, shards)
+                val notRemoved = WithdrawHelper.withdrawFromPlayer(sender, shards)
                 if (notRemoved != 0) {
                     if (notRemoved <= -1) {
                         handleError(
@@ -105,7 +106,7 @@ class Pay : CommandExecutor {
                     val notRemovedDiamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                     shards -= notRemoved
                     val diamondsContinuing = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <#FFA500>Something went wrong while trying to remove <yellow>$notRemovedDiamonds <aqua>${if (notRemovedDiamonds == "1.0") "Diamond" else "Diamonds"}<#FFA500> from your inventory and/or ender chest, proceeding with <yellow>$diamondsContinuing <aqua>${if (diamondsContinuing == "1.0") "Diamond" else "Diamonds"}<#FFA500>."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <#FFA500>Something went wrong while trying to remove <yellow>$notRemovedDiamonds <aqua>Diamond${if (notRemovedDiamonds != "1.0") "s" else ""}<#FFA500> from your inventory and/or ender chest, proceeding with <yellow>$diamondsContinuing <aqua>Diamond${if (diamondsContinuing != "1.0") "s" else ""}<#FFA500>."))
                 }
 
                 val error = DiamondBankOG.postgreSQL.addToPlayerShards(
@@ -139,11 +140,27 @@ class Pay : CommandExecutor {
 
             val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
 
-            sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully paid <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"} <green>to <red>${receiver.name}<green>."))
+            sender.sendMessage(
+                DiamondBankOG.mm.deserialize(
+                    "${Config.prefix}<reset>: <green>Successfully paid <yellow>$diamondsPaid <aqua>Diamond${if (diamondsPaid != "1.0") "s" else ""} <green>to ${
+                        getPrefix(
+                            receiver.uniqueId
+                        )
+                    } ${receiver.name}<reset><green>."
+                )
+            )
 
             if (receiver.isOnline) {
                 val receiverPlayer = receiver.player ?: return@launch
-                receiverPlayer.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>${sender.name} has paid you <yellow>$diamondsPaid <aqua>${if (diamondsPaid == "1.0") "Diamond" else "Diamonds"}<green>."))
+                receiverPlayer.sendMessage(
+                    DiamondBankOG.mm.deserialize(
+                        "${Config.prefix}<reset>: <green>${
+                            getPrefix(
+                                sender.uniqueId
+                            )
+                        } ${sender.name}<reset> <green>has paid you <yellow>$diamondsPaid <aqua>Diamond${if (diamondsPaid != "1.0") "s" else ""}<green>."
+                    )
+                )
             }
 
             val error = DiamondBankOG.postgreSQL.insertTransactionLog(

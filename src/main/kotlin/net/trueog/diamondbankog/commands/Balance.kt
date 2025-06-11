@@ -4,6 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -12,6 +13,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.util.*
 import kotlin.math.floor
+
 
 class Balance : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
@@ -60,11 +62,11 @@ class Balance : CommandExecutor {
                 val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "<green>Balance of <red>${otherPlayer.name}<green>:\n" +
-                                "Bank: <yellow>$bankDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                                "<green>Inventory: <yellow>$inventoryDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                                "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                                "<bold><green>Total: <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}"
+                        "<green>Balance of ${getPrefix(otherPlayer.uniqueId)}${otherPlayer.name}<reset><green>:\n" +
+                                "Bank: <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}\n" +
+                                "<green>Inventory: <yellow>$inventoryDiamonds <aqua>Diamond${if (inventoryDiamonds != "1.0") "s" else ""}\n" +
+                                "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>Diamond${if (enderChestDiamonds != "1.0") "s" else ""}\n" +
+                                "<bold><green>Total: <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}"
                     )
                 )
                 return@launch
@@ -110,11 +112,17 @@ class Balance : CommandExecutor {
             val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <green>${if (balancePlayer.uniqueId == sender.uniqueId) "Your Balance" else "Balance of <red>${balancePlayer.name}"}<green>:\n" +
-                            "Bank: <yellow>$bankDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                            "<green>Inventory: <yellow>$inventoryDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                            "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}\n" +
-                            "<bold><green>Total: <yellow>$totalDiamonds <aqua>${if (totalDiamonds == "1.0") "Diamond" else "Diamonds"}"
+                    "${Config.prefix}<reset>: <green>${
+                        if (balancePlayer.uniqueId == sender.uniqueId) "Your Balance" else "Balance of ${
+                            getPrefix(
+                                balancePlayer.uniqueId
+                            )
+                        }${balancePlayer.name}"
+                    }<reset><green>:\n" +
+                            "Bank: <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}\n" +
+                            "<green>Inventory: <yellow>$inventoryDiamonds <aqua>Diamond${if (inventoryDiamonds != "1.0") "s" else ""}\n" +
+                            "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>Diamond${if (enderChestDiamonds != "1.0") "s" else ""}\n" +
+                            "<bold><green>Total: <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}"
                 )
             )
             return@launch
