@@ -92,9 +92,15 @@ class DiamondBankOG : JavaPlugin() {
 
         Shard.createCraftingRecipes()
 
-        val diamondBankAPI = DiamondBankAPI(postgreSQL)
+        val diamondBankAPIJava = DiamondBankAPIJava(postgreSQL)
         this.server.servicesManager.register(
-            DiamondBankAPI::class.java, diamondBankAPI, this,
+            DiamondBankAPIJava::class.java, diamondBankAPIJava, this,
+            ServicePriority.Normal
+        )
+
+        val diamondBankAPIKotlin = DiamondBankAPIKotlin(postgreSQL)
+        this.server.servicesManager.register(
+            DiamondBankAPIKotlin::class.java, diamondBankAPIKotlin, this,
             ServicePriority.Normal
         )
     }

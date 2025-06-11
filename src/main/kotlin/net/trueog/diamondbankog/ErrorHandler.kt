@@ -4,7 +4,7 @@ import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import java.util.*
 
 object ErrorHandler {
-    class EconomyException(message: String) : Exception(message)
+    class EconomyException(message: String) : RuntimeException(message)
 
     /**
      * Handles the error by throwing, disables the economy unless you specify it shouldn't
