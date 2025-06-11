@@ -3,7 +3,7 @@ package net.trueog.diamondbankog
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisConnectionException
 
-class Redis {
+internal class Redis {
     private val redisClient: RedisClient = RedisClient.create(Config.redisUrl)
 
     /**

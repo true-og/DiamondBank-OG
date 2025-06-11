@@ -3,7 +3,7 @@ package net.trueog.diamondbankog
 import kotlinx.coroutines.future.await
 import java.util.*
 
-object PlayerPrefix {
+internal object PlayerPrefix {
     private val legacyToMmMap = mapOf(
         "0" to "<black>",
         "1" to "<dark_blue>",

@@ -6,7 +6,7 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
-class DisableEconomy : CommandExecutor {
+internal class DisableEconomy : CommandExecutor {
     override fun onCommand(
         sender: CommandSender,
         command: Command,

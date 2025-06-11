@@ -10,7 +10,7 @@ import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.inventory.ShapelessRecipe
 import org.bukkit.persistence.PersistentDataType
 
-object Shard {
+internal object Shard {
     val namespacedKey = NamespacedKey(DiamondBankOG.plugin, "diamondshard")
 
     /**

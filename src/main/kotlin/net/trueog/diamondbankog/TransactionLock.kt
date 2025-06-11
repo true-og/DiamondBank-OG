@@ -4,7 +4,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 
-class TransactionLock {
+internal class TransactionLock {
     private val locks = ConcurrentHashMap<UUID, Semaphore>()
 
     sealed class LockResult<out T> {

@@ -10,7 +10,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import kotlin.math.abs
 
-object AutoCompress {
+internal object AutoCompress {
     fun compress(player: Player) {
         DiamondBankOG.scope.launch {
             val worldName = player.world.name

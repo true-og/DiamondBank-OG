@@ -12,7 +12,7 @@ import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
 
-class DiamondBankOG : JavaPlugin() {
+internal class DiamondBankOG : JavaPlugin() {
     companion object {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 

@@ -3,7 +3,7 @@ package net.trueog.diamondbankog
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import java.util.*
 
-object ErrorHandler {
+internal object ErrorHandler {
     class EconomyException(message: String) : RuntimeException(message)
 
     /**

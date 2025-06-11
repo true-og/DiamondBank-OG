@@ -15,7 +15,7 @@ import org.bukkit.scheduler.BukkitRunnable
 import kotlin.math.ceil
 import kotlin.math.floor
 
-object InventoryExtensions {
+internal object InventoryExtensions {
     private suspend fun Inventory.withdrawShards(shards: Int): Int {
         val removeMap = runOnMainThread {
             this.removeItem(Shard.createItemStack(shards))

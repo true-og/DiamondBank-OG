@@ -7,7 +7,7 @@ import org.bukkit.Material
 import org.bukkit.entity.Item
 import org.bukkit.entity.Player
 
-object AutoDeposit {
+internal object AutoDeposit {
     fun deposit(player: Player, item: Item) {
         val worldName = player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {

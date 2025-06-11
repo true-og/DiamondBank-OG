@@ -25,7 +25,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
 
 @OptIn(DelicateCoroutinesApi::class)
-class Events : Listener {
+internal class Events : Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (DiamondBankOG.economyDisabled) {

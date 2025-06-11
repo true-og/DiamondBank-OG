@@ -14,7 +14,7 @@ import java.util.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class Balancetop : CommandExecutor {
+internal class Balancetop : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         DiamondBankOG.scope.launch {
