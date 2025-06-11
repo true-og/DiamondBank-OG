@@ -56,7 +56,7 @@ internal object AutoCompress {
                                 .sumOf { 64 - it.amount }
 
                         if (changeInDiamonds > emptySlots + leftOverSpaceDiamonds) {
-                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond-related items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."))
+                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."))
                             return@runOnMainThread
                         }
                     }
@@ -69,7 +69,7 @@ internal object AutoCompress {
                                 .sumOf { 64 - it.amount }
 
                         if (changeInDiamondBlocks > emptySlots + leftOverSpaceDiamondBlocks) {
-                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond-related items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."))
+                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."))
                             return@runOnMainThread
                         }
                     }
@@ -77,7 +77,7 @@ internal object AutoCompress {
                     if (changeInShards < 0) {
                         val removeMap = player.inventory.removeItem(Shard.createItemStack(abs(changeInShards)))
                         if (removeMap.isNotEmpty()) {
-                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond-related items in your inventory."))
+                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."))
                             return@runOnMainThread
                         }
                     }
@@ -85,13 +85,13 @@ internal object AutoCompress {
                     if (changeInDiamonds > 0) {
                         val addMap = player.inventory.addItem(ItemStack(Material.DIAMOND, changeInDiamonds))
                         if (addMap.isNotEmpty()) {
-                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond-related items in your inventory."))
+                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."))
                             return@runOnMainThread
                         }
                     } else if (changeInDiamonds < 0) {
                         val removeMap = player.inventory.removeItem(ItemStack(Material.DIAMOND, abs(changeInDiamonds)))
                         if (removeMap.isNotEmpty()) {
-                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond-related items in your inventory."))
+                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."))
                             return@runOnMainThread
                         }
                     }
@@ -99,14 +99,14 @@ internal object AutoCompress {
                     if (changeInDiamondBlocks > 0) {
                         val addMap = player.inventory.addItem(ItemStack(Material.DIAMOND_BLOCK, changeInDiamondBlocks))
                         if (addMap.isNotEmpty()) {
-                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond-related items in your inventory."))
+                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."))
                             return@runOnMainThread
                         }
                     } else if (changeInDiamondBlocks < 0) {
                         val removeMap =
                             player.inventory.removeItem(ItemStack(Material.DIAMOND_BLOCK, abs(changeInDiamondBlocks)))
                         if (removeMap.isNotEmpty()) {
-                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond-related items in your inventory."))
+                            player.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."))
                             return@runOnMainThread
                         }
                     }
