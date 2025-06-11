@@ -11,7 +11,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @OptIn(DelicateCoroutinesApi::class)
-class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
+class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
     sealed class DiamondBankException(message: String) : Exception(message) {
         object TransactionsLockedException : DiamondBankException("Transactions for player are locked") {
             @Suppress("unused")
@@ -399,7 +399,12 @@ class DiamondBankAPI(private var postgreSQL: PostgreSQL) {
         DiamondBankException.OtherException::class
     )
     @Suppress("unused")
-    fun withdrawFromPlayer(uuid: UUID, shards: Int, transactionReason: String, notes: String?): CompletableFuture<Unit> {
+    fun withdrawFromPlayer(
+        uuid: UUID,
+        shards: Int,
+        transactionReason: String,
+        notes: String?
+    ): CompletableFuture<Unit> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
