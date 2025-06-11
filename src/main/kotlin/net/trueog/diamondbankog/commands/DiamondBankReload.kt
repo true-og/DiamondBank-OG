@@ -8,7 +8,7 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
-class DiamondBankReload : CommandExecutor {
+internal class DiamondBankReload : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         if (Config.load()) {
             sender.sendMessage(DiamondBankOG.mm.deserialize("<red>Failed to reload the config. Check the console for more information."))

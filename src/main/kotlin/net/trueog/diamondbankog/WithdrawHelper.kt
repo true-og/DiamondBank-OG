@@ -6,7 +6,7 @@ import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.entity.Player
 import kotlin.math.floor
 
-object WithdrawHelper {
+internal object WithdrawHelper {
     /**
      * @return The amount of not removed shards, -1 if error
      */

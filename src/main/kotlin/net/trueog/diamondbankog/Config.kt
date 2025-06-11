@@ -4,7 +4,7 @@ import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 import kotlin.properties.Delegates
 
-object Config {
+internal object Config {
     lateinit var prefix: String
     lateinit var postgresUrl: String
     lateinit var postgresUser: String

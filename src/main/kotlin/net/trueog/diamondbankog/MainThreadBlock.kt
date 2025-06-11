@@ -6,7 +6,7 @@ import org.bukkit.Bukkit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-object MainThreadBlock {
+internal object MainThreadBlock {
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun <T> runOnMainThread(block: () -> T): T {
         return if (Bukkit.isPrimaryThread()) {

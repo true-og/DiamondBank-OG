@@ -12,7 +12,7 @@ import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
 
-class DiamondBankOG : JavaPlugin() {
+internal class DiamondBankOG : JavaPlugin() {
     companion object {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -106,6 +106,10 @@ class DiamondBankOG : JavaPlugin() {
     }
 
     override fun onDisable() {
+        redis.shutdown()
+
+        if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
+
         scope.cancel()
 
         runBlocking {
@@ -113,10 +117,6 @@ class DiamondBankOG : JavaPlugin() {
         }
 
         transactionLock.removeAllLocks()
-
-        redis.shutdown()
-
-        if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
     }
 
 }

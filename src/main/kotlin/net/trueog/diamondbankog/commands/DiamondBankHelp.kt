@@ -6,7 +6,7 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
-class DiamondBankHelp : CommandExecutor {
+internal class DiamondBankHelp : CommandExecutor {
     override fun onCommand(
         sender: CommandSender,
         command: Command,

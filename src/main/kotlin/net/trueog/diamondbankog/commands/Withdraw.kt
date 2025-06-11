@@ -16,7 +16,7 @@ import org.bukkit.inventory.ItemStack
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class Withdraw : CommandExecutor {
+internal class Withdraw : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         DiamondBankOG.scope.launch {

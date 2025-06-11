@@ -7,7 +7,7 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-class AutoCompress : CommandExecutor {
+internal class AutoCompress : CommandExecutor {
     override fun onCommand(
         sender: CommandSender,
         command: Command,

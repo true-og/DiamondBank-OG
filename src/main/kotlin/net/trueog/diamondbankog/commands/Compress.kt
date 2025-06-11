@@ -19,7 +19,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 import kotlin.math.abs
 
-class Compress : CommandExecutor {
+internal class Compress : CommandExecutor {
     private data class RunOnMainThreadResult(
         val shouldReturn: Boolean,
         val changeInShards: Int?,
