@@ -23,7 +23,6 @@ internal object Config {
             DiamondBankOG.plugin.saveDefaultConfig()
         }
         val config = YamlConfiguration.loadConfiguration(file)
-        config.save(file)
 
         try {
             prefix = config.get("prefix") as String
