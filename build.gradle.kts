@@ -3,6 +3,7 @@ import java.io.BufferedReader
 plugins {
     kotlin("jvm") version "2.1.21"
     id("com.gradleup.shadow") version "8.3.6"
+    id("com.diffplug.spotless") version "7.0.4"
     eclipse
 }
 
@@ -48,6 +49,7 @@ configurations.all {
 }
 
 tasks.build {
+    dependsOn(tasks.spotlessApply)
     dependsOn(tasks.shadowJar)
 }
 
@@ -90,4 +92,12 @@ java {
 tasks.withType<AbstractArchiveTask>().configureEach {
     isPreserveFileTimestamps = false
     isReproducibleFileOrder = true
+}
+
+spotless {
+    kotlin {
+        ktfmt().kotlinlangStyle().configure {
+            it.setMaxWidth(120)
+        }
+    }
 }
