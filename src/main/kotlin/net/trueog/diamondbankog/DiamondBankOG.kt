@@ -20,17 +20,20 @@ internal class DiamondBankOG : JavaPlugin() {
         lateinit var postgreSQL: PostgreSQL
         lateinit var redis: Redis
         lateinit var luckPerms: LuckPerms
+
         fun isPostgreSQLInitialised() = ::postgreSQL.isInitialized
-        var mm = MiniMessage.builder()
-            .tags(
-                TagResolver.builder()
-                    .resolver(StandardTags.color())
-                    .resolver(StandardTags.decorations())
-                    .resolver(StandardTags.rainbow())
-                    .resolver(StandardTags.reset())
-                    .build()
-            )
-            .build()
+
+        var mm =
+            MiniMessage.builder()
+                .tags(
+                    TagResolver.builder()
+                        .resolver(StandardTags.color())
+                        .resolver(StandardTags.decorations())
+                        .resolver(StandardTags.rainbow())
+                        .resolver(StandardTags.reset())
+                        .build()
+                )
+                .build()
 
         val transactionLock = TransactionLock()
         var economyDisabled: Boolean = false
@@ -68,7 +71,6 @@ internal class DiamondBankOG : JavaPlugin() {
         }
         luckPerms = luckPermsProvider.provider
 
-
         this.server.pluginManager.registerEvents(Events(), this)
 
         this.getCommand("deposit")?.setExecutor(Deposit())
@@ -94,14 +96,18 @@ internal class DiamondBankOG : JavaPlugin() {
 
         val diamondBankAPIJava = DiamondBankAPIJava(postgreSQL)
         this.server.servicesManager.register(
-            DiamondBankAPIJava::class.java, diamondBankAPIJava, this,
-            ServicePriority.Normal
+            DiamondBankAPIJava::class.java,
+            diamondBankAPIJava,
+            this,
+            ServicePriority.Normal,
         )
 
         val diamondBankAPIKotlin = DiamondBankAPIKotlin(postgreSQL)
         this.server.servicesManager.register(
-            DiamondBankAPIKotlin::class.java, diamondBankAPIKotlin, this,
-            ServicePriority.Normal
+            DiamondBankAPIKotlin::class.java,
+            diamondBankAPIKotlin,
+            this,
+            ServicePriority.Normal,
         )
     }
 
@@ -112,11 +118,8 @@ internal class DiamondBankOG : JavaPlugin() {
 
         scope.cancel()
 
-        runBlocking {
-            scope.coroutineContext[Job]?.join()
-        }
+        runBlocking { scope.coroutineContext[Job]?.join() }
 
         transactionLock.removeAllLocks()
     }
-
 }
