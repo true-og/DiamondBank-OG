@@ -1,20 +1,16 @@
 import java.io.BufferedReader
 
 plugins {
-    kotlin("jvm") version "2.1.21"
-    id("com.gradleup.shadow") version "8.3.6"
+    kotlin("jvm") version "2.1.21" // Import kotlin jvm plugin for kotlin/java integration.
     id("com.diffplug.spotless") version "7.0.4"
-    eclipse
+    id("com.gradleup.shadow") version "8.3.6" // Import shadow API.
+    eclipse // Import eclipse plugin for IDE integration.
 }
 
-val commitHash = Runtime
-    .getRuntime()
-    .exec(arrayOf("git", "rev-parse", "--short=10", "HEAD"))
-    .let { process ->
+val commitHash =
+    Runtime.getRuntime().exec(arrayOf("git", "rev-parse", "--short=10", "HEAD")).let { process ->
         process.waitFor()
-        val output = process.inputStream.use {
-            it.bufferedReader().use(BufferedReader::readText)
-        }
+        val output = process.inputStream.use { it.bufferedReader().use(BufferedReader::readText) }
         process.destroy()
         output.trim()
     }
@@ -22,17 +18,14 @@ val commitHash = Runtime
 val apiVersion = "1.19"
 
 group = "net.trueog.diamondbankog"
+
 version = "$apiVersion-$commitHash"
 
 repositories {
     mavenCentral()
     gradlePluginPortal()
-    maven {
-        url = uri("https://repo.purpurmc.org/snapshots")
-    }
-    maven {
-        url = uri("https://jitpack.io")
-    }
+    maven { url = uri("https://repo.purpurmc.org/snapshots") }
+    maven { url = uri("https://jitpack.io") }
 }
 
 dependencies {
@@ -44,42 +37,29 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 }
 
-configurations.all {
-    exclude(group = "io.projectreactor")
-}
+configurations.all { exclude(group = "io.projectreactor") }
 
 tasks.build {
     dependsOn(tasks.spotlessApply)
     dependsOn(tasks.shadowJar)
 }
 
-tasks.jar {
-    archiveClassifier.set("part")
-}
+tasks.jar { archiveClassifier.set("part") }
 
 tasks.shadowJar {
     archiveClassifier.set("")
     minimize()
 }
 
-kotlin {
-    jvmToolchain(17)
-}
+kotlin { jvmToolchain(17) }
 
 tasks.named<ProcessResources>("processResources") {
-    val props = mapOf(
-        "version" to version,
-        "apiVersion" to apiVersion,
-    )
+    val props = mapOf("version" to version, "apiVersion" to apiVersion)
     inputs.properties(props)
     filteringCharset = "UTF-8"
-    filesMatching("plugin.yml") {
-        expand(props)
-    }
+    filesMatching("plugin.yml") { expand(props) }
 
-    from("LICENSE") {
-        into("/")
-    }
+    from("LICENSE") { into("/") }
 }
 
 java {
@@ -95,9 +75,9 @@ tasks.withType<AbstractArchiveTask>().configureEach {
 }
 
 spotless {
-    kotlin {
-        ktfmt().kotlinlangStyle().configure {
-            it.setMaxWidth(120)
-        }
+    kotlin { ktfmt().kotlinlangStyle().configure { it.setMaxWidth(120) } }
+    kotlinGradle {
+        ktfmt().kotlinlangStyle().configure { it.setMaxWidth(120) }
+        target("build.gradle.kts", "settings.gradle.kts")
     }
 }
