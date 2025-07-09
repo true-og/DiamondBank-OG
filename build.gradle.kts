@@ -50,7 +50,6 @@ tasks.jar { archiveClassifier.set("part") }
 tasks.shadowJar {
     archiveClassifier.set("")
     relocate("io.lettuce", "net.trueog.diamondbankog.shaded.io.lettuce")
-    relocate("reactor.core", "net.trueog.diamondbankog.shaded.reactor.core")
     relocate("com.github.jasync", "net.trueog.diamondbankog.shaded.com.github.jasync")
 }
 
