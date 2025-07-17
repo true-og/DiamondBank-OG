@@ -14,7 +14,7 @@ internal class TransactionLock {
     }
 
     fun <T> withLock(uuid: UUID, block: () -> T): T {
-        val lock = locks.computeIfAbsent(uuid) { Semaphore(1) }
+        val lock = locks.computeIfAbsent(uuid) { Semaphore(1, true) }
         lock.acquire()
         try {
             return block()
@@ -24,7 +24,7 @@ internal class TransactionLock {
     }
 
     suspend fun <T> withLockSuspend(uuid: UUID, block: suspend () -> T): T {
-        val lock = locks.computeIfAbsent(uuid) { Semaphore(1) }
+        val lock = locks.computeIfAbsent(uuid) { Semaphore(1, true) }
         lock.acquire()
         try {
             return block()
@@ -34,7 +34,7 @@ internal class TransactionLock {
     }
 
     fun <T> tryWithLock(uuid: UUID, block: () -> T): LockResult<T> {
-        val lock = locks.computeIfAbsent(uuid) { Semaphore(1) }
+        val lock = locks.computeIfAbsent(uuid) { Semaphore(1, true) }
         return if (lock.tryAcquire()) {
             try {
                 return LockResult.Acquired(block())
@@ -47,7 +47,7 @@ internal class TransactionLock {
     }
 
     suspend fun <T> tryWithLockSuspend(uuid: UUID, block: suspend () -> T): LockResult<T> {
-        val lock = locks.computeIfAbsent(uuid) { Semaphore(1) }
+        val lock = locks.computeIfAbsent(uuid) { Semaphore(1, true) }
         return if (lock.tryAcquire()) {
             try {
                 LockResult.Acquired(block())
