@@ -38,8 +38,7 @@ internal object AutoDeposit {
 
         DiamondBankOG.scope.launch {
             DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
-                val error = DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, shards, ShardType.BANK)
-                if (error) {
+                DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, shards, ShardType.BANK).getOrElse {
                     handleError(player.uniqueId, shards, null)
                     player.sendMessage(
                         DiamondBankOG.mm.deserialize(

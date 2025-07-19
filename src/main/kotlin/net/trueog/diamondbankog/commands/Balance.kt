@@ -7,7 +7,6 @@ import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
-import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -61,24 +60,21 @@ internal class Balance : CommandExecutor {
                     return@launch
                 }
 
-                val balance = DiamondBankOG.postgreSQL.getPlayerShards(otherPlayer.uniqueId, ShardType.ALL)
-                if (
-                    balance.shardsInBank == null ||
-                        balance.shardsInInventory == null ||
-                        balance.shardsInEnderChest == null
-                ) {
-                    sender.sendMessage(
-                        DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>Something went wrong while trying to get their balance."
+                val balance =
+                    DiamondBankOG.postgreSQL.getAllShards(otherPlayer.uniqueId).getOrElse {
+                        sender.sendMessage(
+                            DiamondBankOG.mm.deserialize(
+                                "${Config.prefix}<reset>: <red>Something went wrong while trying to get their balance."
+                            )
                         )
-                    )
-                    return@launch
-                }
-                val totalBalance = balance.shardsInBank + balance.shardsInInventory + balance.shardsInEnderChest
+                        return@launch
+                    }
+
+                val totalBalance = balance.bank + balance.inventory + balance.enderChest
                 val totalDiamonds = String.format("%.1f", floor((totalBalance / 9.0) * 10) / 10.0)
-                val bankDiamonds = String.format("%.1f", floor((balance.shardsInBank / 9.0) * 10) / 10.0)
-                val inventoryDiamonds = String.format("%.1f", floor((balance.shardsInInventory / 9.0) * 10) / 10.0)
-                val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
+                val bankDiamonds = String.format("%.1f", floor((balance.bank / 9.0) * 10) / 10.0)
+                val inventoryDiamonds = String.format("%.1f", floor((balance.inventory / 9.0) * 10) / 10.0)
+                val enderChestDiamonds = String.format("%.1f", floor((balance.enderChest / 9.0) * 10) / 10.0)
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
                         "<green>Balance of ${getPrefix(otherPlayer.uniqueId)}${otherPlayer.name}<reset><green>:\n" +
@@ -119,22 +115,23 @@ internal class Balance : CommandExecutor {
                     }
                     otherPlayer
                 }
-            val balance = DiamondBankOG.postgreSQL.getPlayerShards(balancePlayer.uniqueId, ShardType.ALL)
-            if (balance.isNeededShardTypeNull(ShardType.ALL)) {
-                sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>Something went wrong while trying to get ${
+            val balance =
+                DiamondBankOG.postgreSQL.getAllShards(balancePlayer.uniqueId).getOrElse {
+                    sender.sendMessage(
+                        DiamondBankOG.mm.deserialize(
+                            "${Config.prefix}<reset>: <red>Something went wrong while trying to get ${
                             if (balancePlayer.uniqueId != sender.uniqueId) "their" else "your"
                         } balance."
+                        )
                     )
-                )
-                return@launch
-            }
-            val totalBalance = balance.shardsInBank!! + balance.shardsInInventory!! + balance.shardsInEnderChest!!
+                    return@launch
+                }
+
+            val totalBalance = balance.bank + balance.inventory + balance.enderChest
             val totalDiamonds = String.format("%.1f", floor((totalBalance / 9.0) * 10) / 10.0)
-            val bankDiamonds = String.format("%.1f", floor((balance.shardsInBank / 9.0) * 10) / 10.0)
-            val inventoryDiamonds = String.format("%.1f", floor((balance.shardsInInventory / 9.0) * 10) / 10.0)
-            val enderChestDiamonds = String.format("%.1f", floor((balance.shardsInEnderChest / 9.0) * 10) / 10.0)
+            val bankDiamonds = String.format("%.1f", floor((balance.bank / 9.0) * 10) / 10.0)
+            val inventoryDiamonds = String.format("%.1f", floor((balance.inventory / 9.0) * 10) / 10.0)
+            val enderChestDiamonds = String.format("%.1f", floor((balance.enderChest / 9.0) * 10) / 10.0)
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
                     "${Config.prefix}<reset>: <green>${

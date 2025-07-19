@@ -3,30 +3,19 @@ package net.trueog.diamondbankog
 import kotlin.math.floor
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
-import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.entity.Player
 
 internal object WithdrawHelper {
     /** @return The amount of not removed shards, -1 if error */
     suspend fun withdrawFromPlayer(player: Player, shards: Int): Int {
-        val playerShards = DiamondBankOG.postgreSQL.getPlayerShards(player.uniqueId, ShardType.ALL)
-        if (
-            playerShards.shardsInBank == null ||
-                playerShards.shardsInInventory == null ||
-                playerShards.shardsInEnderChest == null
-        ) {
-            return -1
-        }
+        val playerShards =
+            DiamondBankOG.postgreSQL.getAllShards(player.uniqueId).getOrElse {
+                return -1
+            }
 
         // Withdraw everything
         if (shards == -1) {
-            val error =
-                DiamondBankOG.postgreSQL.subtractFromPlayerShards(
-                    player.uniqueId,
-                    playerShards.shardsInBank,
-                    ShardType.BANK,
-                )
-            if (error) {
+            DiamondBankOG.postgreSQL.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
                 handleError(player.uniqueId, shards, playerShards)
                 player.sendMessage(
                     DiamondBankOG.mm.deserialize(
@@ -36,22 +25,18 @@ internal object WithdrawHelper {
                 return -1
             }
 
-            val notRemovedInventory = player.inventory.withdraw(playerShards.shardsInInventory)
+            val notRemovedInventory = player.inventory.withdraw(playerShards.inventory)
 
-            val notRemovedEnderChest = player.enderChest.withdraw(playerShards.shardsInEnderChest)
+            val notRemovedEnderChest = player.enderChest.withdraw(playerShards.enderChest)
             return notRemovedInventory + notRemovedEnderChest
         }
 
-        if (shards > playerShards.shardsInBank + playerShards.shardsInInventory + playerShards.shardsInEnderChest) {
+        if (shards > playerShards.bank + playerShards.inventory + playerShards.enderChest) {
             val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
             val totalDiamonds =
                 String.format(
                     "%.1f",
-                    floor(
-                        ((playerShards.shardsInBank +
-                            playerShards.shardsInInventory +
-                            playerShards.shardsInEnderChest) / 9.0) * 10
-                    ) / 10.0,
+                    floor(((playerShards.bank + playerShards.inventory + playerShards.enderChest) / 9.0) * 10) / 10.0,
                 )
             player.sendMessage(
                 DiamondBankOG.mm.deserialize(
@@ -61,9 +46,8 @@ internal object WithdrawHelper {
             return -1
         }
 
-        if (shards <= playerShards.shardsInBank) {
-            val error = DiamondBankOG.postgreSQL.subtractFromPlayerShards(player.uniqueId, shards, ShardType.BANK)
-            if (error) {
+        if (shards <= playerShards.bank) {
+            DiamondBankOG.postgreSQL.subtractFromBankShards(player.uniqueId, shards).getOrElse {
                 handleError(player.uniqueId, shards, playerShards)
                 player.sendMessage(
                     DiamondBankOG.mm.deserialize(
@@ -75,14 +59,8 @@ internal object WithdrawHelper {
             return 0
         }
 
-        if (shards <= playerShards.shardsInBank + playerShards.shardsInInventory) {
-            val error =
-                DiamondBankOG.postgreSQL.subtractFromPlayerShards(
-                    player.uniqueId,
-                    playerShards.shardsInBank,
-                    ShardType.BANK,
-                )
-            if (error) {
+        if (shards <= playerShards.bank + playerShards.inventory) {
+            DiamondBankOG.postgreSQL.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
                 handleError(player.uniqueId, shards, playerShards)
                 player.sendMessage(
                     DiamondBankOG.mm.deserialize(
@@ -92,17 +70,11 @@ internal object WithdrawHelper {
                 return -1
             }
 
-            val notRemoved = player.inventory.withdraw(shards - playerShards.shardsInBank)
+            val notRemoved = player.inventory.withdraw(shards - playerShards.bank)
             return notRemoved
         }
 
-        val error =
-            DiamondBankOG.postgreSQL.subtractFromPlayerShards(
-                player.uniqueId,
-                playerShards.shardsInBank,
-                ShardType.BANK,
-            )
-        if (error) {
+        DiamondBankOG.postgreSQL.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
             handleError(player.uniqueId, shards, playerShards)
             player.sendMessage(
                 DiamondBankOG.mm.deserialize(
@@ -112,10 +84,9 @@ internal object WithdrawHelper {
             return -1
         }
 
-        val notRemovedInventory = player.inventory.withdraw(playerShards.shardsInInventory)
+        val notRemovedInventory = player.inventory.withdraw(playerShards.inventory)
 
-        val notRemovedEnderChest =
-            player.enderChest.withdraw(shards - (playerShards.shardsInBank + playerShards.shardsInInventory))
+        val notRemovedEnderChest = player.enderChest.withdraw(shards - (playerShards.bank + playerShards.inventory))
 
         return notRemovedInventory + notRemovedEnderChest
     }

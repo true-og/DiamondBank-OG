@@ -149,17 +149,17 @@ internal class Pay : CommandExecutor {
                             )
                         }
 
-                        val error =
-                            DiamondBankOG.postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK)
-                        if (error) {
-                            handleError(sender.uniqueId, shards, null, receiver.uniqueId)
-                            sender.sendMessage(
-                                DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                        DiamondBankOG.postgreSQL
+                            .addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK)
+                            .getOrElse {
+                                handleError(sender.uniqueId, shards, null, receiver.uniqueId)
+                                sender.sendMessage(
+                                    DiamondBankOG.mm.deserialize(
+                                        "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                    )
                                 )
-                            )
-                            return@tryWithLockSuspend true
-                        }
+                                return@tryWithLockSuspend true
+                            }
                         false
                     }
             ) {
@@ -204,8 +204,8 @@ internal class Pay : CommandExecutor {
                 )
             }
 
-            val error =
-                DiamondBankOG.postgreSQL.insertTransactionLog(
+            DiamondBankOG.postgreSQL
+                .insertTransactionLog(
                     sender.uniqueId,
                     shards,
                     receiver.uniqueId,
@@ -213,9 +213,7 @@ internal class Pay : CommandExecutor {
                     if (shards != originalShards) "Could not withdraw $originalShards shards, continued with $shards"
                     else null,
                 )
-            if (error) {
-                handleError(sender.uniqueId, shards, null, receiver.uniqueId, true)
-            }
+                .getOrElse { handleError(sender.uniqueId, shards, null, receiver.uniqueId, true) }
         }
         return true
     }

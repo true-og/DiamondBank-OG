@@ -70,15 +70,14 @@ internal class Deposit : CommandExecutor {
             }
 
             val playerInventoryShards =
-                DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.INVENTORY).shardsInInventory
-            if (playerInventoryShards == null) {
-                sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
+                DiamondBankOG.postgreSQL.getInventoryShards(sender.uniqueId).getOrElse {
+                    sender.sendMessage(
+                        DiamondBankOG.mm.deserialize(
+                            "${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
+                        )
                     )
-                )
-                return@launch
-            }
+                    return@launch
+                }
             if (playerInventoryShards == 0) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
@@ -152,8 +151,7 @@ internal class Deposit : CommandExecutor {
                             )
                         }
 
-                        val error = DiamondBankOG.postgreSQL.addToPlayerShards(sender.uniqueId, shards, ShardType.BANK)
-                        if (error) {
+                        DiamondBankOG.postgreSQL.addToPlayerShards(sender.uniqueId, shards, ShardType.BANK).getOrElse {
                             handleError(sender.uniqueId, shards, PlayerShards(-1, playerInventoryShards, -1))
                             sender.sendMessage(
                                 DiamondBankOG.mm.deserialize(
@@ -188,8 +186,8 @@ internal class Deposit : CommandExecutor {
                 )
             )
 
-            val error =
-                DiamondBankOG.postgreSQL.insertTransactionLog(
+            DiamondBankOG.postgreSQL
+                .insertTransactionLog(
                     sender.uniqueId,
                     shards,
                     null,
@@ -197,9 +195,7 @@ internal class Deposit : CommandExecutor {
                     if (shards != originalShards) "Could not withdraw $originalShards shards, continued with $shards"
                     else null,
                 )
-            if (error) {
-                handleError(sender.uniqueId, shards, null, null, true)
-            }
+                .getOrElse { handleError(sender.uniqueId, shards, null, null, true) }
         }
         return true
     }
