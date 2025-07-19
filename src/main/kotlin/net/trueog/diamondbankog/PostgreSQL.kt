@@ -18,7 +18,7 @@ class PostgreSQL {
         BANK("bank_shards"),
         INVENTORY("inventory_shards"),
         ENDER_CHEST("ender_chest_shards"),
-        ALL("bank_shards, inventory_shards, ender_chest_shards"),
+        TOTAL("bank_shards, inventory_shards, ender_chest_shards"),
     }
 
     @Throws(SQLException::class, ClassNotFoundException::class)
@@ -83,7 +83,7 @@ class PostgreSQL {
     data class PlayerShards(val bank: Int, val inventory: Int, val enderChest: Int)
 
     suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
-        if (type == ShardType.ALL) return Result.failure(InvalidArgumentException())
+        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
         try {
             val connection = pool.asSuspending.connect()
 
@@ -100,7 +100,7 @@ class PostgreSQL {
     }
 
     suspend fun addToPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
-        if (type == ShardType.ALL) return Result.failure(InvalidArgumentException())
+        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
 
         val playerShards =
             when (type) {

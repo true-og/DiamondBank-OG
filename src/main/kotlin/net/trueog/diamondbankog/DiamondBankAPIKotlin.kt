@@ -3,6 +3,7 @@ package net.trueog.diamondbankog
 import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import net.trueog.diamondbankog.ErrorHandler.handleError
+import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock.LockResult
 import org.bukkit.Bukkit
@@ -152,6 +153,17 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
     suspend fun blockingGetEnderChestShards(uuid: UUID): Result<Int> =
         blockingGetShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
+    /** WARNING: blocking, if the player has a transaction lock applied this function will wait until its released */
+    @Suppress("unused")
+    suspend fun blockingGetTotalShards(uuid: UUID): Result<Int> = blockingGetShardTypeShards(uuid, ShardType.TOTAL)
+
+    /** WARNING: blocking, if the player has a transaction lock applied this function will wait until its released */
+    @Suppress("unused")
+    suspend fun blockingGetAllShards(uuid: UUID): Result<PlayerShards> {
+        if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
+        return postgreSQL.getAllShards(uuid)
+    }
+
     private suspend fun blockingGetShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
 
@@ -160,7 +172,7 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                 ShardType.BANK -> postgreSQL.getBankShards(uuid)
                 ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
                 ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
-                ShardType.ALL -> postgreSQL.getTotalShards(uuid)
+                ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
             }
         }
     }
@@ -170,6 +182,25 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
     @Suppress("unused") suspend fun getInventoryShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.INVENTORY)
 
     @Suppress("unused") suspend fun getEnderChestShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
+
+    @Suppress("unused") suspend fun getTotalShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.TOTAL)
+
+    @Suppress("unused")
+    suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
+        if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
+
+        return when (
+            val result = DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
+        ) {
+            is LockResult.Acquired -> {
+                result.result
+            }
+
+            LockResult.Failed -> {
+                return Result.failure(DiamondBankException.TransactionsLockedException)
+            }
+        }
+    }
 
     private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
@@ -181,7 +212,7 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                         ShardType.BANK -> postgreSQL.getBankShards(uuid)
                         ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
                         ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
-                        ShardType.ALL -> postgreSQL.getTotalShards(uuid)
+                        ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
                     }
                 }
         ) {

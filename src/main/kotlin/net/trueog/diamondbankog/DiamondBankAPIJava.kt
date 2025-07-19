@@ -2,10 +2,12 @@ package net.trueog.diamondbankog
 
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import kotlin.getOrThrow
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.runBlocking
 import net.trueog.diamondbankog.ErrorHandler.handleError
+import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock.LockResult
 import org.bukkit.Bukkit
@@ -176,6 +178,35 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
     @Suppress("unused")
     fun blockingGetEnderChestShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
+    /**
+     * WARNING: do not run on a thread where blocking is unacceptable WARNING: blocking, if the player has a transaction
+     * lock applied this function will wait until its released
+     *
+     * @throws DiamondBankException.EconomyDisabledException
+     * @throws java.lang.Exception
+     */
+    @Suppress("unused") fun blockingGetTotalShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.TOTAL)
+
+    /**
+     * WARNING: do not run on a thread where blocking is unacceptable WARNING: blocking, if the player has a transaction
+     * lock applied this function will wait until its released
+     *
+     * @throws DiamondBankException.EconomyDisabledException
+     * @throws java.lang.Exception
+     */
+    @Suppress("unused")
+    fun blockingGetAllShards(uuid: UUID): PlayerShards {
+        if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
+
+        return runBlocking {
+            DiamondBankOG.transactionLock.withLockSuspend(uuid) {
+                val result = postgreSQL.getAllShards(uuid)
+                result.exceptionOrNull()?.let { throw it }
+                result.getOrThrow()
+            }
+        }
+    }
+
     private fun blockingGetShardTypeShards(uuid: UUID, type: ShardType): Int {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
@@ -186,7 +217,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                         ShardType.BANK -> postgreSQL.getBankShards(uuid)
                         ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
                         ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
-                        ShardType.ALL -> postgreSQL.getTotalShards(uuid)
+                        ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
                     }
                 }
             result.exceptionOrNull()?.let { throw it }
@@ -221,6 +252,42 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      */
     @Suppress("unused") fun getEnderChestShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
+    /**
+     * WARNING: do not run on a thread where blocking is unacceptable
+     *
+     * @throws DiamondBankException.EconomyDisabledException
+     * @throws DiamondBankException.TransactionsLockedException
+     * @throws java.lang.Exception
+     */
+    @Suppress("unused") fun getTotalShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.TOTAL)
+
+    /**
+     * WARNING: do not run on a thread where blocking is unacceptable
+     *
+     * @throws DiamondBankException.EconomyDisabledException
+     * @throws DiamondBankException.TransactionsLockedException
+     * @throws java.lang.Exception
+     */
+    @Suppress("unused")
+    fun getAllShards(uuid: UUID): PlayerShards {
+        if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
+
+        return runBlocking {
+            when (
+                val result = DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
+            ) {
+                is LockResult.Acquired -> {
+                    result.result.exceptionOrNull()?.let { throw it }
+                    result.result.getOrThrow()
+                }
+
+                LockResult.Failed -> {
+                    throw DiamondBankException.TransactionsLockedException
+                }
+            }
+        }
+    }
+
     private fun getShardTypeShards(uuid: UUID, type: ShardType): Int {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
@@ -232,7 +299,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                             ShardType.BANK -> postgreSQL.getBankShards(uuid)
                             ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
                             ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
-                            ShardType.ALL -> postgreSQL.getTotalShards(uuid)
+                            ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
                         }
                     }
             ) {
