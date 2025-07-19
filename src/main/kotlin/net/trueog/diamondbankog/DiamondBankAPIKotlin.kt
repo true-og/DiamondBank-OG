@@ -64,13 +64,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                     Result.success(Unit)
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                return Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
@@ -129,13 +125,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                     Result.success(Unit)
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
@@ -192,13 +184,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         return when (
             val result = DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                return Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
@@ -216,13 +204,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                     }
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                return Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
@@ -307,13 +291,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                     Result.success(Unit)
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
@@ -412,13 +392,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                     Result.success(Unit)
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 }

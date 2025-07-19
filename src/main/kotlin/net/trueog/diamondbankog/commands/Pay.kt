@@ -169,7 +169,7 @@ internal class Pay : CommandExecutor {
                     }
                 }
 
-                TransactionLock.LockResult.Failed -> {
+                is TransactionLock.LockResult.Failed -> {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
                             "${Config.prefix}<reset>: <red>You are currently blocked from using /pay."

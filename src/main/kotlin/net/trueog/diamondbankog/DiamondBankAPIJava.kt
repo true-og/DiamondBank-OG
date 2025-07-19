@@ -71,13 +71,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                             .getOrElse { handleError(uuid, shards, null, null, true) }
                     }
             ) {
-                is LockResult.Acquired -> {
-                    result.result
-                }
+                is LockResult.Acquired -> result.result
 
-                LockResult.Failed -> {
-                    throw DiamondBankException.TransactionsLockedException
-                }
+                is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
             }
         }
     }
@@ -138,13 +134,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                             .getOrElse { handleError(uuid, shards, null, null, true) }
                     }
             ) {
-                is LockResult.Acquired -> {
-                    result.result
-                }
+                is LockResult.Acquired -> result.result
 
-                LockResult.Failed -> {
-                    throw DiamondBankException.TransactionsLockedException
-                }
+                is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
             }
         }
     }
@@ -281,9 +273,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                     result.result.getOrThrow()
                 }
 
-                LockResult.Failed -> {
-                    throw DiamondBankException.TransactionsLockedException
-                }
+                is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
             }
         }
     }
@@ -308,9 +298,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                     result.result.getOrThrow()
                 }
 
-                LockResult.Failed -> {
-                    throw DiamondBankException.TransactionsLockedException
-                }
+                is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
             }
         }
     }
@@ -428,13 +416,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                             .getOrElse { handleError(uuid, shards, null, null, true) }
                     }
             ) {
-                is LockResult.Acquired -> {
-                    result.result
-                }
+                is LockResult.Acquired -> result.result
 
-                LockResult.Failed -> {
-                    throw DiamondBankException.TransactionsLockedException
-                }
+                is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
             }
         }
     }
@@ -550,13 +534,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                             .getOrElse { handleError(payerUuid, shards, null, receiverUuid, true) }
                     }
             ) {
-                is LockResult.Acquired -> {
-                    result.result
-                }
+                is LockResult.Acquired -> result.result
 
-                LockResult.Failed -> {
-                    throw DiamondBankException.TransactionsLockedException
-                }
+                is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
             }
         }
     }
