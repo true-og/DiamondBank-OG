@@ -148,7 +148,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws java.lang.Exception
      */
-    @Suppress("unused") fun blockingGetBankShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.BANK)
+    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
+    @Suppress("unused")
+    fun blockingGetBankShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.BANK)
 
     /**
      * WARNING: do not run on a thread where blocking is unacceptable WARNING: blocking, if the player has a transaction
@@ -157,6 +159,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws java.lang.Exception
      */
+    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
     @Suppress("unused")
     fun blockingGetInventoryShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.INVENTORY)
 
@@ -167,6 +170,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws java.lang.Exception
      */
+    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
     @Suppress("unused")
     fun blockingGetEnderChestShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
@@ -177,7 +181,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws java.lang.Exception
      */
-    @Suppress("unused") fun blockingGetTotalShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.TOTAL)
+    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
+    @Suppress("unused")
+    fun blockingGetTotalShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.TOTAL)
 
     /**
      * WARNING: do not run on a thread where blocking is unacceptable WARNING: blocking, if the player has a transaction
@@ -186,6 +192,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws java.lang.Exception
      */
+    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
     @Suppress("unused")
     fun blockingGetAllShards(uuid: UUID): PlayerShards {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
@@ -224,7 +231,13 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws java.lang.Exception
      */
-    @Suppress("unused") fun getBankShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.BANK)
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        Exception::class,
+    )
+    @Suppress("unused")
+    fun getBankShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.BANK)
 
     /**
      * WARNING: do not run on a thread where blocking is unacceptable
@@ -233,7 +246,13 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws java.lang.Exception
      */
-    @Suppress("unused") fun getInventoryShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.INVENTORY)
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        Exception::class,
+    )
+    @Suppress("unused")
+    fun getInventoryShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.INVENTORY)
 
     /**
      * WARNING: do not run on a thread where blocking is unacceptable
@@ -242,7 +261,13 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws java.lang.Exception
      */
-    @Suppress("unused") fun getEnderChestShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        Exception::class,
+    )
+    @Suppress("unused")
+    fun getEnderChestShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     /**
      * WARNING: do not run on a thread where blocking is unacceptable
@@ -251,7 +276,13 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.TransactionsLockedException
      * @throws java.lang.Exception
      */
-    @Suppress("unused") fun getTotalShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.TOTAL)
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        Exception::class,
+    )
+    @Suppress("unused")
+    fun getTotalShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.TOTAL)
 
     /**
      * WARNING: do not run on a thread where blocking is unacceptable
