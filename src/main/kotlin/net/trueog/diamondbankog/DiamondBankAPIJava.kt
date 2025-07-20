@@ -21,16 +21,16 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.OtherException
+     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.OtherException::class)
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     @Suppress("unused")
     fun blockingAddToPlayerBankShards(uuid: UUID, shards: Int, transactionReason: String, notes: String?) {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
         return runBlocking {
             DiamondBankOG.transactionLock.withLockSuspend(uuid) {
                 postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
-                    throw DiamondBankException.OtherException
+                    throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
                 }
 
                 DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
@@ -47,7 +47,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
-     * @throws DiamondBankException.OtherException
+     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
@@ -63,7 +63,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                 val result =
                     DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
                         postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
-                            throw DiamondBankException.OtherException
+                            throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
                         }
 
                         DiamondBankOG.postgreSQL
@@ -85,16 +85,16 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.OtherException
+     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.OtherException::class)
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     @Suppress("unused")
     fun blockingSubtractFromPlayerBankShards(uuid: UUID, shards: Int, transactionReason: String, notes: String?) {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return runBlocking {
             DiamondBankOG.transactionLock.withLockSuspend(uuid) {
-                postgreSQL.subtractFromBankShards(uuid, shards).getOrElse { throw DiamondBankException.OtherException }
+                postgreSQL.subtractFromBankShards(uuid, shards).getOrElse { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
 
                 DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                     handleError(uuid, shards, null, null, true)
@@ -110,12 +110,12 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
-     * @throws DiamondBankException.OtherException
+     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
         DiamondBankException.TransactionsLockedException::class,
-        DiamondBankException.OtherException::class,
+        DiamondBankException.DatabaseException::class,
     )
     @Suppress("unused")
     fun subtractFromPlayerBankShards(uuid: UUID, shards: Int, transactionReason: String, notes: String?) {
@@ -126,7 +126,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                 val result =
                     DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
                         postgreSQL.subtractFromBankShards(uuid, shards).getOrElse {
-                            throw DiamondBankException.OtherException
+                            throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
                         }
 
                         DiamondBankOG.postgreSQL
@@ -146,9 +146,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * lock applied this function will wait until its released
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     @Suppress("unused")
     fun blockingGetBankShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.BANK)
 
@@ -157,9 +157,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * lock applied this function will wait until its released
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     @Suppress("unused")
     fun blockingGetInventoryShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.INVENTORY)
 
@@ -168,9 +168,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * lock applied this function will wait until its released
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     @Suppress("unused")
     fun blockingGetEnderChestShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
@@ -179,9 +179,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * lock applied this function will wait until its released
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     @Suppress("unused")
     fun blockingGetTotalShards(uuid: UUID): Int = blockingGetShardTypeShards(uuid, ShardType.TOTAL)
 
@@ -190,9 +190,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * lock applied this function will wait until its released
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(DiamondBankException.EconomyDisabledException::class, Exception::class)
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     @Suppress("unused")
     fun blockingGetAllShards(uuid: UUID): PlayerShards {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
@@ -200,12 +200,20 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
         return runBlocking {
             DiamondBankOG.transactionLock.withLockSuspend(uuid) {
                 val result = postgreSQL.getAllShards(uuid)
-                result.exceptionOrNull()?.let { throw it }
+                result.exceptionOrNull()?.let { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
                 result.getOrThrow()
             }
         }
     }
 
+    /**
+     * WARNING: do not run on a thread where blocking is unacceptable WARNING: blocking, if the player has a transaction
+     * lock applied this function will wait until its released
+     *
+     * @throws DiamondBankException.EconomyDisabledException
+     * @throws DiamondBankException.DatabaseException
+     */
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     private fun blockingGetShardTypeShards(uuid: UUID, type: ShardType): Int {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
@@ -219,7 +227,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                         ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
                     }
                 }
-            result.exceptionOrNull()?.let { throw it }
+            result.exceptionOrNull()?.let { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
             result.getOrThrow()
         }
     }
@@ -229,12 +237,12 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      *
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
         DiamondBankException.TransactionsLockedException::class,
-        Exception::class,
+        DiamondBankException.DatabaseException::class,
     )
     @Suppress("unused")
     fun getBankShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.BANK)
@@ -244,12 +252,12 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      *
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
         DiamondBankException.TransactionsLockedException::class,
-        Exception::class,
+        DiamondBankException.DatabaseException::class,
     )
     @Suppress("unused")
     fun getInventoryShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.INVENTORY)
@@ -259,12 +267,12 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      *
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
         DiamondBankException.TransactionsLockedException::class,
-        Exception::class,
+        DiamondBankException.DatabaseException::class,
     )
     @Suppress("unused")
     fun getEnderChestShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
@@ -274,12 +282,12 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      *
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
         DiamondBankException.TransactionsLockedException::class,
-        Exception::class,
+        DiamondBankException.DatabaseException::class,
     )
     @Suppress("unused")
     fun getTotalShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.TOTAL)
@@ -289,8 +297,13 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      *
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.TransactionsLockedException
-     * @throws java.lang.Exception
+     * @throws DiamondBankException.DatabaseException
      */
+    @Throws(
+        DiamondBankException.EconomyDisabledException::class,
+        DiamondBankException.TransactionsLockedException::class,
+        DiamondBankException.DatabaseException::class,
+    )
     @Suppress("unused")
     fun getAllShards(uuid: UUID): PlayerShards {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
@@ -300,7 +313,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                 val result = DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
             ) {
                 is LockResult.Acquired -> {
-                    result.result.exceptionOrNull()?.let { throw it }
+                    result.result.exceptionOrNull()?.let { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
                     result.result.getOrThrow()
                 }
 
@@ -325,7 +338,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                     }
             ) {
                 is LockResult.Acquired -> {
-                    result.result.exceptionOrNull()?.let { throw it }
+                    result.result.exceptionOrNull()?.let { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
                     result.result.getOrThrow()
                 }
 
@@ -338,9 +351,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * WARNING: do not run on a thread where blocking is unacceptable
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.OtherException
+     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.OtherException::class)
+    @Throws(DiamondBankException.EconomyDisabledException::class, DiamondBankException.DatabaseException::class)
     @Suppress("unused")
     fun getBaltop(offset: Int): CompletableFuture<Map<UUID?, Int>> {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
@@ -348,7 +361,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
         return DiamondBankOG.scope.future {
             val baltop = postgreSQL.getBaltop(offset)
             if (baltop == null) {
-                throw DiamondBankException.OtherException
+                throw DiamondBankException.DatabaseException("Database exception")
             }
             baltop
         }
@@ -363,13 +376,13 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
-     * @throws DiamondBankException.OtherException
+     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
         DiamondBankException.InvalidPlayerException::class,
         DiamondBankException.PlayerNotOnlineException::class,
-        DiamondBankException.OtherException::class,
+        DiamondBankException.DatabaseException::class,
     )
     @Suppress("unused")
     fun blockingWithdrawFromPlayer(
@@ -390,7 +403,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                 val notRemoved = WithdrawHelper.withdrawFromPlayer(playerPlayer, shards)
                 if (notRemoved != 0) {
                     handleError(uuid, shards, null)
-                    throw DiamondBankException.OtherException
+                    throw DiamondBankException.DatabaseException("Database exception")
                 }
 
                 DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
@@ -409,14 +422,14 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
      * @throws DiamondBankException.TransactionsLockedException
-     * @throws DiamondBankException.OtherException
+     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
         DiamondBankException.InvalidPlayerException::class,
         DiamondBankException.PlayerNotOnlineException::class,
         DiamondBankException.TransactionsLockedException::class,
-        DiamondBankException.OtherException::class,
+        DiamondBankException.DatabaseException::class,
     )
     @Suppress("unused")
     fun withdrawFromPlayer(
@@ -439,7 +452,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                         val notRemoved = WithdrawHelper.withdrawFromPlayer(playerPlayer, shards)
                         if (notRemoved != 0) {
                             handleError(uuid, shards, null)
-                            throw DiamondBankException.OtherException
+                            throw DiamondBankException.DatabaseException("Database exception")
                         }
 
                         DiamondBankOG.postgreSQL
@@ -463,12 +476,14 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
+     * @throws DiamondBankException.DatabaseException
      * @throws DiamondBankException.OtherException
      */
     @Throws(
         DiamondBankException.EconomyDisabledException::class,
         DiamondBankException.InvalidPlayerException::class,
         DiamondBankException.PlayerNotOnlineException::class,
+        DiamondBankException.DatabaseException::class,
         DiamondBankException.OtherException::class,
     )
     @Suppress("unused")
@@ -499,7 +514,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
 
                 postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
                     handleError(sender.uniqueId, shards, null)
-                    throw DiamondBankException.OtherException
+                    throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
                 }
 
                 DiamondBankOG.postgreSQL
@@ -518,6 +533,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
      * @throws DiamondBankException.TransactionsLockedException
+     * @throws DiamondBankException.DatabaseException
      * @throws DiamondBankException.OtherException
      */
     @Throws(
@@ -525,6 +541,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
         DiamondBankException.InvalidPlayerException::class,
         DiamondBankException.PlayerNotOnlineException::class,
         DiamondBankException.TransactionsLockedException::class,
+        DiamondBankException.DatabaseException::class,
         DiamondBankException.OtherException::class,
     )
     @Suppress("unused")
@@ -557,7 +574,7 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
 
                         postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
                             handleError(sender.uniqueId, shards, null)
-                            throw DiamondBankException.OtherException
+                            throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
                         }
 
                         DiamondBankOG.postgreSQL

@@ -21,6 +21,8 @@ sealed class DiamondBankException(message: String) : Exception(message) {
         @Suppress("unused") private fun readResolve(): Any = PlayerNotOnlineException
     }
 
+    class DatabaseException(message: String) : DiamondBankException(message)
+
     object OtherException : DiamondBankException("Other exception") {
         @Suppress("unused") private fun readResolve(): Any = OtherException
     }
