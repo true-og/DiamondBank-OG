@@ -25,14 +25,13 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
     ): Result<Unit> {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
         return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
-            val error = postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK)
-            if (error) {
-                return@withLockSuspend Result.failure(DiamondBankException.OtherException)
+            postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
+                return@withLockSuspend Result.failure(
+                    DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                )
             }
 
-            val transactionLogError =
-                DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes)
-            if (transactionLogError) {
+            DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -56,27 +55,22 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         return when (
             val result =
                 DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
-                    val error = postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK)
-                    if (error) {
-                        return@tryWithLockSuspend Result.failure(DiamondBankException.OtherException)
+                    postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
+                        return@tryWithLockSuspend Result.failure(
+                            DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                        )
                     }
 
-                    val transactionLogError =
-                        DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes)
-                    if (transactionLogError) {
-                        handleError(uuid, shards, null, null, true)
-                    }
+                    DiamondBankOG.postgreSQL
+                        .insertTransactionLog(uuid, shards, null, transactionReason, notes)
+                        .getOrElse { handleError(uuid, shards, null, null, true) }
 
                     Result.success(Unit)
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                return Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
@@ -96,14 +90,13 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
 
         return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
-            val error = postgreSQL.subtractFromPlayerShards(uuid, shards, ShardType.BANK)
-            if (error) {
-                return@withLockSuspend Result.failure(DiamondBankException.OtherException)
+            postgreSQL.subtractFromBankShards(uuid, shards).getOrElse {
+                return@withLockSuspend Result.failure(
+                    DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                )
             }
 
-            val transactionLogError =
-                DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes)
-            if (transactionLogError) {
+            DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -127,66 +120,118 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         return when (
             val result =
                 DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
-                    val error = postgreSQL.subtractFromPlayerShards(uuid, shards, ShardType.BANK)
-                    if (error) {
-                        return@tryWithLockSuspend Result.failure(DiamondBankException.OtherException)
+                    postgreSQL.subtractFromBankShards(uuid, shards).getOrElse {
+                        return@tryWithLockSuspend Result.failure(
+                            DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                        )
                     }
 
-                    val transactionLogError =
-                        DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes)
-                    if (transactionLogError) {
-                        handleError(uuid, shards, null, null, true)
-                    }
+                    DiamondBankOG.postgreSQL
+                        .insertTransactionLog(uuid, shards, null, transactionReason, notes)
+                        .getOrElse { handleError(uuid, shards, null, null, true) }
 
                     Result.success(Unit)
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
     /** WARNING: blocking, if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")
-    suspend fun blockingGetPlayerShards(uuid: UUID, type: ShardType): Result<PlayerShards> {
+    suspend fun blockingGetBankShards(uuid: UUID): Result<Int> = blockingGetShardTypeShards(uuid, ShardType.BANK)
+
+    /** WARNING: blocking, if the player has a transaction lock applied this function will wait until its released */
+    @Suppress("unused")
+    suspend fun blockingGetInventoryShards(uuid: UUID): Result<Int> =
+        blockingGetShardTypeShards(uuid, ShardType.INVENTORY)
+
+    /** WARNING: blocking, if the player has a transaction lock applied this function will wait until its released */
+    @Suppress("unused")
+    suspend fun blockingGetEnderChestShards(uuid: UUID): Result<Int> =
+        blockingGetShardTypeShards(uuid, ShardType.ENDER_CHEST)
+
+    /** WARNING: blocking, if the player has a transaction lock applied this function will wait until its released */
+    @Suppress("unused")
+    suspend fun blockingGetTotalShards(uuid: UUID): Result<Int> = blockingGetShardTypeShards(uuid, ShardType.TOTAL)
+
+    /** WARNING: blocking, if the player has a transaction lock applied this function will wait until its released */
+    @Suppress("unused")
+    suspend fun blockingGetAllShards(uuid: UUID): Result<PlayerShards> {
+        if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
+        return postgreSQL.getAllShards(uuid)
+    }
+
+    private suspend fun blockingGetShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
 
         return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
-            val playerShards = postgreSQL.getPlayerShards(uuid, type)
-            if (playerShards.isNeededShardTypeNull(type)) {
-                return@withLockSuspend Result.failure(DiamondBankException.OtherException)
+            val result =
+                when (type) {
+                    ShardType.BANK -> postgreSQL.getBankShards(uuid)
+                    ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
+                    ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
+                    ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
+                }
+            result.exceptionOrNull()?.let {
+                Result.failure<Int>(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
             }
-
-            Result.success(playerShards)
+            Result.success(result.getOrThrow())
         }
     }
 
+    @Suppress("unused") suspend fun getBankShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.BANK)
+
+    @Suppress("unused") suspend fun getInventoryShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.INVENTORY)
+
+    @Suppress("unused") suspend fun getEnderChestShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
+
+    @Suppress("unused") suspend fun getTotalShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.TOTAL)
+
     @Suppress("unused")
-    suspend fun getPlayerShards(uuid: UUID, type: ShardType): Result<PlayerShards> {
+    suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
 
         return when (
             val result =
                 DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
-                    val playerShards = postgreSQL.getPlayerShards(uuid, type)
-                    if (playerShards.isNeededShardTypeNull(type)) {
-                        return@tryWithLockSuspend Result.failure(DiamondBankException.OtherException)
+                    val result = postgreSQL.getAllShards(uuid)
+                    result.exceptionOrNull()?.let {
+                        Result.failure<Int>(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
                     }
-                    Result.success(playerShards)
+                    Result.success(result.getOrThrow())
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                return Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
+        }
+    }
+
+    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
+        if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
+
+        return when (
+            val result =
+                DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
+                    val result =
+                        when (type) {
+                            ShardType.BANK -> postgreSQL.getBankShards(uuid)
+                            ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
+                            ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
+                            ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
+                        }
+                    result.exceptionOrNull()?.let {
+                        Result.failure<Int>(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+                    }
+                    Result.success(result.getOrThrow())
+                }
+        ) {
+            is LockResult.Acquired -> result.result
+
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
@@ -194,10 +239,10 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
     suspend fun getBaltop(offset: Int): Result<Map<UUID?, Int>> {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
 
-        val baltop = postgreSQL.getBaltop(offset)
-        if (baltop == null) {
-            return Result.failure(DiamondBankException.OtherException)
-        }
+        val baltop =
+            postgreSQL.getBaltop(offset).getOrElse {
+                return Result.failure(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+            }
         return Result.success(baltop)
     }
 
@@ -230,9 +275,7 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                 return@withLockSuspend Result.failure(DiamondBankException.OtherException)
             }
 
-            val transactionLogError =
-                DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes)
-            if (transactionLogError) {
+            DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -266,22 +309,16 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                         return@tryWithLockSuspend Result.failure(DiamondBankException.OtherException)
                     }
 
-                    val transactionLogError =
-                        DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes)
-                    if (transactionLogError) {
-                        handleError(uuid, shards, null, null, true)
-                    }
+                    DiamondBankOG.postgreSQL
+                        .insertTransactionLog(uuid, shards, null, transactionReason, notes)
+                        .getOrElse { handleError(uuid, shards, null, null, true) }
 
                     Result.success(Unit)
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 
@@ -319,17 +356,16 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                 return@withLockSuspend Result.failure(DiamondBankException.OtherException)
             }
 
-            val error = postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK)
-            if (error) {
+            postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
                 handleError(sender.uniqueId, shards, null)
-                return@withLockSuspend Result.failure(DiamondBankException.OtherException)
+                return@withLockSuspend Result.failure(
+                    DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                )
             }
 
-            val transactionLogError =
-                DiamondBankOG.postgreSQL.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes)
-            if (transactionLogError) {
-                handleError(payerUuid, shards, null, receiverUuid, true)
-            }
+            DiamondBankOG.postgreSQL
+                .insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes)
+                .getOrElse { handleError(payerUuid, shards, null, receiverUuid, true) }
 
             Result.success(Unit)
         }
@@ -371,34 +407,23 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                         return@tryWithLockSuspend Result.failure(DiamondBankException.OtherException)
                     }
 
-                    val error = postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK)
-                    if (error) {
+                    postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
                         handleError(sender.uniqueId, shards, null)
-                        return@tryWithLockSuspend Result.failure(DiamondBankException.OtherException)
+                        return@tryWithLockSuspend Result.failure(
+                            DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                        )
                     }
 
-                    val transactionLogError =
-                        DiamondBankOG.postgreSQL.insertTransactionLog(
-                            payerUuid,
-                            shards,
-                            receiverUuid,
-                            transactionReason,
-                            notes,
-                        )
-                    if (transactionLogError) {
-                        handleError(payerUuid, shards, null, receiverUuid, true)
-                    }
+                    DiamondBankOG.postgreSQL
+                        .insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes)
+                        .getOrElse { handleError(payerUuid, shards, null, receiverUuid, true) }
 
                     Result.success(Unit)
                 }
         ) {
-            is LockResult.Acquired -> {
-                result.result
-            }
+            is LockResult.Acquired -> result.result
 
-            LockResult.Failed -> {
-                Result.failure(DiamondBankException.TransactionsLockedException)
-            }
+            is LockResult.Failed -> throw DiamondBankException.TransactionsLockedException
         }
     }
 }

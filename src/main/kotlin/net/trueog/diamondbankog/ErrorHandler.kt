@@ -24,15 +24,15 @@ internal object ErrorHandler {
                 if (otherUuid != null) "Other Player UUID: $otherUuid" else ""
             }Expected Mutated Shards = $expectedMutatedShards${
                 if (playerShards != null) {
-                    if (playerShards.shardsInBank != -1) "Player Bank Balance: ${playerShards.shardsInBank}" else ""
+                    if (playerShards.bank != -1) "Player Bank Balance: ${playerShards.bank}" else ""
                 } else ""
             }${
                 if (playerShards != null) {
-                    if (playerShards.shardsInInventory != -1) "Player Inventory Balance: ${playerShards.shardsInInventory}" else ""
+                    if (playerShards.inventory != -1) "Player Inventory Balance: ${playerShards.inventory}" else ""
                 } else ""
             }${
                 if (playerShards != null) {
-                    if (playerShards.shardsInEnderChest != -1) "Player Ender Chest Balance: ${playerShards.shardsInEnderChest}" else ""
+                    if (playerShards.enderChest != -1) "Player Ender Chest Balance: ${playerShards.enderChest}" else ""
                 } else ""
             }
         """

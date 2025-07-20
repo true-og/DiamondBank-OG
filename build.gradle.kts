@@ -4,7 +4,6 @@ plugins {
     kotlin("jvm") version "2.1.21" // Import kotlin jvm plugin for kotlin/java integration.
     id("com.diffplug.spotless") version "7.0.4"
     id("com.gradleup.shadow") version "8.3.6" // Import shadow API.
-    id("maven-publish")
     eclipse // Import eclipse plugin for IDE integration.
 }
 
@@ -42,7 +41,6 @@ configurations.all { exclude(group = "io.projectreactor") }
 tasks.build {
     dependsOn(tasks.spotlessApply)
     dependsOn(tasks.shadowJar)
-    dependsOn(tasks.publishToMavenLocal)
 }
 
 tasks.jar { archiveClassifier.set("part") }
@@ -73,17 +71,6 @@ java {
 tasks.withType<AbstractArchiveTask>().configureEach {
     isPreserveFileTimestamps = false
     isReproducibleFileOrder = true
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("shadow") {
-            groupId = "net.trueog.diamondbank-og"
-            artifactId = "diamondbank-og"
-            version = project.version.toString()
-            artifact(tasks.shadowJar)
-        }
-    }
 }
 
 spotless {

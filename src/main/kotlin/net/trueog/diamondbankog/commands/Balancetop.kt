@@ -73,16 +73,15 @@ internal class Balancetop : CommandExecutor {
             }
 
             if (player != null) {
-                val baltopWithUuid = DiamondBankOG.postgreSQL.getBaltopWithUuid(player.uniqueId)
-                if (baltopWithUuid == null) {
-                    sender.sendMessage(
-                        DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
+                val baltopWithUuid =
+                    DiamondBankOG.postgreSQL.getBaltopWithUuid(player.uniqueId).getOrElse {
+                        sender.sendMessage(
+                            DiamondBankOG.mm.deserialize(
+                                "${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
+                            )
                         )
-                    )
-                    return@launch
-                }
-
+                        return@launch
+                    }
                 val (baltop, offset) = baltopWithUuid
 
                 var baltopMessage = "${Config.prefix} <aqua>Top Balances:<reset>"
@@ -112,24 +111,25 @@ internal class Balancetop : CommandExecutor {
                 return@launch
             }
 
-            val baltop = DiamondBankOG.postgreSQL.getBaltop(offset)
-            if (baltop == null) {
-                sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
+            val baltop =
+                DiamondBankOG.postgreSQL.getBaltop(offset).getOrElse {
+                    sender.sendMessage(
+                        DiamondBankOG.mm.deserialize(
+                            "${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
+                        )
                     )
-                )
-                return@launch
-            }
-            val numberOfRows = DiamondBankOG.postgreSQL.getNumberOfRows()
-            if (numberOfRows == null) {
-                sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
+                    return@launch
+                }
+
+            val numberOfRows =
+                DiamondBankOG.postgreSQL.getNumberOfRows().getOrElse {
+                    sender.sendMessage(
+                        DiamondBankOG.mm.deserialize(
+                            "${Config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
+                        )
                     )
-                )
-                return@launch
-            }
+                    return@launch
+                }
 
             if (index > ceil(numberOfRows / 9.0)) {
                 sender.sendMessage(

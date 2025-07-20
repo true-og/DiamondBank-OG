@@ -99,24 +99,20 @@ internal class Withdraw : CommandExecutor {
                 shards = (split[0].toInt() * 9) + split[1].toInt()
             }
 
-            val result =
+            val lockResult =
                 DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                    val playerShards = DiamondBankOG.postgreSQL.getPlayerShards(sender.uniqueId, ShardType.ALL)
-                    if (
-                        playerShards.shardsInBank == null ||
-                            playerShards.shardsInInventory == null ||
-                            playerShards.shardsInEnderChest == null
-                    ) {
-                        sender.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
+                    val playerShards =
+                        DiamondBankOG.postgreSQL.getAllShards(sender.uniqueId).getOrElse {
+                            sender.sendMessage(
+                                DiamondBankOG.mm.deserialize(
+                                    "${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
+                                )
                             )
-                        )
-                        return@tryWithLockSuspend true
-                    }
+                            return@tryWithLockSuspend true
+                        }
 
-                    val playerBankShards = playerShards.shardsInBank
-                    val playerInventoryShards = playerShards.shardsInInventory
+                    val playerBankShards = playerShards.bank
+                    val playerInventoryShards = playerShards.inventory
 
                     if (shards == -1) shards = playerBankShards
 
@@ -164,9 +160,7 @@ internal class Withdraw : CommandExecutor {
                         return@tryWithLockSuspend true
                     }
 
-                    var error =
-                        DiamondBankOG.postgreSQL.subtractFromPlayerShards(sender.uniqueId, shards, ShardType.BANK)
-                    if (error) {
+                    DiamondBankOG.postgreSQL.subtractFromBankShards(sender.uniqueId, shards).getOrElse {
                         handleError(sender.uniqueId, shards, PostgreSQL.PlayerShards(playerBankShards, -1, -1))
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
@@ -196,8 +190,7 @@ internal class Withdraw : CommandExecutor {
                         return@tryWithLockSuspend true
                     }
 
-                    error = DiamondBankOG.postgreSQL.addToPlayerShards(sender.uniqueId, shards, ShardType.INVENTORY)
-                    if (error) {
+                    DiamondBankOG.postgreSQL.addToPlayerShards(sender.uniqueId, shards, ShardType.INVENTORY).getOrElse {
                         handleError(sender.uniqueId, shards, playerShards)
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
@@ -208,14 +201,14 @@ internal class Withdraw : CommandExecutor {
                     }
                     false
                 }
-            when (result) {
+            when (lockResult) {
                 is TransactionLock.LockResult.Acquired -> {
-                    if (result.result) {
+                    if (lockResult.result) {
                         return@launch
                     }
                 }
 
-                TransactionLock.LockResult.Failed -> {
+                is TransactionLock.LockResult.Failed -> {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
                             "${Config.prefix}<reset>: <red>You are currently blocked from using /withdraw."
@@ -232,8 +225,7 @@ internal class Withdraw : CommandExecutor {
                 )
             )
 
-            val error = DiamondBankOG.postgreSQL.insertTransactionLog(sender.uniqueId, shards, null, "Withdraw", null)
-            if (error) {
+            DiamondBankOG.postgreSQL.insertTransactionLog(sender.uniqueId, shards, null, "Withdraw", null).getOrElse {
                 handleError(sender.uniqueId, shards, null, null, true)
             }
         }

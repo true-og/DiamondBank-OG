@@ -82,13 +82,13 @@ internal object InventoryExtensions {
 
         val leftOver = addMap[0]!!.amount
 
-        val error = DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, leftOver, ShardType.BANK)
+        val result = DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, leftOver, ShardType.BANK)
         player.sendMessage(
             DiamondBankOG.mm.deserialize(
                 "${Config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been deposited into your bank."
             )
         )
-        return error
+        return result.isFailure
     }
 
     /** ONLY USE FOR INVENTORIES THAT DO NOT HAVE A HOLDER (for example shulker boxes) */
@@ -106,8 +106,9 @@ internal object InventoryExtensions {
 
         if (inventoryAddMap.isNotEmpty()) {
             val inventoryLeftOver = inventoryAddMap[0]!!.amount
-            val error = DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, inventoryLeftOver, ShardType.BANK)
-            if (error) return true
+            DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, inventoryLeftOver, ShardType.BANK).getOrElse {
+                return true
+            }
             player.sendMessage(
                 DiamondBankOG.mm.deserialize(
                     "${Config.prefix}<reset>: The change of ${leftOver - inventoryLeftOver} <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been added to your inventory, and the remaining $inventoryLeftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset> has been deposited into your bank."
@@ -195,20 +196,16 @@ internal object InventoryExtensions {
                         DiamondBankOG.scope.launch {
                             DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
                                 val inventoryShards = player.inventory.countTotal()
-                                val error =
-                                    DiamondBankOG.postgreSQL.setPlayerShards(
-                                        player.uniqueId,
-                                        inventoryShards,
-                                        ShardType.INVENTORY,
-                                    )
-                                if (error) {
-                                    handleError(player.uniqueId, inventoryShards, null)
-                                    player.sendMessage(
-                                        DiamondBankOG.mm.deserialize(
-                                            "${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."
+                                DiamondBankOG.postgreSQL
+                                    .setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY)
+                                    .getOrElse {
+                                        handleError(player.uniqueId, inventoryShards, null)
+                                        player.sendMessage(
+                                            DiamondBankOG.mm.deserialize(
+                                                "${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."
+                                            )
                                         )
-                                    )
-                                }
+                                    }
                             }
                         }
                     }

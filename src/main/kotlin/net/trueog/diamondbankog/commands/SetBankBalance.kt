@@ -74,8 +74,7 @@ internal class SetBankBalance : CommandExecutor {
                 return@launch
             }
 
-            var error = DiamondBankOG.postgreSQL.setPlayerShards(player.uniqueId, balance, ShardType.BANK)
-            if (error) {
+            DiamondBankOG.postgreSQL.setPlayerShards(player.uniqueId, balance, ShardType.BANK).getOrElse {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
                         "${Config.prefix}<reset>: <red>Something went wrong while trying to set that player's balance."
@@ -83,6 +82,7 @@ internal class SetBankBalance : CommandExecutor {
                 )
                 return@launch
             }
+
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
                     "${Config.prefix}<reset>: <green>Successfully set the balance of ${
@@ -93,17 +93,15 @@ internal class SetBankBalance : CommandExecutor {
                 )
             )
 
-            error =
-                DiamondBankOG.postgreSQL.insertTransactionLog(
+            DiamondBankOG.postgreSQL
+                .insertTransactionLog(
                     player.uniqueId,
                     balance,
                     null,
                     "Set Bank Balance",
                     "Bank Balance set by ${if (sender is Player) "${sender.uniqueId}" else "console"}",
                 )
-            if (error) {
-                handleError(player.uniqueId, balance, null, null, true)
-            }
+                .getOrElse { handleError(player.uniqueId, balance, null, null, true) }
         }
         return true
     }

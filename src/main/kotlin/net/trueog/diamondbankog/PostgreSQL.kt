@@ -12,11 +12,19 @@ import kotlinx.coroutines.future.await
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
+    object InvalidArgumentException : Exception() {
+        @Suppress("unused") private fun readResolve(): Any = InvalidArgumentException
+    }
+
+    object NoRowsException : Exception() {
+        @Suppress("unused") private fun readResolve(): Any = NoRowsException
+    }
+
     enum class ShardType(val string: String) {
         BANK("bank_shards"),
         INVENTORY("inventory_shards"),
         ENDER_CHEST("ender_chest_shards"),
-        ALL("bank_shards, inventory_shards, ender_chest_shards"),
+        TOTAL("bank_shards, inventory_shards, ender_chest_shards"),
     }
 
     @Throws(SQLException::class, ClassNotFoundException::class)
@@ -78,42 +86,10 @@ class PostgreSQL {
         }
     }
 
-    data class PlayerShards(val shardsInBank: Int?, val shardsInInventory: Int?, val shardsInEnderChest: Int?) {
-        fun isNeededShardTypeNull(type: ShardType): Boolean {
-            when (type) {
-                ShardType.BANK -> {
-                    if (this.shardsInBank == null) {
-                        return true
-                    }
-                }
+    data class PlayerShards(val bank: Int, val inventory: Int, val enderChest: Int)
 
-                ShardType.INVENTORY -> {
-                    if (this.shardsInInventory == null) {
-                        return true
-                    }
-                }
-
-                ShardType.ENDER_CHEST -> {
-                    if (this.shardsInEnderChest == null) {
-                        return true
-                    }
-                }
-
-                ShardType.ALL -> {
-                    if (
-                        this.shardsInBank == null || this.shardsInInventory == null || this.shardsInEnderChest == null
-                    ) {
-                        return true
-                    }
-                }
-            }
-            return false
-        }
-    }
-
-    /** @return True if failed */
-    suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
-        if (type == ShardType.ALL) return true
+    suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
+        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
         try {
             val connection = pool.asSuspending.connect()
 
@@ -123,54 +99,130 @@ class PostgreSQL {
                     listOf(uuid, shards),
                 )
             preparedStatement.await()
-        } catch (_: Exception) {
-            return true
+        } catch (e: Exception) {
+            return Result.failure(e)
         }
-        return false
+        return Result.success(Unit)
     }
 
-    /** @return True if failed */
-    suspend fun addToPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
-        if (type == ShardType.ALL) return true
+    suspend fun addToPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
+        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
 
-        val playerDiamonds = getPlayerShardsWrapper(uuid, type) ?: return true
+        val playerShards =
+            when (type) {
+                ShardType.BANK -> getBankShards(uuid)
+                ShardType.INVENTORY -> getInventoryShards(uuid)
+                ShardType.ENDER_CHEST -> getEnderChestShards(uuid)
+                else -> {
+                    return Result.failure(InvalidArgumentException)
+                }
+            }
 
-        val error = setPlayerShards(uuid, playerDiamonds + shards, type)
-        return error
+        playerShards.exceptionOrNull()?.let {
+            return Result.failure(it)
+        }
+
+        return setPlayerShards(uuid, playerShards.getOrThrow() + shards, type)
     }
 
-    /** @return True if failed */
-    suspend fun subtractFromPlayerShards(uuid: UUID, shards: Int, type: ShardType): Boolean {
-        if (type == ShardType.ALL) return true
+    suspend fun subtractFromBankShards(uuid: UUID, shards: Int): Result<Unit> {
+        val bankShards = getBankShards(uuid)
+        bankShards.exceptionOrNull()?.let {
+            return Result.failure(it)
+        }
 
-        val playerDiamonds = getPlayerShardsWrapper(uuid, type) ?: return true
-
-        val error = setPlayerShards(uuid, playerDiamonds - shards, type)
-        return error
+        return setPlayerShards(uuid, bankShards.getOrThrow() - shards, ShardType.BANK)
     }
 
-    private suspend fun getPlayerShardsWrapper(uuid: UUID, type: ShardType): Int? {
-        val getResponse = getPlayerShards(uuid, type)
+    suspend fun getBankShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.BANK)
 
-        return when (type) {
-            ShardType.BANK -> getResponse.shardsInBank
-            ShardType.INVENTORY -> getResponse.shardsInInventory
-            ShardType.ENDER_CHEST -> getResponse.shardsInEnderChest
-            ShardType.ALL ->
-                if (
-                    getResponse.shardsInBank != null &&
-                        getResponse.shardsInInventory != null &&
-                        getResponse.shardsInEnderChest != null
+    suspend fun getInventoryShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.INVENTORY)
+
+    suspend fun getEnderChestShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
+
+    suspend fun getTotalShards(uuid: UUID): Result<Int> {
+        var totalShards: Int?
+        try {
+            val connection = pool.asSuspending.connect()
+
+            val preparedStatement =
+                connection.sendPreparedStatement(
+                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${Config.postgresTable} WHERE uuid = ? LIMIT 1",
+                    listOf(uuid),
                 )
-                    getResponse.shardsInBank + getResponse.shardsInInventory + getResponse.shardsInEnderChest
-                else null
+            val result = preparedStatement.await()
+
+            totalShards =
+                if (result.rows.isNotEmpty()) {
+                    val rowData = result.rows[0] as ArrayRowData
+                    val bankShards =
+                        if (rowData.columns[0] != null) {
+                            rowData.columns[0] as Int
+                        } else 0
+                    val inventoryShards =
+                        if (rowData.columns[1] != null) {
+                            rowData.columns[1] as Int
+                        } else 0
+                    val enderChestShards =
+                        if (rowData.columns[2] != null) {
+                            rowData.columns[2] as Int
+                        } else 0
+
+                    bankShards + inventoryShards + enderChestShards
+                } else {
+                    0
+                }
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
         }
+
+        return Result.success(totalShards)
     }
 
-    suspend fun getPlayerShards(uuid: UUID, type: ShardType): PlayerShards {
-        var bankShards: Int? = null
-        var inventoryShards: Int? = null
-        var enderChestShards: Int? = null
+    suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
+        var bankShards: Int?
+        var inventoryShards: Int?
+        var enderChestShards: Int?
+        try {
+            val connection = pool.asSuspending.connect()
+
+            val preparedStatement =
+                connection.sendPreparedStatement(
+                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${Config.postgresTable} WHERE uuid = ? LIMIT 1",
+                    listOf(uuid),
+                )
+            val result = preparedStatement.await()
+
+            if (result.rows.isNotEmpty()) {
+                val rowData = result.rows[0] as ArrayRowData
+                bankShards =
+                    if (rowData.columns[0] != null) {
+                        rowData.columns[0] as Int
+                    } else 0
+                inventoryShards =
+                    if (rowData.columns[1] != null) {
+                        rowData.columns[1] as Int
+                    } else 0
+                enderChestShards =
+                    if (rowData.columns[2] != null) {
+                        rowData.columns[2] as Int
+                    } else 0
+            } else {
+                bankShards = 0
+                inventoryShards = 0
+                enderChestShards = 0
+            }
+        } catch (e: Exception) {
+            DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
+        }
+
+        return Result.success(PlayerShards(bankShards, inventoryShards, enderChestShards))
+    }
+
+    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
+        var shards: Int?
         try {
             val connection = pool.asSuspending.connect()
 
@@ -181,59 +233,24 @@ class PostgreSQL {
                 )
             val result = preparedStatement.await()
 
-            if (result.rows.isNotEmpty()) {
-                val rowData = result.rows[0] as ArrayRowData
-
-                when (type) {
-                    ShardType.BANK -> {
-                        bankShards =
-                            if (rowData.columns[0] != null) {
-                                rowData.columns[0] as Int
-                            } else 0
-                    }
-
-                    ShardType.INVENTORY -> {
-                        inventoryShards =
-                            if (rowData.columns[0] != null) {
-                                rowData.columns[0] as Int
-                            } else 0
-                    }
-
-                    ShardType.ENDER_CHEST -> {
-                        enderChestShards =
-                            if (rowData.columns[0] != null) {
-                                rowData.columns[0] as Int
-                            } else 0
-                    }
-
-                    ShardType.ALL -> {
-                        bankShards =
-                            if (rowData.columns[0] != null) {
-                                rowData.columns[0] as Int
-                            } else 0
-                        inventoryShards =
-                            if (rowData.columns[1] != null) {
-                                rowData.columns[1] as Int
-                            } else 0
-                        enderChestShards =
-                            if (rowData.columns[2] != null) {
-                                rowData.columns[2] as Int
-                            } else 0
-                    }
+            shards =
+                if (result.rows.isNotEmpty()) {
+                    val rowData = result.rows[0] as ArrayRowData
+                    if (rowData.columns[0] != null) {
+                        rowData.columns[0] as Int
+                    } else 0
+                } else {
+                    0
                 }
-            } else {
-                bankShards = 0
-                inventoryShards = 0
-                enderChestShards = 0
-            }
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
         }
 
-        return PlayerShards(bankShards, inventoryShards, enderChestShards)
+        return Result.success(shards)
     }
 
-    suspend fun getBaltop(offset: Int): Map<UUID?, Int>? {
+    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Int>> {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
@@ -258,18 +275,18 @@ class PostgreSQL {
 
                 baltop[uuid] = totalShards
             }
-            return baltop
+            return Result.success(baltop)
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
         }
-        return null
     }
 
     /**
      * @return Pair with as the first value a map with the player name and total balance and as the second value the
      *   offset
      */
-    suspend fun getBaltopWithUuid(uuid: UUID): Pair<Map<UUID?, Int>, Long>? {
+    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Int>, Long>> {
         try {
             val connection = pool.asSuspending.connect()
             // @formatter:off
@@ -311,15 +328,15 @@ class PostgreSQL {
 
                 baltop[uuid] = totalShards
             }
-            return Pair(baltop, offset)
+            return Result.success(Pair(baltop, offset))
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
         }
-        return null
     }
 
-    suspend fun getNumberOfRows(): Long? {
-        var number: Long? = null
+    suspend fun getNumberOfRows(): Result<Long> {
+        var number: Long?
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
@@ -332,21 +349,23 @@ class PostgreSQL {
                     if (rowData.columns[0] != null) {
                         rowData.columns[0] as Long
                     } else 0
+            } else {
+                return Result.failure(NoRowsException)
             }
+            return Result.success(number)
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
         }
-        return number
     }
 
-    /** @return True if failed */
     suspend fun insertTransactionLog(
         playerUuid: UUID,
         transferredShards: Int,
         playerToUuid: UUID?,
         transactionReason: String,
         notes: String?,
-    ): Boolean {
+    ): Result<Unit> {
         try {
             val connection = pool.asSuspending.connect()
 
@@ -358,8 +377,8 @@ class PostgreSQL {
                 )
             preparedStatement.await()
         } catch (_: Exception) {
-            return true
+            return Result.failure(Exception())
         }
-        return false
+        return Result.success(Unit)
     }
 }
