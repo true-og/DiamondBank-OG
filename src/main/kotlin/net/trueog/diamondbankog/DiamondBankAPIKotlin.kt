@@ -26,7 +26,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
         return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
             postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
-                return@withLockSuspend Result.failure(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+                return@withLockSuspend Result.failure(
+                    DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                )
             }
 
             DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
@@ -54,7 +56,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
             val result =
                 DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
                     postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
-                        return@tryWithLockSuspend Result.failure(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+                        return@tryWithLockSuspend Result.failure(
+                            DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                        )
                     }
 
                     DiamondBankOG.postgreSQL
@@ -87,7 +91,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
 
         return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
             postgreSQL.subtractFromBankShards(uuid, shards).getOrElse {
-                return@withLockSuspend Result.failure(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+                return@withLockSuspend Result.failure(
+                    DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                )
             }
 
             DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
@@ -115,7 +121,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
             val result =
                 DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
                     postgreSQL.subtractFromBankShards(uuid, shards).getOrElse {
-                        return@tryWithLockSuspend Result.failure(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+                        return@tryWithLockSuspend Result.failure(
+                            DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                        )
                     }
 
                     DiamondBankOG.postgreSQL
@@ -160,12 +168,13 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
 
         return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
-            val result = when (type) {
-                ShardType.BANK -> postgreSQL.getBankShards(uuid)
-                ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
-                ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
-                ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
-            }
+            val result =
+                when (type) {
+                    ShardType.BANK -> postgreSQL.getBankShards(uuid)
+                    ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
+                    ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
+                    ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
+                }
             result.exceptionOrNull()?.let {
                 Result.failure<Int>(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
             }
@@ -186,13 +195,14 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
 
         return when (
-            val result = DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
-                val result = postgreSQL.getAllShards(uuid)
-                result.exceptionOrNull()?.let {
-                    Result.failure<Int>(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+            val result =
+                DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
+                    val result = postgreSQL.getAllShards(uuid)
+                    result.exceptionOrNull()?.let {
+                        Result.failure<Int>(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+                    }
+                    Result.success(result.getOrThrow())
                 }
-                Result.success(result.getOrThrow())
-            }
         ) {
             is LockResult.Acquired -> result.result
 
@@ -206,12 +216,13 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         return when (
             val result =
                 DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) {
-                    val result = when (type) {
-                        ShardType.BANK -> postgreSQL.getBankShards(uuid)
-                        ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
-                        ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
-                        ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
-                    }
+                    val result =
+                        when (type) {
+                            ShardType.BANK -> postgreSQL.getBankShards(uuid)
+                            ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
+                            ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
+                            ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
+                        }
                     result.exceptionOrNull()?.let {
                         Result.failure<Int>(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
                     }
@@ -228,10 +239,10 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
     suspend fun getBaltop(offset: Int): Result<Map<UUID?, Int>> {
         if (DiamondBankOG.economyDisabled) return Result.failure(DiamondBankException.EconomyDisabledException)
 
-        val baltop = postgreSQL.getBaltop(offset)
-        if (baltop == null) {
-            return Result.failure(DiamondBankException.DatabaseException("Database exception"))
-        }
+        val baltop =
+            postgreSQL.getBaltop(offset).getOrElse {
+                return Result.failure(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+            }
         return Result.success(baltop)
     }
 
@@ -347,7 +358,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
 
             postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
                 handleError(sender.uniqueId, shards, null)
-                return@withLockSuspend Result.failure(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+                return@withLockSuspend Result.failure(
+                    DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                )
             }
 
             DiamondBankOG.postgreSQL
@@ -396,7 +409,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
 
                     postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
                         handleError(sender.uniqueId, shards, null)
-                        return@tryWithLockSuspend Result.failure(DiamondBankException.DatabaseException(it.message ?: "Database exception"))
+                        return@tryWithLockSuspend Result.failure(
+                            DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                        )
                     }
 
                     DiamondBankOG.postgreSQL

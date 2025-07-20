@@ -94,7 +94,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
 
         return runBlocking {
             DiamondBankOG.transactionLock.withLockSuspend(uuid) {
-                postgreSQL.subtractFromBankShards(uuid, shards).getOrElse { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
+                postgreSQL.subtractFromBankShards(uuid, shards).getOrElse {
+                    throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                }
 
                 DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                     handleError(uuid, shards, null, null, true)
@@ -200,7 +202,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
         return runBlocking {
             DiamondBankOG.transactionLock.withLockSuspend(uuid) {
                 val result = postgreSQL.getAllShards(uuid)
-                result.exceptionOrNull()?.let { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
+                result.exceptionOrNull()?.let {
+                    throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                }
                 result.getOrThrow()
             }
         }
@@ -227,7 +231,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                         ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
                     }
                 }
-            result.exceptionOrNull()?.let { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
+            result.exceptionOrNull()?.let {
+                throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
+            }
             result.getOrThrow()
         }
     }
@@ -313,7 +319,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                 val result = DiamondBankOG.transactionLock.tryWithLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
             ) {
                 is LockResult.Acquired -> {
-                    result.result.exceptionOrNull()?.let { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
+                    result.result.exceptionOrNull()?.let {
+                        throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                    }
                     result.result.getOrThrow()
                 }
 
@@ -338,7 +346,9 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
                     }
             ) {
                 is LockResult.Acquired -> {
-                    result.result.exceptionOrNull()?.let { throw DiamondBankException.DatabaseException(it.message ?: "Database exception") }
+                    result.result.exceptionOrNull()?.let {
+                        throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                    }
                     result.result.getOrThrow()
                 }
 
@@ -359,10 +369,10 @@ class DiamondBankAPIJava(private var postgreSQL: PostgreSQL) {
         if (DiamondBankOG.economyDisabled) throw DiamondBankException.EconomyDisabledException
 
         return DiamondBankOG.scope.future {
-            val baltop = postgreSQL.getBaltop(offset)
-            if (baltop == null) {
-                throw DiamondBankException.DatabaseException("Database exception")
-            }
+            val baltop =
+                postgreSQL.getBaltop(offset).getOrElse {
+                    throw DiamondBankException.DatabaseException(it.message ?: "Database exception")
+                }
             baltop
         }
     }

@@ -12,7 +12,13 @@ import kotlinx.coroutines.future.await
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
-    class InvalidArgumentException : Exception()
+    object InvalidArgumentException : Exception() {
+        @Suppress("unused") private fun readResolve(): Any = InvalidArgumentException
+    }
+
+    object NoRowsException : Exception() {
+        @Suppress("unused") private fun readResolve(): Any = NoRowsException
+    }
 
     enum class ShardType(val string: String) {
         BANK("bank_shards"),
@@ -83,7 +89,7 @@ class PostgreSQL {
     data class PlayerShards(val bank: Int, val inventory: Int, val enderChest: Int)
 
     suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
-        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
+        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
         try {
             val connection = pool.asSuspending.connect()
 
@@ -100,7 +106,7 @@ class PostgreSQL {
     }
 
     suspend fun addToPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
-        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
+        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
 
         val playerShards =
             when (type) {
@@ -108,7 +114,7 @@ class PostgreSQL {
                 ShardType.INVENTORY -> getInventoryShards(uuid)
                 ShardType.ENDER_CHEST -> getEnderChestShards(uuid)
                 else -> {
-                    return Result.failure(InvalidArgumentException())
+                    return Result.failure(InvalidArgumentException)
                 }
             }
 
@@ -244,7 +250,7 @@ class PostgreSQL {
         return Result.success(shards)
     }
 
-    suspend fun getBaltop(offset: Int): Map<UUID?, Int>? {
+    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Int>> {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
@@ -269,18 +275,18 @@ class PostgreSQL {
 
                 baltop[uuid] = totalShards
             }
-            return baltop
+            return Result.success(baltop)
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
         }
-        return null
     }
 
     /**
      * @return Pair with as the first value a map with the player name and total balance and as the second value the
      *   offset
      */
-    suspend fun getBaltopWithUuid(uuid: UUID): Pair<Map<UUID?, Int>, Long>? {
+    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Int>, Long>> {
         try {
             val connection = pool.asSuspending.connect()
             // @formatter:off
@@ -322,15 +328,15 @@ class PostgreSQL {
 
                 baltop[uuid] = totalShards
             }
-            return Pair(baltop, offset)
+            return Result.success(Pair(baltop, offset))
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
         }
-        return null
     }
 
-    suspend fun getNumberOfRows(): Long? {
-        var number: Long? = null
+    suspend fun getNumberOfRows(): Result<Long> {
+        var number: Long?
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
@@ -343,11 +349,14 @@ class PostgreSQL {
                     if (rowData.columns[0] != null) {
                         rowData.columns[0] as Long
                     } else 0
+            } else {
+                return Result.failure(NoRowsException)
             }
+            return Result.success(number)
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
+            return Result.failure(e)
         }
-        return number
     }
 
     suspend fun insertTransactionLog(
