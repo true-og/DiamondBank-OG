@@ -8,6 +8,7 @@ import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
 import java.sql.SQLException
 import java.util.*
 import kotlinx.coroutines.future.await
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
@@ -32,22 +33,22 @@ class PostgreSQL {
         try {
             pool =
                 PostgreSQLConnectionBuilder.createConnectionPool(
-                    "${Config.postgresUrl}?user=${Config.postgresUser}&password=${Config.postgresPassword}"
+                    "${config.postgresUrl}?user=${config.postgresUser}&password=${config.postgresPassword}"
                 )
             val createTable =
                 pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${Config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards INTEGER, inventory_shards INTEGER, ender_chest_shards INTEGER, total_shards INTEGER GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
+                    "CREATE TABLE IF NOT EXISTS ${config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards INTEGER, inventory_shards INTEGER, ender_chest_shards INTEGER, total_shards INTEGER GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
                 )
             createTable.join()
             val createTotalShardsIndex =
                 pool.sendPreparedStatement(
-                    "CREATE INDEX IF NOT EXISTS idx_total_shards ON ${Config.postgresTable}(total_shards DESC)"
+                    "CREATE INDEX IF NOT EXISTS idx_total_shards ON ${config.postgresTable}(total_shards DESC)"
                 )
             createTotalShardsIndex.join()
 
             val createLogTable =
                 pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${Config.postgresLogTable}(id SERIAL PRIMARY KEY, player_uuid UUID NOT NULL, transferred_shards INTEGER NOT NULL, player_to_uuid UUID, transaction_reason TEXT, notes TEXT, timestamp TIMESTAMPTZ DEFAULT NOW())"
+                    "CREATE TABLE IF NOT EXISTS ${config.postgresLogTable}(id SERIAL PRIMARY KEY, player_uuid UUID NOT NULL, transferred_shards INTEGER NOT NULL, player_to_uuid UUID, transaction_reason TEXT, notes TEXT, timestamp TIMESTAMPTZ DEFAULT NOW())"
                 )
             createLogTable.join()
             // @formatter:off
@@ -55,11 +56,11 @@ class PostgreSQL {
                 pool.sendPreparedStatement(
                     "CREATE OR REPLACE FUNCTION fifo_limit_trigger() RETURNS TRIGGER AS $$" +
                         "DECLARE " +
-                        "max_rows CONSTANT INTEGER := ${Config.postgresLogLimit};" +
+                        "max_rows CONSTANT INTEGER := ${config.postgresLogLimit};" +
                         "BEGIN " +
-                        "DELETE FROM ${Config.postgresLogTable} " +
+                        "DELETE FROM ${config.postgresLogTable} " +
                         "WHERE id <= (" +
-                        "SELECT id FROM ${Config.postgresLogTable} " +
+                        "SELECT id FROM ${config.postgresLogTable} " +
                         "ORDER BY id DESC " +
                         "OFFSET max_rows LIMIT 1" +
                         ");" +
@@ -72,7 +73,7 @@ class PostgreSQL {
             val createTrigger =
                 pool.sendPreparedStatement(
                     "CREATE OR REPLACE TRIGGER fifo_limit_trigger\n" +
-                        "AFTER INSERT ON ${Config.postgresLogTable}\n" +
+                        "AFTER INSERT ON ${config.postgresLogTable}\n" +
                         "FOR EACH STATEMENT\n" +
                         "EXECUTE FUNCTION fifo_limit_trigger();"
                 )
@@ -95,7 +96,7 @@ class PostgreSQL {
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "INSERT INTO ${Config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}",
+                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}",
                     listOf(uuid, shards),
                 )
             preparedStatement.await()
@@ -147,7 +148,7 @@ class PostgreSQL {
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${Config.postgresTable} WHERE uuid = ? LIMIT 1",
+                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
                     listOf(uuid),
                 )
             val result = preparedStatement.await()
@@ -189,7 +190,7 @@ class PostgreSQL {
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${Config.postgresTable} WHERE uuid = ? LIMIT 1",
+                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
                     listOf(uuid),
                 )
             val result = preparedStatement.await()
@@ -228,7 +229,7 @@ class PostgreSQL {
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "SELECT ${type.string} FROM ${Config.postgresTable} WHERE uuid = ? LIMIT 1",
+                    "SELECT ${type.string} FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
                     listOf(uuid),
                 )
             val result = preparedStatement.await()
@@ -256,7 +257,7 @@ class PostgreSQL {
             val preparedStatement =
                 connection.sendPreparedStatement(
                     "SELECT uuid, total_shards " +
-                        "FROM ${Config.postgresTable} " +
+                        "FROM ${config.postgresTable} " +
                         "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 9",
                     listOf(offset),
                 )
@@ -295,7 +296,7 @@ class PostgreSQL {
                     "WITH ranked AS (" +
                         "SELECT " +
                         "uuid, total_shards, ROW_NUMBER() OVER (ORDER BY total_shards DESC, uuid DESC) AS rn " +
-                        "FROM ${Config.postgresTable}" +
+                        "FROM ${config.postgresTable}" +
                         "), " +
                         "target AS (" +
                         "SELECT rn, ((rn - 1) / 9) * 9 AS page_offset FROM ranked WHERE uuid = ?), " +
@@ -340,7 +341,7 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
-                connection.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${Config.postgresTable}")
+                connection.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${config.postgresTable}")
             val result = preparedStatement.await()
 
             if (result.rows.isNotEmpty()) {
@@ -371,7 +372,7 @@ class PostgreSQL {
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "INSERT INTO ${Config.postgresLogTable}(player_uuid, transferred_shards, player_to_uuid, transaction_reason, notes) " +
+                    "INSERT INTO ${config.postgresLogTable}(player_uuid, transferred_shards, player_to_uuid, transaction_reason, notes) " +
                         "VALUES(?, ?, ?, ?, ?)",
                     listOf(playerUuid, transferredShards, playerToUuid, transactionReason, notes),
                 )

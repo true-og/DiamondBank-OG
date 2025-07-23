@@ -3,8 +3,8 @@ package net.trueog.diamondbankog.commands
 import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -21,7 +21,7 @@ internal class SetBankBalance : CommandExecutor {
             if (DiamondBankOG.economyDisabled) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
+                        "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                     )
                 )
                 return@launch
@@ -30,7 +30,7 @@ internal class SetBankBalance : CommandExecutor {
             if (!sender.hasPermission("diamondbank-og.setbankbalance")) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You do not have permission to use this command."
+                        "${config.prefix}<reset>: <red>You do not have permission to use this command."
                     )
                 )
                 return@launch
@@ -39,7 +39,7 @@ internal class SetBankBalance : CommandExecutor {
             if (args == null || args.isEmpty()) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You did not provide the name or the UUID of a player and the amount of <aqua>Shards<red>."
+                        "${config.prefix}<reset>: <red>You did not provide the name or the UUID of a player and the amount of <aqua>Shards<red>."
                     )
                 )
                 return@launch
@@ -47,7 +47,7 @@ internal class SetBankBalance : CommandExecutor {
             if (args.size != 2) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>Incorrect syntax. Usage: /setbankbal(ance) <player name or player uuid> <shards>."
+                        "${config.prefix}<reset>: <red>Incorrect syntax. Usage: /setbankbal(ance) <player name or player uuid> <shards>."
                     )
                 )
                 return@launch
@@ -61,7 +61,7 @@ internal class SetBankBalance : CommandExecutor {
                 }
             if (!player.hasPlayedBefore()) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist.")
+                    DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>That player doesn't exist.")
                 )
                 return@launch
             }
@@ -70,14 +70,14 @@ internal class SetBankBalance : CommandExecutor {
             try {
                 balance = args[1].toInt()
             } catch (_: Exception) {
-                sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
+                sender.sendMessage(DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
                 return@launch
             }
 
             DiamondBankOG.postgreSQL.setPlayerShards(player.uniqueId, balance, ShardType.BANK).getOrElse {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>Something went wrong while trying to set that player's balance."
+                        "${config.prefix}<reset>: <red>Something went wrong while trying to set that player's balance."
                     )
                 )
                 return@launch
@@ -85,7 +85,7 @@ internal class SetBankBalance : CommandExecutor {
 
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <green>Successfully set the balance of ${
+                    "${config.prefix}<reset>: <green>Successfully set the balance of ${
                         getPrefix(
                             player.uniqueId
                         )

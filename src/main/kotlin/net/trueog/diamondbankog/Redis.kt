@@ -2,9 +2,10 @@ package net.trueog.diamondbankog
 
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisConnectionException
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 
 internal class Redis {
-    private val redisClient: RedisClient = RedisClient.create(Config.redisUrl)
+    private val redisClient: RedisClient = RedisClient.create(config.redisUrl)
 
     /** @return True if failed */
     fun testConnection(): Boolean {

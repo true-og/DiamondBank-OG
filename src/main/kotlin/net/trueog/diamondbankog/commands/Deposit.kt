@@ -3,8 +3,8 @@ package net.trueog.diamondbankog.commands
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
@@ -22,7 +22,7 @@ internal class Deposit : CommandExecutor {
             if (DiamondBankOG.economyDisabled) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
+                        "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                     )
                 )
                 return@launch
@@ -37,7 +37,7 @@ internal class Deposit : CommandExecutor {
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You cannot use /deposit when in a minigame."
+                        "${config.prefix}<reset>: <red>You cannot use /deposit when in a minigame."
                     )
                 )
                 return@launch
@@ -46,7 +46,7 @@ internal class Deposit : CommandExecutor {
             if (!sender.hasPermission("diamondbank-og.deposit")) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You do not have permission to use this command."
+                        "${config.prefix}<reset>: <red>You do not have permission to use this command."
                     )
                 )
                 return@launch
@@ -55,7 +55,7 @@ internal class Deposit : CommandExecutor {
             if (args == null || args.isEmpty()) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You did not provide the amount of <aqua>Diamonds <red>that you want to deposit."
+                        "${config.prefix}<reset>: <red>You did not provide the amount of <aqua>Diamonds <red>that you want to deposit."
                     )
                 )
                 return@launch
@@ -63,7 +63,7 @@ internal class Deposit : CommandExecutor {
             if (args.size != 1) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>Please (only) provide the amount of <aqua>Diamonds <red>you want to deposit. Either a number or \"all\"."
+                        "${config.prefix}<reset>: <red>Please (only) provide the amount of <aqua>Diamonds <red>you want to deposit. Either a number or \"all\"."
                     )
                 )
                 return@launch
@@ -73,7 +73,7 @@ internal class Deposit : CommandExecutor {
                 DiamondBankOG.postgreSQL.getInventoryShards(sender.uniqueId).getOrElse {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
+                            "${config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
                         )
                     )
                     return@launch
@@ -81,7 +81,7 @@ internal class Deposit : CommandExecutor {
             if (playerInventoryShards == 0) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."
+                        "${config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit."
                     )
                 )
                 return@launch
@@ -95,20 +95,20 @@ internal class Deposit : CommandExecutor {
                     if (amount <= 0) {
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>You cannot deposit a negative or zero amount."
+                                "${config.prefix}<reset>: <red>You cannot deposit a negative or zero amount."
                             )
                         )
                         return@launch
                     }
                 } catch (_: Exception) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
                     return@launch
                 }
                 val split = amount.toString().split(".")
                 if (split[1].length > 1) {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+                            "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
                         )
                     )
                     return@launch
@@ -118,7 +118,7 @@ internal class Deposit : CommandExecutor {
                 if (shards > playerInventoryShards) {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>You do not have <yellow>${args[0]} <aqua>Diamond${if (args[0] != "1.0") "s" else ""} <red>in your inventory."
+                            "${config.prefix}<reset>: <red>You do not have <yellow>${args[0]} <aqua>Diamond${if (args[0] != "1.0") "s" else ""} <red>in your inventory."
                         )
                     )
                     return@launch
@@ -136,7 +136,7 @@ internal class Deposit : CommandExecutor {
                                 handleError(sender.uniqueId, shards, PlayerShards(-1, playerInventoryShards, -1))
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
-                                        "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                                     )
                                 )
                                 return@tryWithLockSuspend true
@@ -146,7 +146,7 @@ internal class Deposit : CommandExecutor {
                             val diamondsContinuing = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                             sender.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <#FFA500>Something went wrong while trying to remove <yellow>$notRemovedDiamonds <aqua>Diamond${if (notRemovedDiamonds != "1.0") "s" else ""}<#FFA500> from your inventory, proceeding with <yellow>$diamondsContinuing <aqua>Diamond${if (diamondsContinuing != "1.0") "s" else ""}<#FFA500>."
+                                    "${config.prefix}<reset>: <#FFA500>Something went wrong while trying to remove <yellow>$notRemovedDiamonds <aqua>Diamond${if (notRemovedDiamonds != "1.0") "s" else ""}<#FFA500> from your inventory, proceeding with <yellow>$diamondsContinuing <aqua>Diamond${if (diamondsContinuing != "1.0") "s" else ""}<#FFA500>."
                                 )
                             )
                         }
@@ -155,7 +155,7 @@ internal class Deposit : CommandExecutor {
                             handleError(sender.uniqueId, shards, PlayerShards(-1, playerInventoryShards, -1))
                             sender.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                    "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                                 )
                             )
                             return@tryWithLockSuspend true
@@ -172,7 +172,7 @@ internal class Deposit : CommandExecutor {
                 is TransactionLock.LockResult.Failed -> {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>You are currently blocked from using /deposit."
+                            "${config.prefix}<reset>: <red>You are currently blocked from using /deposit."
                         )
                     )
                     return@launch
@@ -182,7 +182,7 @@ internal class Deposit : CommandExecutor {
             val diamondsDeposited = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>Diamond${if (diamondsDeposited != "1.0") "s" else ""} <green>into your bank account."
+                    "${config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>Diamond${if (diamondsDeposited != "1.0") "s" else ""} <green>into your bank account."
                 )
             )
 

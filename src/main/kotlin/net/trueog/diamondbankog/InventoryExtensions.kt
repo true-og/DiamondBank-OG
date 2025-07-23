@@ -3,6 +3,7 @@ package net.trueog.diamondbankog
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -85,7 +86,7 @@ internal object InventoryExtensions {
         val result = DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, leftOver, ShardType.BANK)
         player.sendMessage(
             DiamondBankOG.mm.deserialize(
-                "${Config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been deposited into your bank."
+                "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been deposited into your bank."
             )
         )
         return result.isFailure
@@ -111,14 +112,14 @@ internal object InventoryExtensions {
             }
             player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: The change of ${leftOver - inventoryLeftOver} <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been added to your inventory, and the remaining $inventoryLeftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset> has been deposited into your bank."
+                    "${config.prefix}<reset>: The change of ${leftOver - inventoryLeftOver} <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been added to your inventory, and the remaining $inventoryLeftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset> has been deposited into your bank."
                 )
             )
             return false
         }
         player.sendMessage(
             DiamondBankOG.mm.deserialize(
-                "${Config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been added to your inventory."
+                "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been added to your inventory."
             )
         )
         return false
@@ -152,7 +153,7 @@ internal object InventoryExtensions {
 
         player.sendMessage(
             DiamondBankOG.mm.deserialize(
-                "${Config.prefix}<reset>: The change of $leftOver <aqua>Diamond${if (leftOver != 1) "s" else ""} <reset>has been added to your inventory."
+                "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond${if (leftOver != 1) "s" else ""} <reset>has been added to your inventory."
             )
         )
         return 0
@@ -202,7 +203,7 @@ internal object InventoryExtensions {
                                         handleError(player.uniqueId, inventoryShards, null)
                                         player.sendMessage(
                                             DiamondBankOG.mm.deserialize(
-                                                "${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."
+                                                "${config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."
                                             )
                                         )
                                     }

@@ -2,6 +2,7 @@ package net.trueog.diamondbankog
 
 import kotlin.math.abs
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.InventoryExtensions.countShards
@@ -21,7 +22,7 @@ internal object AutoCompress {
             if (!player.hasPermission("diamondbank-og.compress")) {
                 player.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You do not have permission to compress."
+                        "${config.prefix}<reset>: <red>You do not have permission to compress."
                     )
                 )
                 return@launch
@@ -64,7 +65,7 @@ internal object AutoCompress {
                         if (changeInDiamonds > emptySlots + leftOverSpaceDiamonds) {
                             player.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
+                                    "${config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
                                 )
                             )
                             return@runOnMainThread
@@ -82,7 +83,7 @@ internal object AutoCompress {
                         if (changeInDiamondBlocks > emptySlots + leftOverSpaceDiamondBlocks) {
                             player.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
+                                    "${config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
                                 )
                             )
                             return@runOnMainThread
@@ -94,7 +95,7 @@ internal object AutoCompress {
                         if (removeMap.isNotEmpty()) {
                             player.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                                    "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
                             return@runOnMainThread
@@ -106,7 +107,7 @@ internal object AutoCompress {
                         if (addMap.isNotEmpty()) {
                             player.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                                    "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
                             return@runOnMainThread
@@ -116,7 +117,7 @@ internal object AutoCompress {
                         if (removeMap.isNotEmpty()) {
                             player.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                                    "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
                             return@runOnMainThread
@@ -128,7 +129,7 @@ internal object AutoCompress {
                         if (addMap.isNotEmpty()) {
                             player.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                                    "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
                             return@runOnMainThread
@@ -139,7 +140,7 @@ internal object AutoCompress {
                         if (removeMap.isNotEmpty()) {
                             player.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                                    "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
                             return@runOnMainThread

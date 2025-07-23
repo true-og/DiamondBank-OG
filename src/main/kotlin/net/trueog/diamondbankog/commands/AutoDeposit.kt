@@ -1,7 +1,7 @@
 package net.trueog.diamondbankog.commands
 
-import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -12,7 +12,7 @@ internal class AutoDeposit : CommandExecutor {
         if (DiamondBankOG.economyDisabled) {
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
+                    "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                 )
             )
             return true
@@ -26,7 +26,7 @@ internal class AutoDeposit : CommandExecutor {
         if (!sender.hasPermission("diamondbank-og.deposit")) {
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>You do not have permission to use this command."
+                    "${config.prefix}<reset>: <red>You do not have permission to use this command."
                 )
             )
             return true
@@ -36,21 +36,21 @@ internal class AutoDeposit : CommandExecutor {
             DiamondBankOG.redis.setValue("diamondbankog:${sender.uniqueId}:autodeposit", "false")
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <green>Successfully turned auto-deposit <red>off<green>."
+                    "${config.prefix}<reset>: <green>Successfully turned auto-deposit <red>off<green>."
                 )
             )
         } else {
             if (DiamondBankOG.redis.getValue("diamondbankog:${sender.uniqueId}:autocompress") == "true") {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <#FFA500>You cannot have both auto-deposit and auto-compress on at the same time, so auto-compress has been turned <red>off<#FFA500>."
+                        "${config.prefix}<reset>: <#FFA500>You cannot have both auto-deposit and auto-compress on at the same time, so auto-compress has been turned <red>off<#FFA500>."
                     )
                 )
                 DiamondBankOG.redis.setValue("diamondbankog:${sender.uniqueId}:autocompress", "false")
             }
             DiamondBankOG.redis.setValue("diamondbankog:${sender.uniqueId}:autodeposit", "true")
             sender.sendMessage(
-                DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <green>Successfully turned auto-deposit on.")
+                DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <green>Successfully turned auto-deposit on.")
             )
         }
         return true

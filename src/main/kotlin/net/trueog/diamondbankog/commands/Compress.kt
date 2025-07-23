@@ -2,8 +2,8 @@ package net.trueog.diamondbankog.commands
 
 import kotlin.math.abs
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.InventoryExtensions.countShards
@@ -32,7 +32,7 @@ internal class Compress : CommandExecutor {
             if (DiamondBankOG.economyDisabled) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
+                        "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                     )
                 )
                 return@launch
@@ -47,7 +47,7 @@ internal class Compress : CommandExecutor {
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You cannot use /compress when in a minigame."
+                        "${config.prefix}<reset>: <red>You cannot use /compress when in a minigame."
                     )
                 )
                 return@launch
@@ -56,7 +56,7 @@ internal class Compress : CommandExecutor {
             if (!sender.hasPermission("diamondbank-og.compress")) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You do not have permission to use this command."
+                        "${config.prefix}<reset>: <red>You do not have permission to use this command."
                     )
                 )
                 return@launch
@@ -71,14 +71,14 @@ internal class Compress : CommandExecutor {
                                 if (args.size > 1) {
                                     sender.sendMessage(
                                         DiamondBankOG.mm.deserialize(
-                                            "${Config.prefix}<reset>: <red>Do not provide more arguments than \"yes\" if you want to compress the items in the shulker box you're holding."
+                                            "${config.prefix}<reset>: <red>Do not provide more arguments than \"yes\" if you want to compress the items in the shulker box you're holding."
                                         )
                                     )
                                     return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
                                 }
                                 if (args[0] != "yes") {
                                     sender.sendMessage(
-                                        DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument.")
+                                        DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>Invalid argument.")
                                     )
                                     return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
                                 }
@@ -87,7 +87,7 @@ internal class Compress : CommandExecutor {
                                 if (itemInMainHand.type != Material.SHULKER_BOX) {
                                     sender.sendMessage(
                                         DiamondBankOG.mm.deserialize(
-                                            "${Config.prefix}<reset>: <red>You are not holding a shulker box."
+                                            "${config.prefix}<reset>: <red>You are not holding a shulker box."
                                         )
                                     )
                                     return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -104,7 +104,7 @@ internal class Compress : CommandExecutor {
                         if (sender.inventory.itemInMainHand.type == Material.SHULKER_BOX && !isShulkerBox) {
                             sender.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <#FFA500>Are you sure you want to compress the Diamond currency items in the shulker box you're holding? If so, run \"/compress yes\""
+                                    "${config.prefix}<reset>: <#FFA500>Are you sure you want to compress the Diamond currency items in the shulker box you're holding? If so, run \"/compress yes\""
                                 )
                             )
                             return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -145,7 +145,7 @@ internal class Compress : CommandExecutor {
                             if (changeInDiamonds > emptySlots + leftOverSpaceDiamonds) {
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
-                                        "${Config.prefix}<reset>: <red>You do not have enough space in your ${if (isShulkerBox) "shulker box" else "inventory"} to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
+                                        "${config.prefix}<reset>: <red>You do not have enough space in your ${if (isShulkerBox) "shulker box" else "inventory"} to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
                                     )
                                 )
                                 return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -163,7 +163,7 @@ internal class Compress : CommandExecutor {
                             if (changeInDiamondBlocks > emptySlots + leftOverSpaceDiamondBlocks) {
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
-                                        "${Config.prefix}<reset>: <red>You do not have enough space in your ${if (isShulkerBox) "shulker box" else "inventory"} to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
+                                        "${config.prefix}<reset>: <red>You do not have enough space in your ${if (isShulkerBox) "shulker box" else "inventory"} to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
                                     )
                                 )
                                 return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -175,7 +175,7 @@ internal class Compress : CommandExecutor {
                             if (removeMap.isNotEmpty()) {
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
-                                        "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
+                                        "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
                                 return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -187,7 +187,7 @@ internal class Compress : CommandExecutor {
                             if (addMap.isNotEmpty()) {
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
-                                        "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
+                                        "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
                                 return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -197,7 +197,7 @@ internal class Compress : CommandExecutor {
                             if (removeMap.isNotEmpty()) {
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
-                                        "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
+                                        "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
                                 return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -209,7 +209,7 @@ internal class Compress : CommandExecutor {
                             if (addMap.isNotEmpty()) {
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
-                                        "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
+                                        "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
                                 return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -220,7 +220,7 @@ internal class Compress : CommandExecutor {
                             if (removeMap.isNotEmpty()) {
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
-                                        "${Config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
+                                        "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
                                 return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
@@ -244,7 +244,7 @@ internal class Compress : CommandExecutor {
                     is TransactionLock.LockResult.Failed -> {
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>You are currently blocked from using /deposit."
+                                "${config.prefix}<reset>: <red>You are currently blocked from using /deposit."
                             )
                         )
                         RunOnMainThreadResult(true, null, null, null)
@@ -255,14 +255,14 @@ internal class Compress : CommandExecutor {
             if (changeInShards == null || changeInDiamonds == null || changeInDiamondBlocks == null) return@launch
             if (changeInShards == 0 && changeInDiamonds == 0 && changeInDiamondBlocks == 0) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <#FFA500>Nothing found to compress.")
+                    DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <#FFA500>Nothing found to compress.")
                 )
                 return@launch
             }
 
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <green>Successfully compressed all the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}!"
+                    "${config.prefix}<reset>: <green>Successfully compressed all the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}!"
                 )
             )
 
@@ -296,7 +296,7 @@ internal class Compress : CommandExecutor {
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
                     buildString {
-                            append("${Config.prefix}<reset>: Compression Summary:\n")
+                            append("${config.prefix}<reset>: Compression Summary:\n")
                             if (shardsLine.isNotEmpty()) append(shardsLine)
                             if (diamondsLine.isNotEmpty()) append(diamondsLine)
                             if (diamondBlocksLine.isNotEmpty()) append(diamondBlocksLine)
