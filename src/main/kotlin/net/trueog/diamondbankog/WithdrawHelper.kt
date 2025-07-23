@@ -1,6 +1,7 @@
 package net.trueog.diamondbankog
 
 import kotlin.math.floor
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
 import org.bukkit.entity.Player
@@ -19,7 +20,7 @@ internal object WithdrawHelper {
                 handleError(player.uniqueId, shards, playerShards)
                 player.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                     )
                 )
                 return -1
@@ -40,7 +41,7 @@ internal object WithdrawHelper {
                 )
             player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>Cannot use <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <red>in a transaction because you only have <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}<red>."
+                    "${config.prefix}<reset>: <red>Cannot use <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <red>in a transaction because you only have <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}<red>."
                 )
             )
             return -1
@@ -51,7 +52,7 @@ internal object WithdrawHelper {
                 handleError(player.uniqueId, shards, playerShards)
                 player.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                     )
                 )
                 return -1
@@ -64,7 +65,7 @@ internal object WithdrawHelper {
                 handleError(player.uniqueId, shards, playerShards)
                 player.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                     )
                 )
                 return -1
@@ -78,7 +79,7 @@ internal object WithdrawHelper {
             handleError(player.uniqueId, shards, playerShards)
             player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                    "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                 )
             )
             return -1

@@ -5,6 +5,7 @@ import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.*
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
@@ -23,7 +24,7 @@ internal class Withdraw : CommandExecutor {
             if (DiamondBankOG.economyDisabled) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
+                        "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                     )
                 )
                 return@launch
@@ -38,7 +39,7 @@ internal class Withdraw : CommandExecutor {
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You cannot use /withdraw when in a minigame."
+                        "${config.prefix}<reset>: <red>You cannot use /withdraw when in a minigame."
                     )
                 )
                 return@launch
@@ -47,7 +48,7 @@ internal class Withdraw : CommandExecutor {
             if (!sender.hasPermission("diamondbank-og.withdraw")) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You do not have permission to use this command."
+                        "${config.prefix}<reset>: <red>You do not have permission to use this command."
                     )
                 )
                 return@launch
@@ -56,7 +57,7 @@ internal class Withdraw : CommandExecutor {
             if (args == null || args.isEmpty()) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You did not provide the amount of <aqua>Diamonds <red>that you want to withdraw."
+                        "${config.prefix}<reset>: <red>You did not provide the amount of <aqua>Diamonds <red>that you want to withdraw."
                     )
                 )
                 return@launch
@@ -64,7 +65,7 @@ internal class Withdraw : CommandExecutor {
             if (args.size != 1 && args.size != 2) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>Please provide the amount of <aqua>Diamonds <red>you want to withdraw. Either a number or \"all\"."
+                        "${config.prefix}<reset>: <red>Please provide the amount of <aqua>Diamonds <red>you want to withdraw. Either a number or \"all\"."
                     )
                 )
                 return@launch
@@ -78,20 +79,20 @@ internal class Withdraw : CommandExecutor {
                     if (amount <= 0) {
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>You cannot withdraw a negative or zero amount."
+                                "${config.prefix}<reset>: <red>You cannot withdraw a negative or zero amount."
                             )
                         )
                         return@launch
                     }
                 } catch (_: Exception) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>Invalid argument."))
+                    sender.sendMessage(DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
                     return@launch
                 }
                 val split = amount.toString().split(".")
                 if (split[1].length > 1) {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+                            "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
                         )
                     )
                     return@launch
@@ -105,7 +106,7 @@ internal class Withdraw : CommandExecutor {
                         DiamondBankOG.postgreSQL.getAllShards(sender.uniqueId).getOrElse {
                             sender.sendMessage(
                                 DiamondBankOG.mm.deserialize(
-                                    "${Config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
+                                    "${config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
                                 )
                             )
                             return@tryWithLockSuspend true
@@ -121,7 +122,7 @@ internal class Withdraw : CommandExecutor {
                         val bankDiamonds = String.format("%.1f", floor((playerBankShards / 9.0) * 10) / 10.0)
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>Cannot withdraw <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <red>because your bank only contains <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}<red>."
+                                "${config.prefix}<reset>: <red>Cannot withdraw <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <red>because your bank only contains <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}<red>."
                             )
                         )
                         return@tryWithLockSuspend true
@@ -154,7 +155,7 @@ internal class Withdraw : CommandExecutor {
                         val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""}<red>."
+                                "${config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""}<red>."
                             )
                         )
                         return@tryWithLockSuspend true
@@ -164,7 +165,7 @@ internal class Withdraw : CommandExecutor {
                         handleError(sender.uniqueId, shards, PostgreSQL.PlayerShards(playerBankShards, -1, -1))
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                             )
                         )
                         return@tryWithLockSuspend true
@@ -184,7 +185,7 @@ internal class Withdraw : CommandExecutor {
                         handleError(sender.uniqueId, shards, playerShards)
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                             )
                         )
                         return@tryWithLockSuspend true
@@ -194,7 +195,7 @@ internal class Withdraw : CommandExecutor {
                         handleError(sender.uniqueId, shards, playerShards)
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."
+                                "${config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."
                             )
                         )
                         return@tryWithLockSuspend true
@@ -211,7 +212,7 @@ internal class Withdraw : CommandExecutor {
                 is TransactionLock.LockResult.Failed -> {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>You are currently blocked from using /withdraw."
+                            "${config.prefix}<reset>: <red>You are currently blocked from using /withdraw."
                         )
                     )
                     return@launch
@@ -221,7 +222,7 @@ internal class Withdraw : CommandExecutor {
             val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <green>from your bank account."
+                    "${config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <green>from your bank account."
                 )
             )
 

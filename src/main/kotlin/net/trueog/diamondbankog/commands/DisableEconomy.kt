@@ -1,7 +1,7 @@
 package net.trueog.diamondbankog.commands
 
-import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -11,7 +11,7 @@ internal class DisableEconomy : CommandExecutor {
         if (!sender.hasPermission("diamondbank-og.admin")) {
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>You do not have permission to use this command."
+                    "${config.prefix}<reset>: <red>You do not have permission to use this command."
                 )
             )
             return true
@@ -20,7 +20,7 @@ internal class DisableEconomy : CommandExecutor {
         DiamondBankOG.economyDisabled = true
         sender.sendMessage(
             DiamondBankOG.mm.deserialize(
-                "${Config.prefix}<reset>: <green>Successfully <red>disabled <green>the economy."
+                "${config.prefix}<reset>: <green>Successfully <red>disabled <green>the economy."
             )
         )
         return true

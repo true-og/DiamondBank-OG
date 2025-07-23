@@ -17,11 +17,14 @@ internal class DiamondBankOG : JavaPlugin() {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
         lateinit var plugin: DiamondBankOG
+        lateinit var config: Config
         lateinit var postgreSQL: PostgreSQL
         lateinit var redis: Redis
         lateinit var luckPerms: LuckPerms
 
-        fun isPostgreSQLInitialised() = ::postgreSQL.isInitialized
+        fun isRedisInitialized() = ::redis.isInitialized
+
+        fun isPostgreSQLInitialized() = ::postgreSQL.isInitialized
 
         var mm =
             MiniMessage.builder()
@@ -42,10 +45,12 @@ internal class DiamondBankOG : JavaPlugin() {
     override fun onEnable() {
         plugin = this
 
-        if (Config.load()) {
-            Bukkit.getPluginManager().disablePlugin(this)
-            return
-        }
+        Companion.config =
+            Config.create()
+                ?: run {
+                    Bukkit.getPluginManager().disablePlugin(this)
+                    return
+                }
 
         postgreSQL = PostgreSQL()
         try {
@@ -112,9 +117,13 @@ internal class DiamondBankOG : JavaPlugin() {
     }
 
     override fun onDisable() {
-        redis.shutdown()
+        if (isRedisInitialized()) {
+            redis.shutdown()
+        }
 
-        if (isPostgreSQLInitialised()) postgreSQL.pool.disconnect().get()
+        if (isPostgreSQLInitialized()) {
+            postgreSQL.pool.disconnect().get()
+        }
 
         scope.cancel()
 

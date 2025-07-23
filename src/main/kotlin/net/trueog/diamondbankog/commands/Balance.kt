@@ -4,8 +4,8 @@ import java.util.*
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -20,7 +20,7 @@ internal class Balance : CommandExecutor {
             if (DiamondBankOG.economyDisabled) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
+                        "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                     )
                 )
                 return@launch
@@ -29,7 +29,7 @@ internal class Balance : CommandExecutor {
             if (!sender.hasPermission("diamondbank-og.balance")) {
                 sender.sendMessage(
                     DiamondBankOG.mm.deserialize(
-                        "${Config.prefix}<reset>: <red>You do not have permission to use this command."
+                        "${config.prefix}<reset>: <red>You do not have permission to use this command."
                     )
                 )
                 return@launch
@@ -41,7 +41,7 @@ internal class Balance : CommandExecutor {
                 if (args.isEmpty()) {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>Please provide that name or UUID of the player that you want to check the balance of."
+                            "${config.prefix}<reset>: <red>Please provide that name or UUID of the player that you want to check the balance of."
                         )
                     )
                     return@launch
@@ -55,7 +55,7 @@ internal class Balance : CommandExecutor {
                     }
                 if (!otherPlayer.hasPlayedBefore()) {
                     sender.sendMessage(
-                        DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist.")
+                        DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>That player doesn't exist.")
                     )
                     return@launch
                 }
@@ -64,7 +64,7 @@ internal class Balance : CommandExecutor {
                     DiamondBankOG.postgreSQL.getAllShards(otherPlayer.uniqueId).getOrElse {
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>Something went wrong while trying to get their balance."
+                                "${config.prefix}<reset>: <red>Something went wrong while trying to get their balance."
                             )
                         )
                         return@launch
@@ -94,7 +94,7 @@ internal class Balance : CommandExecutor {
                     if (!sender.hasPermission("diamondbank-og.balance.others")) {
                         sender.sendMessage(
                             DiamondBankOG.mm.deserialize(
-                                "${Config.prefix}<reset>: <red>You do not have permission to use this command in that way."
+                                "${config.prefix}<reset>: <red>You do not have permission to use this command in that way."
                             )
                         )
                         return@launch
@@ -109,7 +109,7 @@ internal class Balance : CommandExecutor {
                         }
                     if (!otherPlayer.hasPlayedBefore()) {
                         sender.sendMessage(
-                            DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>That player doesn't exist.")
+                            DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>That player doesn't exist.")
                         )
                         return@launch
                     }
@@ -119,7 +119,7 @@ internal class Balance : CommandExecutor {
                 DiamondBankOG.postgreSQL.getAllShards(balancePlayer.uniqueId).getOrElse {
                     sender.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>Something went wrong while trying to get ${
+                            "${config.prefix}<reset>: <red>Something went wrong while trying to get ${
                             if (balancePlayer.uniqueId != sender.uniqueId) "their" else "your"
                         } balance."
                         )
@@ -134,7 +134,7 @@ internal class Balance : CommandExecutor {
             val enderChestDiamonds = String.format("%.1f", floor((balance.enderChest / 9.0) * 10) / 10.0)
             sender.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <green>${
+                    "${config.prefix}<reset>: <green>${
                         if (balancePlayer.uniqueId == sender.uniqueId) "Your Balance" else "Balance of ${
                             getPrefix(
                                 balancePlayer.uniqueId

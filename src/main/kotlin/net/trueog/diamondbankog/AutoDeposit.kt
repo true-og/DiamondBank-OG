@@ -1,6 +1,7 @@
 package net.trueog.diamondbankog
 
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
@@ -16,7 +17,7 @@ internal object AutoDeposit {
 
         if (!player.hasPermission("diamondbank-og.deposit")) {
             player.sendMessage(
-                DiamondBankOG.mm.deserialize("${Config.prefix}<reset>: <red>You do not have permission to deposit.")
+                DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to deposit.")
             )
             return
         }
@@ -42,7 +43,7 @@ internal object AutoDeposit {
                     handleError(player.uniqueId, shards, null)
                     player.sendMessage(
                         DiamondBankOG.mm.deserialize(
-                            "${Config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                            "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                         )
                     )
                     return@withLockSuspend

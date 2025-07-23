@@ -4,6 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.AutoCompress.compress
 import net.trueog.diamondbankog.AutoDeposit.deposit
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
@@ -31,7 +32,7 @@ internal class Events : Listener {
         if (DiamondBankOG.economyDisabled) {
             event.player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
+                    "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                 )
             )
             return
@@ -80,7 +81,7 @@ internal class Events : Listener {
         if (DiamondBankOG.economyDisabled) {
             player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>You cannot pick up any economy-related items while the economy is disabled."
+                    "${config.prefix}<reset>: <red>You cannot pick up any economy-related items while the economy is disabled."
                 )
             )
             event.isCancelled = true
@@ -134,7 +135,7 @@ internal class Events : Listener {
             event.isCancelled = true
             event.player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>You cannot drop any economy-related items while the economy is disabled."
+                    "${config.prefix}<reset>: <red>You cannot drop any economy-related items while the economy is disabled."
                 )
             )
             return
@@ -184,7 +185,7 @@ internal class Events : Listener {
             event.isCancelled = true
             player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>You cannot move any economy-related items while the economy is disabled."
+                    "${config.prefix}<reset>: <red>You cannot move any economy-related items while the economy is disabled."
                 )
             )
             return
@@ -230,7 +231,7 @@ internal class Events : Listener {
             event.isCancelled = true
             event.player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>You cannot interact with any economy-related items while the economy is disabled."
+                    "${config.prefix}<reset>: <red>You cannot interact with any economy-related items while the economy is disabled."
                 )
             )
             return
@@ -273,7 +274,7 @@ internal class Events : Listener {
             event.isCancelled = true
             event.player.sendMessage(
                 DiamondBankOG.mm.deserialize(
-                    "${Config.prefix}<reset>: <red>You cannot interact with any economy-related items while the economy is disabled."
+                    "${config.prefix}<reset>: <red>You cannot interact with any economy-related items while the economy is disabled."
                 )
             )
             return
