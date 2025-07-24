@@ -37,7 +37,7 @@ class PostgreSQL {
                 )
             val createTable =
                 pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards INTEGER, inventory_shards INTEGER, ender_chest_shards INTEGER, total_shards INTEGER GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
+                    "CREATE TABLE IF NOT EXISTS ${config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards BIGINT, inventory_shards BIGINT, ender_chest_shards BIGINT, total_shards BIGINT GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
                 )
             createTable.join()
             val createTotalShardsIndex =
@@ -48,7 +48,7 @@ class PostgreSQL {
 
             val createLogTable =
                 pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${config.postgresLogTable}(id SERIAL PRIMARY KEY, player_uuid UUID NOT NULL, transferred_shards INTEGER NOT NULL, player_to_uuid UUID, transaction_reason TEXT, notes TEXT, timestamp TIMESTAMPTZ DEFAULT NOW())"
+                    "CREATE TABLE IF NOT EXISTS ${config.postgresLogTable}(id SERIAL PRIMARY KEY, player_uuid UUID NOT NULL, transferred_shards BIGINT NOT NULL, player_to_uuid UUID, transaction_reason TEXT, notes TEXT, timestamp TIMESTAMPTZ DEFAULT NOW())"
                 )
             createLogTable.join()
             // @formatter:off
@@ -56,7 +56,7 @@ class PostgreSQL {
                 pool.sendPreparedStatement(
                     "CREATE OR REPLACE FUNCTION fifo_limit_trigger() RETURNS TRIGGER AS $$" +
                         "DECLARE " +
-                        "max_rows CONSTANT INTEGER := ${config.postgresLogLimit};" +
+                        "max_rows CONSTANT BIGINT := ${config.postgresLogLimit};" +
                         "BEGIN " +
                         "DELETE FROM ${config.postgresLogTable} " +
                         "WHERE id <= (" +
