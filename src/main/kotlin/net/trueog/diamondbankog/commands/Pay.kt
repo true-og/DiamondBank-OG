@@ -4,6 +4,7 @@ import java.util.*
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankException
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.ErrorHandler.handleError
@@ -128,9 +129,8 @@ internal class Pay : CommandExecutor {
             when (
                 val result =
                     DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                        val notRemoved = WithdrawHelper.withdrawFromPlayer(sender, shards)
-                        if (notRemoved != 0) {
-                            if (notRemoved <= -1) {
+                        WithdrawHelper.withdrawFromPlayer(sender, shards).getOrElse {
+                            if (it !is DiamondBankException.CouldNotRemoveEnoughException) {
                                 handleError(sender.uniqueId, shards, null, receiver.uniqueId)
                                 sender.sendMessage(
                                     DiamondBankOG.mm.deserialize(
@@ -140,7 +140,7 @@ internal class Pay : CommandExecutor {
                                 return@tryWithLockSuspend true
                             }
                             val notRemovedDiamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
-                            shards -= notRemoved
+                            shards -= it.notRemoved
                             val diamondsContinuing = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                             sender.sendMessage(
                                 DiamondBankOG.mm.deserialize(

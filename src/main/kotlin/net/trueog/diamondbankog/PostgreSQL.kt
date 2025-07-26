@@ -8,6 +8,8 @@ import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
 import java.sql.SQLException
 import java.util.*
 import kotlinx.coroutines.future.await
+import net.trueog.diamondbankog.DiamondBankException.DatabaseException
+import net.trueog.diamondbankog.DiamondBankException.InsufficientBalanceException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 
 class PostgreSQL {
@@ -91,6 +93,7 @@ class PostgreSQL {
 
     suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
+
         try {
             val connection = pool.asSuspending.connect()
 
@@ -101,7 +104,7 @@ class PostgreSQL {
                 )
             preparedStatement.await()
         } catch (e: Exception) {
-            return Result.failure(e)
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
         return Result.success(Unit)
     }
@@ -117,22 +120,24 @@ class PostgreSQL {
                 else -> {
                     return Result.failure(InvalidArgumentException)
                 }
+            }.getOrElse {
+                return Result.failure(it)
             }
 
-        playerShards.exceptionOrNull()?.let {
-            return Result.failure(it)
-        }
-
-        return setPlayerShards(uuid, playerShards.getOrThrow() + shards, type)
+        return setPlayerShards(uuid, playerShards + shards, type)
     }
 
     suspend fun subtractFromBankShards(uuid: UUID, shards: Int): Result<Unit> {
-        val bankShards = getBankShards(uuid)
-        bankShards.exceptionOrNull()?.let {
-            return Result.failure(it)
+        val bankShards =
+            getBankShards(uuid).getOrElse {
+                return Result.failure(it)
+            }
+        val newBalance = bankShards - shards
+        if (newBalance < 0) {
+            return Result.failure(InsufficientBalanceException(bankShards))
         }
 
-        return setPlayerShards(uuid, bankShards.getOrThrow() - shards, ShardType.BANK)
+        return setPlayerShards(uuid, newBalance, ShardType.BANK)
     }
 
     suspend fun getBankShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.BANK)
@@ -175,7 +180,7 @@ class PostgreSQL {
                 }
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
         return Result.success(totalShards)
@@ -216,7 +221,7 @@ class PostgreSQL {
             }
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
         return Result.success(PlayerShards(bankShards, inventoryShards, enderChestShards))
@@ -245,7 +250,7 @@ class PostgreSQL {
                 }
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
         return Result.success(shards)
@@ -279,7 +284,7 @@ class PostgreSQL {
             return Result.success(baltop)
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
 
@@ -332,7 +337,7 @@ class PostgreSQL {
             return Result.success(Pair(baltop, offset))
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
 
@@ -356,7 +361,7 @@ class PostgreSQL {
             return Result.success(number)
         } catch (e: Exception) {
             DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
 
@@ -377,8 +382,8 @@ class PostgreSQL {
                     listOf(playerUuid, transferredShards, playerToUuid, transactionReason, notes),
                 )
             preparedStatement.await()
-        } catch (_: Exception) {
-            return Result.failure(Exception())
+        } catch (e: Exception) {
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
         return Result.success(Unit)
     }
