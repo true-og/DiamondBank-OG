@@ -23,7 +23,7 @@ sealed class DiamondBankException(message: String) : Exception(message) {
 
     class DatabaseException(message: String) : DiamondBankException(message)
 
-    class InsufficientBalanceException(val balance: Int) : DiamondBankException("Insufficient balance")
+    class InsufficientBalanceException(val balance: Long) : DiamondBankException("Insufficient balance")
 
     class CouldNotRemoveEnoughException(val notRemoved: Int) : Exception("Could not remove enough")
 

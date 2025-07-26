@@ -28,7 +28,7 @@ class DiamondBankAPIJava() {
      */
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
-    fun addToPlayerBankShards(uuid: UUID, shards: Int, transactionReason: String, notes: String?) {
+    fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         if (economyDisabled) throw EconomyDisabledException
 
         return runBlocking {
@@ -56,7 +56,7 @@ class DiamondBankAPIJava() {
      */
     @Throws(EconomyDisabledException::class, DatabaseException::class, InsufficientBalanceException::class)
     @Suppress("unused")
-    fun subtractFromPlayerBankShards(uuid: UUID, shards: Int, transactionReason: String, notes: String?) {
+    fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         if (economyDisabled) throw EconomyDisabledException
 
         return runBlocking {
@@ -81,7 +81,7 @@ class DiamondBankAPIJava() {
      */
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
-    fun getBankShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.BANK)
+    fun getBankShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.BANK)
 
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released
@@ -94,7 +94,7 @@ class DiamondBankAPIJava() {
      */
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
-    fun getInventoryShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.INVENTORY)
+    fun getInventoryShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.INVENTORY)
 
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released
@@ -107,7 +107,7 @@ class DiamondBankAPIJava() {
      */
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
-    fun getEnderChestShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
+    fun getEnderChestShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released
@@ -120,7 +120,7 @@ class DiamondBankAPIJava() {
      */
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
-    fun getTotalShards(uuid: UUID): Int = getShardTypeShards(uuid, ShardType.TOTAL)
+    fun getTotalShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.TOTAL)
 
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released
@@ -145,7 +145,7 @@ class DiamondBankAPIJava() {
     }
 
     @Throws(EconomyDisabledException::class, DatabaseException::class)
-    private fun getShardTypeShards(uuid: UUID, type: ShardType): Int {
+    private fun getShardTypeShards(uuid: UUID, type: ShardType): Long {
         if (economyDisabled) throw EconomyDisabledException
 
         return runBlocking {
@@ -173,7 +173,7 @@ class DiamondBankAPIJava() {
      */
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
-    fun getBaltop(offset: Int): Map<UUID?, Int> {
+    fun getBaltop(offset: Int): Map<UUID?, Long> {
         if (economyDisabled) throw EconomyDisabledException
 
         return runBlocking { postgreSQL.getBaltop(offset).getOrElse { throw it } }
@@ -203,7 +203,7 @@ class DiamondBankAPIJava() {
         DatabaseException::class,
     )
     @Suppress("unused")
-    fun withdrawFromPlayer(uuid: UUID, shards: Int, transactionReason: String, notes: String?) {
+    fun withdrawFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         if (economyDisabled) throw EconomyDisabledException
 
         return runBlocking {
@@ -256,7 +256,7 @@ class DiamondBankAPIJava() {
         OtherException::class,
     )
     @Suppress("unused")
-    fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Int, transactionReason: String, notes: String?) {
+    fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         if (economyDisabled) throw EconomyDisabledException
 
         return runBlocking {

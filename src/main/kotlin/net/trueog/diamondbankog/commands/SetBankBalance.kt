@@ -65,9 +65,9 @@ internal class SetBankBalance : CommandExecutor {
                 return@launch
             }
 
-            val balance: Int
+            val balance: Long
             try {
-                balance = args[1].toInt()
+                balance = args[1].toLong()
             } catch (_: Exception) {
                 sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
                 return@launch
@@ -88,7 +88,7 @@ internal class SetBankBalance : CommandExecutor {
                         getPrefix(
                             player.uniqueId
                         )
-                    }${player.name}<reset> <green>to <yellow>$balance <aqua>${if (balance == 1) "Shard" else "Shards"}<green>."
+                    }${player.name}<reset> <green>to <yellow>$balance <aqua>${if (balance == 1L) "Shard" else "Shards"}<green>."
                 )
             )
 

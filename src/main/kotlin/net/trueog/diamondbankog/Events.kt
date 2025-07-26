@@ -61,9 +61,9 @@ internal class Events : Listener {
                     )
                 if (legacyBalance != null) {
                     postgreSQL
-                        .setPlayerShards(event.player.uniqueId, legacyBalance.toInt() * 9, ShardType.BANK)
+                        .setPlayerShards(event.player.uniqueId, legacyBalance.toLong() * 9, ShardType.BANK)
                         .getOrElse {
-                            handleError(event.player.uniqueId, legacyBalance.toInt() * 9, null)
+                            handleError(event.player.uniqueId, legacyBalance.toLong() * 9, null)
                             return@launch
                         }
                 }

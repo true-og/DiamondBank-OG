@@ -85,12 +85,12 @@ internal object InventoryExtensions {
 
         if (addMap.isEmpty()) return false
 
-        val leftOver = addMap[0]!!.amount
+        val leftOver = addMap[0]!!.amount.toLong()
 
         val result = postgreSQL.addToPlayerShards(player.uniqueId, leftOver, ShardType.BANK)
         player.sendMessage(
             mm.deserialize(
-                "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been deposited into your bank."
+                "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1L) "Shard" else "Shards"} <reset>has been deposited into your bank."
             )
         )
         return result.isFailure
@@ -111,7 +111,7 @@ internal object InventoryExtensions {
 
         if (inventoryAddMap.isNotEmpty()) {
             val inventoryLeftOver = inventoryAddMap[0]!!.amount
-            postgreSQL.addToPlayerShards(player.uniqueId, inventoryLeftOver, ShardType.BANK).getOrElse {
+            postgreSQL.addToPlayerShards(player.uniqueId, inventoryLeftOver.toLong(), ShardType.BANK).getOrElse {
                 return true
             }
             player.sendMessage(
@@ -237,7 +237,7 @@ internal object InventoryExtensions {
         return 0
     }
 
-    fun Inventory.countTotal(): Int {
+    fun Inventory.countTotal(): Long {
         return this.countShards() +
             this.countDiamonds() * 9 +
             this.countDiamondBlocks() * 81 +
@@ -246,22 +246,22 @@ internal object InventoryExtensions {
             }
     }
 
-    fun Inventory.countShards(): Int {
+    fun Inventory.countShards(): Long {
         val inventoryShards =
             this.all(Material.PRISMARINE_SHARD)
                 .values
                 .filter { it.persistentDataContainer.has(Shard.namespacedKey) }
                 .sumOf { it.amount }
-        return inventoryShards
+        return inventoryShards.toLong()
     }
 
-    fun Inventory.countDiamonds(): Int {
+    fun Inventory.countDiamonds(): Long {
         val inventoryDiamonds = this.all(Material.DIAMOND).values.sumOf { it.amount }
-        return inventoryDiamonds
+        return inventoryDiamonds.toLong()
     }
 
-    fun Inventory.countDiamondBlocks(): Int {
+    fun Inventory.countDiamondBlocks(): Long {
         val inventoryDiamondBlocks = this.all(Material.DIAMOND_BLOCK).values.sumOf { it.amount }
-        return inventoryDiamondBlocks
+        return inventoryDiamondBlocks.toLong()
     }
 }

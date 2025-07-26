@@ -78,14 +78,14 @@ internal class Deposit : CommandExecutor {
                     )
                     return@launch
                 }
-            if (playerInventoryShards == 0) {
+            if (playerInventoryShards == 0L) {
                 sender.sendMessage(
                     mm.deserialize("${config.prefix}<reset>: <red>You don't have any <aqua>Diamonds <red>to deposit.")
                 )
                 return@launch
             }
 
-            var shards: Int = playerInventoryShards
+            var shards: Long = playerInventoryShards
             if (args[0] != "all") {
                 val amount: Float
                 try {
@@ -111,7 +111,7 @@ internal class Deposit : CommandExecutor {
                     )
                     return@launch
                 }
-                shards = (split[0].toInt() * 9) + split[1].toInt()
+                shards = (split[0].toLong() * 9) + split[1].toLong()
 
                 if (shards > playerInventoryShards) {
                     sender.sendMessage(
@@ -128,7 +128,7 @@ internal class Deposit : CommandExecutor {
             when (
                 val result =
                     transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                        val notRemoved = sender.inventory.withdraw(shards)
+                        val notRemoved = sender.inventory.withdraw(shards.toInt())
                         if (notRemoved != 0) {
                             if (notRemoved <= -1) {
                                 handleError(sender.uniqueId, shards, PlayerShards(-1, playerInventoryShards, -1))

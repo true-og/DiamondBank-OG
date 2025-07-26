@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog
 
 import com.github.jasync.sql.db.asSuspending
-import com.github.jasync.sql.db.general.ArrayRowData
 import com.github.jasync.sql.db.pool.ConnectionPool
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnection
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
@@ -91,9 +90,9 @@ class PostgreSQL {
         }
     }
 
-    data class PlayerShards(val bank: Int, val inventory: Int, val enderChest: Int)
+    data class PlayerShards(val bank: Long, val inventory: Long, val enderChest: Long)
 
-    suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
+    suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
         val playerShards: PlayerShards
 
@@ -102,8 +101,8 @@ class PostgreSQL {
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}" +
-                            "RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
+                        "RETURNING bank_shards, inventory_shards, ender_chest_shards",
                     listOf(uuid, shards),
                 )
             val result = preparedStatement.await()
@@ -112,9 +111,9 @@ class PostgreSQL {
                 throw Exception()
             }
             val row = result.rows[0]
-            val bankShards = row.getInt("bank_shards")
-            val inventoryShards = row.getInt("inventory_shards")
-            val enderChestShards = row.getInt("ender_chest_shards")
+            val bankShards = row.getLong("bank_shards")
+            val inventoryShards = row.getLong("inventory_shards")
+            val enderChestShards = row.getLong("ender_chest_shards")
             if (bankShards == null || inventoryShards == null || enderChestShards == null) {
                 throw Exception()
             }
@@ -128,7 +127,7 @@ class PostgreSQL {
         return Result.success(Unit)
     }
 
-    suspend fun addToPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
+    suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
 
         val playerShards =
@@ -146,7 +145,7 @@ class PostgreSQL {
         return setPlayerShards(uuid, playerShards + shards, type)
     }
 
-    suspend fun subtractFromBankShards(uuid: UUID, shards: Int): Result<Unit> {
+    suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit> {
         val bankShards =
             getBankShards(uuid).getOrElse {
                 return Result.failure(it)
@@ -165,35 +164,22 @@ class PostgreSQL {
 
     suspend fun getEnderChestShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
-    suspend fun getTotalShards(uuid: UUID): Result<Int> {
-        var totalShards: Int?
+    suspend fun getTotalShards(uuid: UUID): Result<Long> {
+        var totalShards: Long?
         try {
             val connection = pool.asSuspending.connect()
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
+                    "SELECT total_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
                     listOf(uuid),
                 )
             val result = preparedStatement.await()
 
             totalShards =
                 if (result.rows.isNotEmpty()) {
-                    val rowData = result.rows[0] as ArrayRowData
-                    val bankShards =
-                        if (rowData.columns[0] != null) {
-                            rowData.columns[0] as Int
-                        } else 0
-                    val inventoryShards =
-                        if (rowData.columns[1] != null) {
-                            rowData.columns[1] as Int
-                        } else 0
-                    val enderChestShards =
-                        if (rowData.columns[2] != null) {
-                            rowData.columns[2] as Int
-                        } else 0
-
-                    bankShards + inventoryShards + enderChestShards
+                    val row = result.rows[0]
+                    row.getLong("total_shards") ?: 0
                 } else {
                     0
                 }
@@ -206,9 +192,9 @@ class PostgreSQL {
     }
 
     suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
-        var bankShards: Int?
-        var inventoryShards: Int?
-        var enderChestShards: Int?
+        var bankShards: Long?
+        var inventoryShards: Long?
+        var enderChestShards: Long?
         try {
             val connection = pool.asSuspending.connect()
 
@@ -220,19 +206,10 @@ class PostgreSQL {
             val result = preparedStatement.await()
 
             if (result.rows.isNotEmpty()) {
-                val rowData = result.rows[0] as ArrayRowData
-                bankShards =
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as Int
-                    } else 0
-                inventoryShards =
-                    if (rowData.columns[1] != null) {
-                        rowData.columns[1] as Int
-                    } else 0
-                enderChestShards =
-                    if (rowData.columns[2] != null) {
-                        rowData.columns[2] as Int
-                    } else 0
+                val row = result.rows[0]
+                bankShards = row.getLong("bank_shards") ?: 0
+                inventoryShards = row.getLong("inventory_shards") ?: 0
+                enderChestShards = row.getLong("ender_chest_shards") ?: 0
             } else {
                 bankShards = 0
                 inventoryShards = 0
@@ -246,8 +223,8 @@ class PostgreSQL {
         return Result.success(PlayerShards(bankShards, inventoryShards, enderChestShards))
     }
 
-    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
-        var shards: Int?
+    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
+        var shards: Long?
         try {
             val connection = pool.asSuspending.connect()
 
@@ -260,10 +237,8 @@ class PostgreSQL {
 
             shards =
                 if (result.rows.isNotEmpty()) {
-                    val rowData = result.rows[0] as ArrayRowData
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as Int
-                    } else 0
+                    val row = result.rows[0]
+                    row.getLong(type.string) ?: 0
                 } else {
                     0
                 }
@@ -275,7 +250,7 @@ class PostgreSQL {
         return Result.success(shards)
     }
 
-    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Int>> {
+    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
@@ -286,18 +261,10 @@ class PostgreSQL {
                     listOf(offset),
                 )
             val result = preparedStatement.await()
-            val baltop = mutableMapOf<UUID?, Int>()
+            val baltop = mutableMapOf<UUID?, Long>()
             result.rows.forEach {
-                val rowData = it as ArrayRowData
-                val uuid =
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as UUID
-                    } else null
-                val totalShards =
-                    if (rowData.columns[1] != null) {
-                        rowData.columns[1] as Int
-                    } else 0
-
+                val uuid = it.getAs<UUID>("uuid")
+                val totalShards = it.getLong("total_shards") ?: 0
                 baltop[uuid] = totalShards
             }
             return Result.success(baltop)
@@ -311,7 +278,7 @@ class PostgreSQL {
      * @return Pair with as the first value a map with the player name and total balance and as the second value the
      *   offset
      */
-    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Int>, Long>> {
+    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Long>, Long>> {
         try {
             val connection = pool.asSuspending.connect()
             // @formatter:off
@@ -333,24 +300,12 @@ class PostgreSQL {
                 )
             // @formatter:on
             val result = preparedStatement.await()
-            val baltop = mutableMapOf<UUID?, Int>()
+            val baltop = mutableMapOf<UUID?, Long>()
             var offset = 0L
             result.rows.forEach {
-                val rowData = it as ArrayRowData
-                val uuid =
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as UUID
-                    } else null
-                val totalShards =
-                    if (rowData.columns[1] != null) {
-                        rowData.columns[1] as Int
-                    } else 0
-
-                offset =
-                    if (rowData.columns[2] != null) {
-                        rowData.columns[2] as Long
-                    } else 0L
-
+                val uuid = it.getAs<UUID>("uuid")
+                val totalShards = it.getLong("total_shards") ?: 0
+                offset = it.getLong("page_offset") ?: 0
                 baltop[uuid] = totalShards
             }
             return Result.success(Pair(baltop, offset))
@@ -369,11 +324,8 @@ class PostgreSQL {
             val result = preparedStatement.await()
 
             if (result.rows.isNotEmpty()) {
-                val rowData = result.rows[0] as ArrayRowData
-                number =
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as Long
-                    } else 0
+                val row = result.rows[0]
+                number = row.getLong(0) ?: 0
             } else {
                 return Result.failure(NoRowsException)
             }
@@ -386,7 +338,7 @@ class PostgreSQL {
 
     suspend fun insertTransactionLog(
         playerUuid: UUID,
-        transferredShards: Int,
+        transferredShards: Long,
         playerToUuid: UUID?,
         transactionReason: String,
         notes: String?,

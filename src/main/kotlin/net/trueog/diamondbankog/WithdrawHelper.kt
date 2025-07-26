@@ -10,15 +10,14 @@ import net.trueog.diamondbankog.InventoryExtensions.withdraw
 import org.bukkit.entity.Player
 
 internal object WithdrawHelper {
-    /** @return The amount of not removed shards, -1 if error */
-    suspend fun withdrawFromPlayer(player: Player, shards: Int): Result<Unit> {
+    suspend fun withdrawFromPlayer(player: Player, shards: Long): Result<Unit> {
         val playerShards =
             postgreSQL.getAllShards(player.uniqueId).getOrElse {
                 return Result.failure(it)
             }
 
         // Withdraw everything
-        if (shards == -1) {
+        if (shards == -1L) {
             postgreSQL.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
                 player.sendMessage(
                     mm.deserialize(
@@ -28,8 +27,8 @@ internal object WithdrawHelper {
                 return Result.failure(it)
             }
 
-            val notRemovedInventory = player.inventory.withdraw(playerShards.inventory)
-            val notRemovedEnderChest = player.enderChest.withdraw(playerShards.enderChest)
+            val notRemovedInventory = player.inventory.withdraw(playerShards.inventory.toInt())
+            val notRemovedEnderChest = player.enderChest.withdraw(playerShards.enderChest.toInt())
             return if (notRemovedInventory == 0 && notRemovedEnderChest == 0) {
                 Result.success(Unit)
             } else {
@@ -74,7 +73,7 @@ internal object WithdrawHelper {
                 return Result.failure(it)
             }
 
-            val notRemoved = player.inventory.withdraw(shards - playerShards.bank)
+            val notRemoved = player.inventory.withdraw((shards - playerShards.bank).toInt())
             return if (notRemoved == 0) {
                 Result.success(Unit)
             } else {
@@ -91,8 +90,9 @@ internal object WithdrawHelper {
             return Result.failure(it)
         }
 
-        val notRemovedInventory = player.inventory.withdraw(playerShards.inventory)
-        val notRemovedEnderChest = player.enderChest.withdraw(shards - (playerShards.bank + playerShards.inventory))
+        val notRemovedInventory = player.inventory.withdraw(playerShards.inventory.toInt())
+        val notRemovedEnderChest =
+            player.enderChest.withdraw((shards - (playerShards.bank + playerShards.inventory)).toInt())
 
         return if (notRemovedInventory == 0 && notRemovedEnderChest == 0) {
             Result.success(Unit)

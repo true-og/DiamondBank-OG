@@ -93,7 +93,7 @@ internal class Pay : CommandExecutor {
                 return@launch
             }
 
-            var shards = -1
+            var shards = -1L
             if (args[1] != "all") {
                 val amount: Float
                 try {
@@ -117,7 +117,7 @@ internal class Pay : CommandExecutor {
                     )
                     return@launch
                 }
-                shards = (split[0].toInt() * 9) + split[1].toInt()
+                shards = (split[0].toLong() * 9) + split[1].toLong()
             }
 
             val originalShards = shards

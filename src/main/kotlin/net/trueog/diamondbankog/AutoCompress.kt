@@ -31,9 +31,9 @@ internal object AutoCompress {
 
             transactionLock.withLockSuspend(player.uniqueId) {
                 runOnMainThread {
-                    val shardsInInventory = player.inventory.countShards()
-                    val diamondsInInventory = player.inventory.countDiamonds()
-                    val diamondBlocksInInventory = player.inventory.countDiamondBlocks()
+                    val shardsInInventory = player.inventory.countShards().toInt()
+                    val diamondsInInventory = player.inventory.countDiamonds().toInt()
+                    val diamondBlocksInInventory = player.inventory.countDiamondBlocks().toInt()
 
                     var finalShards = shardsInInventory
                     var finalDiamonds = diamondsInInventory

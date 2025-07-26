@@ -109,9 +109,9 @@ internal class Compress : CommandExecutor {
                             return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
                         }
 
-                        val shardsInInventory = inventory.countShards()
-                        val diamondsInInventory = inventory.countDiamonds()
-                        val diamondBlocksInInventory = inventory.countDiamondBlocks()
+                        val shardsInInventory = inventory.countShards().toInt()
+                        val diamondsInInventory = inventory.countDiamonds().toInt()
+                        val diamondBlocksInInventory = inventory.countDiamondBlocks().toInt()
 
                         var finalShards = shardsInInventory
                         var finalDiamonds = diamondsInInventory

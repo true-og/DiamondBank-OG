@@ -72,7 +72,7 @@ internal class Withdraw : CommandExecutor {
                 return@launch
             }
 
-            var shards = -1
+            var shards = -1L
             if (args[0] != "all") {
                 val amount: Float
                 try {
@@ -98,7 +98,7 @@ internal class Withdraw : CommandExecutor {
                     )
                     return@launch
                 }
-                shards = (split[0].toInt() * 9) + split[1].toInt()
+                shards = (split[0].toLong() * 9) + split[1].toLong()
             }
 
             val lockResult =
@@ -116,7 +116,7 @@ internal class Withdraw : CommandExecutor {
                     val playerBankShards = playerShards.bank
                     val playerInventoryShards = playerShards.inventory
 
-                    if (shards == -1) shards = playerBankShards
+                    if (shards == -1L) shards = playerBankShards
 
                     if (shards > playerBankShards) {
                         val diamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
@@ -174,10 +174,10 @@ internal class Withdraw : CommandExecutor {
 
                     runOnMainThread {
                         if (diamondAmount > 0) {
-                            sender.inventory.addItem(ItemStack(Material.DIAMOND, diamondAmount))
+                            sender.inventory.addItem(ItemStack(Material.DIAMOND, diamondAmount.toInt()))
                         }
                         if (shardAmount > 0) {
-                            sender.inventory.addItem(Shard.createItemStack(shardAmount))
+                            sender.inventory.addItem(Shard.createItemStack(shardAmount.toInt()))
                         }
                     }
 

@@ -23,7 +23,7 @@ class DiamondBankAPIKotlin() {
     @Suppress("unused")
     suspend fun addToPlayerBankShards(
         uuid: UUID,
-        shards: Int,
+        shards: Long,
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {
@@ -51,7 +51,7 @@ class DiamondBankAPIKotlin() {
     @Suppress("unused")
     suspend fun subtractFromPlayerBankShards(
         uuid: UUID,
-        shards: Int,
+        shards: Long,
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {
@@ -71,18 +71,18 @@ class DiamondBankAPIKotlin() {
     }
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
-    @Suppress("unused") suspend fun getBankShards(uuid: UUID): Result<Int> = getShardTypeShards(uuid, ShardType.BANK)
+    @Suppress("unused") suspend fun getBankShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.BANK)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")
-    suspend fun getInventoryShards(uuid: UUID): Result<Int> = getShardTypeShards(uuid, ShardType.INVENTORY)
+    suspend fun getInventoryShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.INVENTORY)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")
-    suspend fun getEnderChestShards(uuid: UUID): Result<Int> = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
+    suspend fun getEnderChestShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
-    @Suppress("unused") suspend fun getTotalShards(uuid: UUID): Result<Int> = getShardTypeShards(uuid, ShardType.TOTAL)
+    @Suppress("unused") suspend fun getTotalShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.TOTAL)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")
@@ -92,7 +92,7 @@ class DiamondBankAPIKotlin() {
         return transactionLock.withLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
     }
 
-    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
+    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
         if (economyDisabled) return Result.failure(EconomyDisabledException)
 
         return transactionLock.withLockSuspend(uuid) {
@@ -110,7 +110,7 @@ class DiamondBankAPIKotlin() {
     }
 
     @Suppress("unused")
-    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Int>> {
+    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> {
         if (economyDisabled) return Result.failure(EconomyDisabledException)
 
         val baltop =
@@ -127,7 +127,7 @@ class DiamondBankAPIKotlin() {
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      */
     @Suppress("unused")
-    suspend fun withdrawFromPlayer(uuid: UUID, shards: Int, transactionReason: String, notes: String?): Result<Unit> {
+    suspend fun withdrawFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit> {
         if (economyDisabled) return Result.failure(EconomyDisabledException)
 
         return transactionLock.withLockSuspend(uuid) {
@@ -171,7 +171,7 @@ class DiamondBankAPIKotlin() {
     suspend fun playerPayPlayer(
         payerUuid: UUID,
         receiverUuid: UUID,
-        shards: Int,
+        shards: Long,
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {

@@ -27,11 +27,11 @@ internal object AutoDeposit {
         val itemStack = item.itemStack
         val shards =
             if (itemStack.type == Material.DIAMOND_BLOCK) {
-                itemStack.amount * 9 * 9
+                (itemStack.amount * 9 * 9).toLong()
             } else if (itemStack.type == Material.DIAMOND) {
-                itemStack.amount * 9
+                (itemStack.amount * 9).toLong()
             } else if (itemStack.persistentDataContainer.has(Shard.namespacedKey)) {
-                itemStack.amount
+                itemStack.amount.toLong()
             } else {
                 return
             }
