@@ -95,19 +95,36 @@ class PostgreSQL {
 
     suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
+        val playerShards: PlayerShards
 
         try {
             val connection = pool.asSuspending.connect()
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}",
+                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}" +
+                            "RETURNING bank_shards, inventory_shards, ender_chest_shards",
                     listOf(uuid, shards),
                 )
-            preparedStatement.await()
+            val result = preparedStatement.await()
+
+            if (result.rows.isEmpty()) {
+                throw Exception()
+            }
+            val row = result.rows[0]
+            val bankShards = row.getInt("bank_shards")
+            val inventoryShards = row.getInt("inventory_shards")
+            val enderChestShards = row.getInt("ender_chest_shards")
+            if (bankShards == null || inventoryShards == null || enderChestShards == null) {
+                throw Exception()
+            }
+
+            playerShards = PlayerShards(bankShards, inventoryShards, enderChestShards)
         } catch (e: Exception) {
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
+
+        DiamondBankOG.eventManager.sendUpdate(playerShards)
         return Result.success(Unit)
     }
 

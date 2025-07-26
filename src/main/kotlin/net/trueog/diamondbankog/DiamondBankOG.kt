@@ -18,6 +18,7 @@ internal class DiamondBankOG : JavaPlugin() {
 
         lateinit var plugin: DiamondBankOG
         lateinit var config: Config
+        lateinit var eventManager: EventManager
         lateinit var postgreSQL: PostgreSQL
         lateinit var redis: Redis
         lateinit var luckPerms: LuckPerms
@@ -51,6 +52,8 @@ internal class DiamondBankOG : JavaPlugin() {
                     Bukkit.getPluginManager().disablePlugin(this)
                     return
                 }
+
+        eventManager = EventManager()
 
         postgreSQL = PostgreSQL()
         try {

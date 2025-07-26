@@ -4,6 +4,7 @@ import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.eventManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
@@ -209,5 +210,10 @@ class DiamondBankAPIKotlin() {
 
             Result.success(Unit)
         }
+    }
+
+    @Suppress("unused")
+    fun registerEventListener(eventListener: PlayerBalanceChangedListener) {
+        eventManager.register(eventListener)
     }
 }
