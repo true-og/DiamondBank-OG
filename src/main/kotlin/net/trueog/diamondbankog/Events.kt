@@ -16,6 +16,7 @@ import net.trueog.diamondbankog.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -30,6 +31,7 @@ import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.inventory.ItemStack
+import org.bukkit.persistence.PersistentDataType
 
 @OptIn(DelicateCoroutinesApi::class)
 internal class Events : Listener {
@@ -46,6 +48,33 @@ internal class Events : Listener {
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
         scope.launch {
+            val hasEntry =
+                postgreSQL.hasEntry(event.player.uniqueId).getOrElse {
+                    economyDisabled = true
+                    return@launch
+                }
+            if (!hasEntry) {
+                val legacyBalance =
+                    event.player.persistentDataContainer.get(
+                        NamespacedKey.fromString("diamondbank:balance")!!,
+                        PersistentDataType.DOUBLE,
+                    )
+                if (legacyBalance != null) {
+                    postgreSQL
+                        .setPlayerShards(event.player.uniqueId, legacyBalance.toInt() * 9, ShardType.BANK)
+                        .getOrElse {
+                            handleError(event.player.uniqueId, legacyBalance.toInt() * 9, null)
+                            return@launch
+                        }
+                }
+                event.player.persistentDataContainer.remove(NamespacedKey.fromString("diamondbank:balance")!!)
+                event.player.sendMessage(
+                    mm.deserialize(
+                        "${config.prefix}<reset>: <green>Your old balance has been successfully migrated to DiamondBank-OG!"
+                    )
+                )
+            }
+
             val inventoryShards = event.player.inventory.countTotal()
             postgreSQL.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
                 handleError(event.player.uniqueId, inventoryShards, null)

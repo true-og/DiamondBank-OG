@@ -389,4 +389,20 @@ class PostgreSQL {
         }
         return Result.success(Unit)
     }
+
+    suspend fun hasEntry(uuid: UUID): Result<Boolean> {
+        try {
+            val connection = pool.asSuspending.connect()
+            val preparedStatement =
+                connection.sendPreparedStatement("SELECT 1 FROM ${config.postgresTable} WHERE uuid = ?", listOf(uuid))
+            val result = preparedStatement.await()
+
+            if (result.rows.size == 1) {
+                return Result.success(true)
+            }
+        } catch (e: Exception) {
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
+        }
+        return Result.success(false)
+    }
 }
