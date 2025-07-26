@@ -2,8 +2,11 @@ package net.trueog.diamondbankog.commands
 
 import kotlin.math.abs
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
+import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.InventoryExtensions.countShards
@@ -28,10 +31,10 @@ internal class Compress : CommandExecutor {
     )
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        DiamondBankOG.scope.launch {
-            if (DiamondBankOG.economyDisabled) {
+        scope.launch {
+            if (economyDisabled) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                     )
                 )
@@ -46,31 +49,27 @@ internal class Compress : CommandExecutor {
             val worldName = sender.world.name
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${config.prefix}<reset>: <red>You cannot use /compress when in a minigame."
-                    )
+                    mm.deserialize("${config.prefix}<reset>: <red>You cannot use /compress when in a minigame.")
                 )
                 return@launch
             }
 
             if (!sender.hasPermission("diamondbank-og.compress")) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${config.prefix}<reset>: <red>You do not have permission to use this command."
-                    )
+                    mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to use this command.")
                 )
                 return@launch
             }
 
             var isShulkerBox = false
             val result =
-                DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
+                transactionLock.tryWithLockSuspend(sender.uniqueId) {
                     runOnMainThread {
                         val (inventory, blockStateMeta, blockState) =
                             if (args != null && args.isNotEmpty()) {
                                 if (args.size > 1) {
                                     sender.sendMessage(
-                                        DiamondBankOG.mm.deserialize(
+                                        mm.deserialize(
                                             "${config.prefix}<reset>: <red>Do not provide more arguments than \"yes\" if you want to compress the items in the shulker box you're holding."
                                         )
                                     )
@@ -78,7 +77,7 @@ internal class Compress : CommandExecutor {
                                 }
                                 if (args[0] != "yes") {
                                     sender.sendMessage(
-                                        DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>Invalid argument.")
+                                        mm.deserialize("${config.prefix}<reset>: <red>Invalid argument.")
                                     )
                                     return@runOnMainThread RunOnMainThreadResult(true, null, null, null)
                                 }
@@ -86,7 +85,7 @@ internal class Compress : CommandExecutor {
                                 val itemInMainHand = sender.inventory.itemInMainHand
                                 if (itemInMainHand.type != Material.SHULKER_BOX) {
                                     sender.sendMessage(
-                                        DiamondBankOG.mm.deserialize(
+                                        mm.deserialize(
                                             "${config.prefix}<reset>: <red>You are not holding a shulker box."
                                         )
                                     )
@@ -103,7 +102,7 @@ internal class Compress : CommandExecutor {
 
                         if (sender.inventory.itemInMainHand.type == Material.SHULKER_BOX && !isShulkerBox) {
                             sender.sendMessage(
-                                DiamondBankOG.mm.deserialize(
+                                mm.deserialize(
                                     "${config.prefix}<reset>: <#FFA500>Are you sure you want to compress the Diamond currency items in the shulker box you're holding? If so, run \"/compress yes\""
                                 )
                             )
@@ -144,7 +143,7 @@ internal class Compress : CommandExecutor {
 
                             if (changeInDiamonds > emptySlots + leftOverSpaceDiamonds) {
                                 sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
+                                    mm.deserialize(
                                         "${config.prefix}<reset>: <red>You do not have enough space in your ${if (isShulkerBox) "shulker box" else "inventory"} to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
                                     )
                                 )
@@ -162,7 +161,7 @@ internal class Compress : CommandExecutor {
 
                             if (changeInDiamondBlocks > emptySlots + leftOverSpaceDiamondBlocks) {
                                 sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
+                                    mm.deserialize(
                                         "${config.prefix}<reset>: <red>You do not have enough space in your ${if (isShulkerBox) "shulker box" else "inventory"} to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
                                     )
                                 )
@@ -174,7 +173,7 @@ internal class Compress : CommandExecutor {
                             val removeMap = inventory.removeItem(Shard.createItemStack(abs(changeInShards)))
                             if (removeMap.isNotEmpty()) {
                                 sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
+                                    mm.deserialize(
                                         "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
@@ -186,7 +185,7 @@ internal class Compress : CommandExecutor {
                             val addMap = inventory.addItem(ItemStack(Material.DIAMOND, changeInDiamonds))
                             if (addMap.isNotEmpty()) {
                                 sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
+                                    mm.deserialize(
                                         "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
@@ -196,7 +195,7 @@ internal class Compress : CommandExecutor {
                             val removeMap = inventory.removeItem(ItemStack(Material.DIAMOND, abs(changeInDiamonds)))
                             if (removeMap.isNotEmpty()) {
                                 sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
+                                    mm.deserialize(
                                         "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
@@ -208,7 +207,7 @@ internal class Compress : CommandExecutor {
                             val addMap = inventory.addItem(ItemStack(Material.DIAMOND_BLOCK, changeInDiamondBlocks))
                             if (addMap.isNotEmpty()) {
                                 sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
+                                    mm.deserialize(
                                         "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
@@ -219,7 +218,7 @@ internal class Compress : CommandExecutor {
                                 inventory.removeItem(ItemStack(Material.DIAMOND_BLOCK, abs(changeInDiamondBlocks)))
                             if (removeMap.isNotEmpty()) {
                                 sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
+                                    mm.deserialize(
                                         "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                     )
                                 )
@@ -243,7 +242,7 @@ internal class Compress : CommandExecutor {
 
                     is TransactionLock.LockResult.Failed -> {
                         sender.sendMessage(
-                            DiamondBankOG.mm.deserialize(
+                            mm.deserialize(
                                 "${config.prefix}<reset>: <red>You are currently blocked from using /deposit."
                             )
                         )
@@ -254,14 +253,12 @@ internal class Compress : CommandExecutor {
             if (shouldReturn) return@launch
             if (changeInShards == null || changeInDiamonds == null || changeInDiamondBlocks == null) return@launch
             if (changeInShards == 0 && changeInDiamonds == 0 && changeInDiamondBlocks == 0) {
-                sender.sendMessage(
-                    DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <#FFA500>Nothing found to compress.")
-                )
+                sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <#FFA500>Nothing found to compress."))
                 return@launch
             }
 
             sender.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     "${config.prefix}<reset>: <green>Successfully compressed all the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}!"
                 )
             )
@@ -294,7 +291,7 @@ internal class Compress : CommandExecutor {
                     else ""
 
             sender.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     buildString {
                             append("${config.prefix}<reset>: Compression Summary:\n")
                             if (shardsLine.isNotEmpty()) append(shardsLine)

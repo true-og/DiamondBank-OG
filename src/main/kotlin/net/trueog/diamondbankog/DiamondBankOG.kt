@@ -56,7 +56,7 @@ internal class DiamondBankOG : JavaPlugin() {
         try {
             postgreSQL.initDB()
         } catch (e: Exception) {
-            plugin.logger.info(e.toString())
+            logger.info(e.toString())
             Bukkit.getPluginManager().disablePlugin(this)
             return
         }
@@ -70,7 +70,7 @@ internal class DiamondBankOG : JavaPlugin() {
 
         val luckPermsProvider = Bukkit.getServicesManager().getRegistration(LuckPerms::class.java)
         if (luckPermsProvider == null) {
-            this.logger.severe("Luckperms API is null, quitting...")
+            logger.severe("Luckperms API is null, quitting...")
             Bukkit.getPluginManager().disablePlugin(this)
             return
         }
@@ -99,7 +99,7 @@ internal class DiamondBankOG : JavaPlugin() {
 
         Shard.createCraftingRecipes()
 
-        val diamondBankAPIJava = DiamondBankAPIJava(postgreSQL)
+        val diamondBankAPIJava = DiamondBankAPIJava()
         this.server.servicesManager.register(
             DiamondBankAPIJava::class.java,
             diamondBankAPIJava,
@@ -107,7 +107,7 @@ internal class DiamondBankOG : JavaPlugin() {
             ServicePriority.Normal,
         )
 
-        val diamondBankAPIKotlin = DiamondBankAPIKotlin(postgreSQL)
+        val diamondBankAPIKotlin = DiamondBankAPIKotlin()
         this.server.servicesManager.register(
             DiamondBankAPIKotlin::class.java,
             diamondBankAPIKotlin,

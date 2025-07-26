@@ -3,13 +3,16 @@ package net.trueog.diamondbankog
 import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import net.trueog.diamondbankog.DiamondBankException.*
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
+import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 
 @OptIn(DelicateCoroutinesApi::class)
-class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
+class DiamondBankAPIKotlin() {
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released
      *
@@ -23,14 +26,14 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {
-        if (DiamondBankOG.economyDisabled) return Result.failure(EconomyDisabledException)
+        if (economyDisabled) return Result.failure(EconomyDisabledException)
 
-        return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
+        return transactionLock.withLockSuspend(uuid) {
             postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
                 return@withLockSuspend Result.failure(it)
             }
 
-            DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -51,14 +54,14 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {
-        if (DiamondBankOG.economyDisabled) return Result.failure(EconomyDisabledException)
+        if (economyDisabled) return Result.failure(EconomyDisabledException)
 
-        return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
+        return transactionLock.withLockSuspend(uuid) {
             postgreSQL.subtractFromBankShards(uuid, shards).getOrElse {
                 return@withLockSuspend Result.failure(it)
             }
 
-            DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -83,15 +86,15 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")
     suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
-        if (DiamondBankOG.economyDisabled) return Result.failure(EconomyDisabledException)
+        if (economyDisabled) return Result.failure(EconomyDisabledException)
 
-        return DiamondBankOG.transactionLock.withLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
+        return transactionLock.withLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
     }
 
     private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
-        if (DiamondBankOG.economyDisabled) return Result.failure(EconomyDisabledException)
+        if (economyDisabled) return Result.failure(EconomyDisabledException)
 
-        return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
+        return transactionLock.withLockSuspend(uuid) {
             val result =
                 when (type) {
                     ShardType.BANK -> postgreSQL.getBankShards(uuid)
@@ -107,7 +110,7 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
 
     @Suppress("unused")
     suspend fun getBaltop(offset: Int): Result<Map<UUID?, Int>> {
-        if (DiamondBankOG.economyDisabled) return Result.failure(EconomyDisabledException)
+        if (economyDisabled) return Result.failure(EconomyDisabledException)
 
         val baltop =
             postgreSQL.getBaltop(offset).getOrElse {
@@ -124,9 +127,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
      */
     @Suppress("unused")
     suspend fun withdrawFromPlayer(uuid: UUID, shards: Int, transactionReason: String, notes: String?): Result<Unit> {
-        if (DiamondBankOG.economyDisabled) return Result.failure(EconomyDisabledException)
+        if (economyDisabled) return Result.failure(EconomyDisabledException)
 
-        return DiamondBankOG.transactionLock.withLockSuspend(uuid) {
+        return transactionLock.withLockSuspend(uuid) {
             val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
             if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException)
             if (!player.isOnline) return@withLockSuspend Result.failure(PlayerNotOnlineException)
@@ -145,7 +148,7 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                 return@withLockSuspend Result.failure(it)
             }
 
-            DiamondBankOG.postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -171,9 +174,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {
-        if (DiamondBankOG.economyDisabled) return Result.failure(EconomyDisabledException)
+        if (economyDisabled) return Result.failure(EconomyDisabledException)
 
-        return DiamondBankOG.transactionLock.withLockSuspend(payerUuid) {
+        return transactionLock.withLockSuspend(payerUuid) {
             val payer = Bukkit.getPlayer(payerUuid) ?: Bukkit.getOfflinePlayer(payerUuid)
             if (!payer.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException)
             if (!payer.isOnline) return@withLockSuspend Result.failure(PayerNotOnlineException)
@@ -200,9 +203,9 @@ class DiamondBankAPIKotlin(private var postgreSQL: PostgreSQL) {
                 return@withLockSuspend Result.failure(it)
             }
 
-            DiamondBankOG.postgreSQL
-                .insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes)
-                .getOrElse { handleError(payerUuid, shards, null, receiverUuid, true) }
+            postgreSQL.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes).getOrElse {
+                handleError(payerUuid, shards, null, receiverUuid, true)
+            }
 
             Result.success(Unit)
         }

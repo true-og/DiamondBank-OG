@@ -1,5 +1,6 @@
 package net.trueog.diamondbankog
 
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -17,7 +18,7 @@ internal object Shard {
     fun createItemStack(amount: Int = 1): ItemStack {
         val shard = ItemStack(Material.PRISMARINE_SHARD, amount)
         val shardMeta = shard.itemMeta
-        shardMeta.displayName(DiamondBankOG.mm.deserialize("<aqua>Diamond Shard"))
+        shardMeta.displayName(mm.deserialize("<aqua>Diamond Shard"))
         shardMeta.persistentDataContainer.set(namespacedKey, PersistentDataType.STRING, "")
         shardMeta.addEnchant(Enchantment.DURABILITY, 1, false)
         shardMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS)

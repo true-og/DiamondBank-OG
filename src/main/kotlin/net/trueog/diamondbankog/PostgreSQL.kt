@@ -11,6 +11,8 @@ import kotlinx.coroutines.future.await
 import net.trueog.diamondbankog.DiamondBankException.DatabaseException
 import net.trueog.diamondbankog.DiamondBankException.InsufficientBalanceException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
 
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
@@ -81,8 +83,8 @@ class PostgreSQL {
                 )
             createTrigger.join()
         } catch (_: Exception) {
-            DiamondBankOG.economyDisabled = true
-            DiamondBankOG.plugin.logger.severe(
+            economyDisabled = true
+            plugin.logger.severe(
                 "ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?"
             )
             return
@@ -179,7 +181,7 @@ class PostgreSQL {
                     0
                 }
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
+            plugin.logger.severe(e.toString())
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
@@ -220,7 +222,7 @@ class PostgreSQL {
                 enderChestShards = 0
             }
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
+            plugin.logger.severe(e.toString())
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
@@ -249,7 +251,7 @@ class PostgreSQL {
                     0
                 }
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
+            plugin.logger.severe(e.toString())
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
@@ -283,7 +285,7 @@ class PostgreSQL {
             }
             return Result.success(baltop)
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
+            plugin.logger.severe(e.toString())
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
@@ -336,7 +338,7 @@ class PostgreSQL {
             }
             return Result.success(Pair(baltop, offset))
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
+            plugin.logger.severe(e.toString())
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
@@ -360,7 +362,7 @@ class PostgreSQL {
             }
             return Result.success(number)
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
+            plugin.logger.severe(e.toString())
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }

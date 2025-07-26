@@ -5,6 +5,12 @@ import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.AutoCompress.compress
 import net.trueog.diamondbankog.AutoDeposit.deposit
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
+import net.trueog.diamondbankog.DiamondBankOG.Companion.redis
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
+import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
@@ -29,11 +35,9 @@ import org.bukkit.inventory.ItemStack
 internal class Events : Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (DiamondBankOG.economyDisabled) {
+        if (economyDisabled) {
             event.player.sendMessage(
-                DiamondBankOG.mm.deserialize(
-                    "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
-                )
+                mm.deserialize("${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member.")
             )
             return
         }
@@ -41,22 +45,18 @@ internal class Events : Listener {
         val worldName = event.player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
-        DiamondBankOG.scope.launch {
+        scope.launch {
             val inventoryShards = event.player.inventory.countTotal()
-            DiamondBankOG.postgreSQL
-                .setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY)
-                .getOrElse {
-                    handleError(event.player.uniqueId, inventoryShards, null)
-                    return@launch
-                }
+            postgreSQL.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                handleError(event.player.uniqueId, inventoryShards, null)
+                return@launch
+            }
 
             val enderChestDiamonds = event.player.enderChest.countTotal()
-            DiamondBankOG.postgreSQL
-                .setPlayerShards(event.player.uniqueId, enderChestDiamonds, ShardType.ENDER_CHEST)
-                .getOrElse {
-                    handleError(event.player.uniqueId, enderChestDiamonds, null)
-                    return@launch
-                }
+            postgreSQL.setPlayerShards(event.player.uniqueId, enderChestDiamonds, ShardType.ENDER_CHEST).getOrElse {
+                handleError(event.player.uniqueId, enderChestDiamonds, null)
+                return@launch
+            }
         }
     }
 
@@ -78,9 +78,9 @@ internal class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.economyDisabled) {
+        if (economyDisabled) {
             player.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     "${config.prefix}<reset>: <red>You cannot pick up any economy-related items while the economy is disabled."
                 )
             )
@@ -88,29 +88,27 @@ internal class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.transactionLock.isLocked(player.uniqueId)) {
+        if (transactionLock.isLocked(player.uniqueId)) {
             event.isCancelled = true
             return
         }
 
-        if (DiamondBankOG.redis.getValue("diamondbankog:${player.uniqueId}:autodeposit") == "true") {
+        if (redis.getValue("diamondbankog:${player.uniqueId}:autodeposit") == "true") {
             deposit(player, event.item)
         }
 
-        DiamondBankOG.scope.launch {
-            if (DiamondBankOG.redis.getValue("diamondbankog:${player.uniqueId}:autocompress") == "true") {
+        scope.launch {
+            if (redis.getValue("diamondbankog:${player.uniqueId}:autocompress") == "true") {
                 compress(player)
             }
 
-            DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
+            transactionLock.withLockSuspend(player.uniqueId) {
                 val inventoryShards = runOnMainThread { player.inventory.countTotal() }
 
-                DiamondBankOG.postgreSQL
-                    .setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY)
-                    .getOrElse {
-                        handleError(player.uniqueId, inventoryShards, null)
-                        return@withLockSuspend
-                    }
+                postgreSQL.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                    handleError(player.uniqueId, inventoryShards, null)
+                    return@withLockSuspend
+                }
             }
         }
     }
@@ -131,30 +129,28 @@ internal class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.economyDisabled) {
+        if (economyDisabled) {
             event.isCancelled = true
             event.player.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     "${config.prefix}<reset>: <red>You cannot drop any economy-related items while the economy is disabled."
                 )
             )
             return
         }
 
-        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
+        if (transactionLock.isLocked(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }
 
-        DiamondBankOG.scope.launch {
-            DiamondBankOG.transactionLock.withLockSuspend(event.player.uniqueId) {
+        scope.launch {
+            transactionLock.withLockSuspend(event.player.uniqueId) {
                 val inventoryShards = runOnMainThread { event.player.inventory.countTotal() }
-                DiamondBankOG.postgreSQL
-                    .setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY)
-                    .getOrElse {
-                        handleError(event.player.uniqueId, inventoryShards, null)
-                        return@withLockSuspend
-                    }
+                postgreSQL.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                    handleError(event.player.uniqueId, inventoryShards, null)
+                    return@withLockSuspend
+                }
             }
         }
     }
@@ -181,17 +177,17 @@ internal class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.economyDisabled) {
+        if (economyDisabled) {
             event.isCancelled = true
             player.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     "${config.prefix}<reset>: <red>You cannot move any economy-related items while the economy is disabled."
                 )
             )
             return
         }
 
-        if (DiamondBankOG.transactionLock.isLocked(player.uniqueId)) {
+        if (transactionLock.isLocked(player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -227,17 +223,17 @@ internal class Events : Listener {
             }
         }
 
-        if (DiamondBankOG.economyDisabled) {
+        if (economyDisabled) {
             event.isCancelled = true
             event.player.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     "${config.prefix}<reset>: <red>You cannot interact with any economy-related items while the economy is disabled."
                 )
             )
             return
         }
 
-        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
+        if (transactionLock.isLocked(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -270,17 +266,17 @@ internal class Events : Listener {
             return
         }
 
-        if (DiamondBankOG.economyDisabled) {
+        if (economyDisabled) {
             event.isCancelled = true
             event.player.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     "${config.prefix}<reset>: <red>You cannot interact with any economy-related items while the economy is disabled."
                 )
             )
             return
         }
 
-        if (DiamondBankOG.transactionLock.isLocked(event.player.uniqueId)) {
+        if (transactionLock.isLocked(event.player.uniqueId)) {
             event.isCancelled = true
             return
         }
@@ -288,27 +284,27 @@ internal class Events : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onInventoryClose(event: InventoryCloseEvent) {
-        if (DiamondBankOG.economyDisabled) {
+        if (economyDisabled) {
             return
         }
 
         val player = event.player
         if (player !is Player) return
 
-        if (DiamondBankOG.transactionLock.isLocked(player.uniqueId)) {
+        if (transactionLock.isLocked(player.uniqueId)) {
             return
         }
 
         val worldName = player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
-        DiamondBankOG.scope.launch {
-            if (DiamondBankOG.redis.getValue("diamondbankog:${player.uniqueId}:autocompress") == "true") {
+        scope.launch {
+            if (redis.getValue("diamondbankog:${player.uniqueId}:autocompress") == "true") {
                 compress(player)
             }
 
-            DiamondBankOG.scope.launch {
-                DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
+            scope.launch {
+                transactionLock.withLockSuspend(player.uniqueId) {
                     val (inventoryShards, enderChestShards) =
                         runOnMainThread {
                             Pair(
@@ -317,20 +313,16 @@ internal class Events : Listener {
                                 else null,
                             )
                         }
-                    DiamondBankOG.postgreSQL
-                        .setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY)
-                        .getOrElse {
-                            handleError(player.uniqueId, inventoryShards, null)
-                            return@withLockSuspend
-                        }
+                    postgreSQL.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                        handleError(player.uniqueId, inventoryShards, null)
+                        return@withLockSuspend
+                    }
 
                     if (enderChestShards == null) return@withLockSuspend
-                    DiamondBankOG.postgreSQL
-                        .setPlayerShards(player.uniqueId, enderChestShards, ShardType.ENDER_CHEST)
-                        .getOrElse {
-                            handleError(player.uniqueId, enderChestShards, null)
-                            return@withLockSuspend
-                        }
+                    postgreSQL.setPlayerShards(player.uniqueId, enderChestShards, ShardType.ENDER_CHEST).getOrElse {
+                        handleError(player.uniqueId, enderChestShards, null)
+                        return@withLockSuspend
+                    }
                 }
             }
         }

@@ -5,8 +5,11 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
@@ -17,10 +20,10 @@ import org.bukkit.command.CommandSender
 internal class Balancetop : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        DiamondBankOG.scope.launch {
-            if (DiamondBankOG.economyDisabled) {
+        scope.launch {
+            if (economyDisabled) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                     )
                 )
@@ -29,9 +32,7 @@ internal class Balancetop : CommandExecutor {
 
             if (!sender.hasPermission("diamondbank-og.balancetop")) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${config.prefix}<reset>: <red>You do not have permission to use this command."
-                    )
+                    mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to use this command.")
                 )
                 return@launch
             }
@@ -39,7 +40,7 @@ internal class Balancetop : CommandExecutor {
             if (args == null) return@launch
             if (args.size > 1) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <red>Please (only) optionally provide the page number or the name or UUID of the player you want to see the position of."
                     )
                 )
@@ -63,7 +64,7 @@ internal class Balancetop : CommandExecutor {
                         }
                     if (!player.hasPlayedBefore()) {
                         sender.sendMessage(
-                            DiamondBankOG.mm.deserialize(
+                            mm.deserialize(
                                 "${config.prefix}<reset>: <red>That player doesn't exist or hasn't joined this server before."
                             )
                         )
@@ -74,9 +75,9 @@ internal class Balancetop : CommandExecutor {
 
             if (player != null) {
                 val baltopWithUuid =
-                    DiamondBankOG.postgreSQL.getBaltopWithUuid(player.uniqueId).getOrElse {
+                    postgreSQL.getBaltopWithUuid(player.uniqueId).getOrElse {
                         sender.sendMessage(
-                            DiamondBankOG.mm.deserialize(
+                            mm.deserialize(
                                 "${config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
                             )
                         )
@@ -89,7 +90,7 @@ internal class Balancetop : CommandExecutor {
                     val uuid = it.key
                     if (uuid == null) {
                         sender.sendMessage(
-                            DiamondBankOG.mm.deserialize(
+                            mm.deserialize(
                                 "${config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
                             )
                         )
@@ -107,14 +108,14 @@ internal class Balancetop : CommandExecutor {
                         )
                     }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
                 }
-                sender.sendMessage(DiamondBankOG.mm.deserialize(baltopMessage))
+                sender.sendMessage(mm.deserialize(baltopMessage))
                 return@launch
             }
 
             val baltop =
-                DiamondBankOG.postgreSQL.getBaltop(offset).getOrElse {
+                postgreSQL.getBaltop(offset).getOrElse {
                     sender.sendMessage(
-                        DiamondBankOG.mm.deserialize(
+                        mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
                         )
                     )
@@ -122,9 +123,9 @@ internal class Balancetop : CommandExecutor {
                 }
 
             val numberOfRows =
-                DiamondBankOG.postgreSQL.getNumberOfRows().getOrElse {
+                postgreSQL.getNumberOfRows().getOrElse {
                     sender.sendMessage(
-                        DiamondBankOG.mm.deserialize(
+                        mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
                         )
                     )
@@ -133,7 +134,7 @@ internal class Balancetop : CommandExecutor {
 
             if (index > ceil(numberOfRows / 9.0)) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <red>The amount of pages only goes up to and including ${
                             ceil(
                                 numberOfRows / 9.0
@@ -149,7 +150,7 @@ internal class Balancetop : CommandExecutor {
                 val uuid = it.key
                 if (uuid == null) {
                     sender.sendMessage(
-                        DiamondBankOG.mm.deserialize(
+                        mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
                         )
                     )
@@ -168,7 +169,7 @@ internal class Balancetop : CommandExecutor {
                 }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
             }
 
-            sender.sendMessage(DiamondBankOG.mm.deserialize(baltopMessage))
+            sender.sendMessage(mm.deserialize(baltopMessage))
         }
         return true
     }

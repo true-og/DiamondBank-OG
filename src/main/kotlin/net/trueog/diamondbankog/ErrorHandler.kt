@@ -1,6 +1,7 @@
 package net.trueog.diamondbankog
 
 import java.util.*
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 
 internal object ErrorHandler {
@@ -14,7 +15,7 @@ internal object ErrorHandler {
         otherUuid: UUID? = null,
         dontDisableEconomy: Boolean = false,
     ) {
-        if (!dontDisableEconomy) DiamondBankOG.economyDisabled = true
+        if (!dontDisableEconomy) economyDisabled = true
 
         throw EconomyException(
             """

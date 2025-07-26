@@ -5,8 +5,12 @@ import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankException
-import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
+import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -21,10 +25,10 @@ import org.bukkit.entity.Player
 internal class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        DiamondBankOG.scope.launch launch@{
-            if (DiamondBankOG.economyDisabled) {
+        scope.launch launch@{
+            if (economyDisabled) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member."
                     )
                 )
@@ -39,25 +43,21 @@ internal class Pay : CommandExecutor {
             val worldName = sender.world.name
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${config.prefix}<reset>: <red>You cannot use /pay when in a minigame."
-                    )
+                    mm.deserialize("${config.prefix}<reset>: <red>You cannot use /pay when in a minigame.")
                 )
                 return@launch
             }
 
             if (!sender.hasPermission("diamondbank-og.pay")) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${config.prefix}<reset>: <red>You do not have permission to use this command."
-                    )
+                    mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to use this command.")
                 )
                 return@launch
             }
 
             if (args == null || args.isEmpty()) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <red>You did not provide the name or the UUID of a player and the amount of <aqua>Diamonds<red>."
                     )
                 )
@@ -65,7 +65,7 @@ internal class Pay : CommandExecutor {
             }
             if (args.size != 2) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <red>Please (only) provide the name or the UUID of a player and the amount of <aqua>Diamonds<red>."
                     )
                 )
@@ -80,15 +80,13 @@ internal class Pay : CommandExecutor {
                 }
 
             if (sender.uniqueId == receiver.uniqueId) {
-                sender.sendMessage(
-                    DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>You cannot pay yourself.")
-                )
+                sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>You cannot pay yourself."))
                 return@launch
             }
 
             if (!receiver.hasPlayedBefore()) {
                 sender.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <red>That player doesn't exist or hasn't joined this server before."
                     )
                 )
@@ -102,20 +100,18 @@ internal class Pay : CommandExecutor {
                     amount = args[1].toFloat()
                     if (amount <= 0) {
                         sender.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${config.prefix}<reset>: <red>You cannot pay a negative or zero amount."
-                            )
+                            mm.deserialize("${config.prefix}<reset>: <red>You cannot pay a negative or zero amount.")
                         )
                         return@launch
                     }
                 } catch (_: Exception) {
-                    sender.sendMessage(DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
+                    sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
                     return@launch
                 }
                 val split = amount.toString().split(".")
                 if (split[1].length > 1) {
                     sender.sendMessage(
-                        DiamondBankOG.mm.deserialize(
+                        mm.deserialize(
                             "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
                         )
                     )
@@ -128,12 +124,12 @@ internal class Pay : CommandExecutor {
 
             when (
                 val result =
-                    DiamondBankOG.transactionLock.tryWithLockSuspend(sender.uniqueId) {
+                    transactionLock.tryWithLockSuspend(sender.uniqueId) {
                         WithdrawHelper.withdrawFromPlayer(sender, shards).getOrElse {
                             if (it !is DiamondBankException.CouldNotRemoveEnoughException) {
                                 handleError(sender.uniqueId, shards, null, receiver.uniqueId)
                                 sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
+                                    mm.deserialize(
                                         "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                                     )
                                 )
@@ -143,23 +139,21 @@ internal class Pay : CommandExecutor {
                             shards -= it.notRemoved
                             val diamondsContinuing = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
                             sender.sendMessage(
-                                DiamondBankOG.mm.deserialize(
+                                mm.deserialize(
                                     "${config.prefix}<reset>: <#FFA500>Something went wrong while trying to remove <yellow>$notRemovedDiamonds <aqua>Diamond${if (notRemovedDiamonds != "1.0") "s" else ""}<#FFA500> from your inventory and/or ender chest, proceeding with <yellow>$diamondsContinuing <aqua>Diamond${if (diamondsContinuing != "1.0") "s" else ""}<#FFA500>."
                                 )
                             )
                         }
 
-                        DiamondBankOG.postgreSQL
-                            .addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK)
-                            .getOrElse {
-                                handleError(sender.uniqueId, shards, null, receiver.uniqueId)
-                                sender.sendMessage(
-                                    DiamondBankOG.mm.deserialize(
-                                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
-                                    )
+                        postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
+                            handleError(sender.uniqueId, shards, null, receiver.uniqueId)
+                            sender.sendMessage(
+                                mm.deserialize(
+                                    "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                                 )
-                                return@tryWithLockSuspend true
-                            }
+                            )
+                            return@tryWithLockSuspend true
+                        }
                         false
                     }
             ) {
@@ -171,9 +165,7 @@ internal class Pay : CommandExecutor {
 
                 is TransactionLock.LockResult.Failed -> {
                     sender.sendMessage(
-                        DiamondBankOG.mm.deserialize(
-                            "${config.prefix}<reset>: <red>You are currently blocked from using /pay."
-                        )
+                        mm.deserialize("${config.prefix}<reset>: <red>You are currently blocked from using /pay.")
                     )
                     return@launch
                 }
@@ -182,7 +174,7 @@ internal class Pay : CommandExecutor {
             val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
 
             sender.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     "${config.prefix}<reset>: <green>Successfully paid <yellow>$diamondsPaid <aqua>Diamond${if (diamondsPaid != "1.0") "s" else ""} <green>to ${
                         getPrefix(
                             receiver.uniqueId
@@ -194,7 +186,7 @@ internal class Pay : CommandExecutor {
             if (receiver.isOnline) {
                 val receiverPlayer = receiver.player ?: return@launch
                 receiverPlayer.sendMessage(
-                    DiamondBankOG.mm.deserialize(
+                    mm.deserialize(
                         "${config.prefix}<reset>: <green>${
                             getPrefix(
                                 sender.uniqueId
@@ -204,7 +196,7 @@ internal class Pay : CommandExecutor {
                 )
             }
 
-            DiamondBankOG.postgreSQL
+            postgreSQL
                 .insertTransactionLog(
                     sender.uniqueId,
                     shards,
