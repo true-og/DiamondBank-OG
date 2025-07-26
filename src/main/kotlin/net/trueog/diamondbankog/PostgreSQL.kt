@@ -1,14 +1,17 @@
 package net.trueog.diamondbankog
 
 import com.github.jasync.sql.db.asSuspending
-import com.github.jasync.sql.db.general.ArrayRowData
 import com.github.jasync.sql.db.pool.ConnectionPool
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnection
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
 import java.sql.SQLException
 import java.util.*
 import kotlinx.coroutines.future.await
+import net.trueog.diamondbankog.DiamondBankException.DatabaseException
+import net.trueog.diamondbankog.DiamondBankException.InsufficientBalanceException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
 
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
@@ -37,7 +40,7 @@ class PostgreSQL {
                 )
             val createTable =
                 pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards INTEGER, inventory_shards INTEGER, ender_chest_shards INTEGER, total_shards INTEGER GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
+                    "CREATE TABLE IF NOT EXISTS ${config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards BIGINT, inventory_shards BIGINT, ender_chest_shards BIGINT, total_shards BIGINT GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
                 )
             createTable.join()
             val createTotalShardsIndex =
@@ -48,7 +51,7 @@ class PostgreSQL {
 
             val createLogTable =
                 pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${config.postgresLogTable}(id SERIAL PRIMARY KEY, player_uuid UUID NOT NULL, transferred_shards INTEGER NOT NULL, player_to_uuid UUID, transaction_reason TEXT, notes TEXT, timestamp TIMESTAMPTZ DEFAULT NOW())"
+                    "CREATE TABLE IF NOT EXISTS ${config.postgresLogTable}(id SERIAL PRIMARY KEY, player_uuid UUID NOT NULL, transferred_shards BIGINT NOT NULL, player_to_uuid UUID, transaction_reason TEXT, notes TEXT, timestamp TIMESTAMPTZ DEFAULT NOW())"
                 )
             createLogTable.join()
             // @formatter:off
@@ -56,7 +59,7 @@ class PostgreSQL {
                 pool.sendPreparedStatement(
                     "CREATE OR REPLACE FUNCTION fifo_limit_trigger() RETURNS TRIGGER AS $$" +
                         "DECLARE " +
-                        "max_rows CONSTANT INTEGER := ${config.postgresLogLimit};" +
+                        "max_rows CONSTANT BIGINT := ${config.postgresLogLimit};" +
                         "BEGIN " +
                         "DELETE FROM ${config.postgresLogTable} " +
                         "WHERE id <= (" +
@@ -79,34 +82,52 @@ class PostgreSQL {
                 )
             createTrigger.join()
         } catch (_: Exception) {
-            DiamondBankOG.economyDisabled = true
-            DiamondBankOG.plugin.logger.severe(
+            economyDisabled = true
+            plugin.logger.severe(
                 "ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?"
             )
             return
         }
     }
 
-    data class PlayerShards(val bank: Int, val inventory: Int, val enderChest: Int)
+    data class PlayerShards(val bank: Long, val inventory: Long, val enderChest: Long)
 
-    suspend fun setPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
+    suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
+        val playerShards: PlayerShards
+
         try {
             val connection = pool.asSuspending.connect()
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string}",
+                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
+                        "RETURNING bank_shards, inventory_shards, ender_chest_shards",
                     listOf(uuid, shards),
                 )
-            preparedStatement.await()
+            val result = preparedStatement.await()
+
+            if (result.rows.isEmpty()) {
+                throw Exception()
+            }
+            val row = result.rows[0]
+            val bankShards = row.getLong("bank_shards")
+            val inventoryShards = row.getLong("inventory_shards")
+            val enderChestShards = row.getLong("ender_chest_shards")
+            if (bankShards == null || inventoryShards == null || enderChestShards == null) {
+                throw Exception()
+            }
+
+            playerShards = PlayerShards(bankShards, inventoryShards, enderChestShards)
         } catch (e: Exception) {
-            return Result.failure(e)
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
+
+        DiamondBankOG.eventManager.sendUpdate(playerShards)
         return Result.success(Unit)
     }
 
-    suspend fun addToPlayerShards(uuid: UUID, shards: Int, type: ShardType): Result<Unit> {
+    suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
 
         val playerShards =
@@ -117,22 +138,24 @@ class PostgreSQL {
                 else -> {
                     return Result.failure(InvalidArgumentException)
                 }
+            }.getOrElse {
+                return Result.failure(it)
             }
 
-        playerShards.exceptionOrNull()?.let {
-            return Result.failure(it)
-        }
-
-        return setPlayerShards(uuid, playerShards.getOrThrow() + shards, type)
+        return setPlayerShards(uuid, playerShards + shards, type)
     }
 
-    suspend fun subtractFromBankShards(uuid: UUID, shards: Int): Result<Unit> {
-        val bankShards = getBankShards(uuid)
-        bankShards.exceptionOrNull()?.let {
-            return Result.failure(it)
+    suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit> {
+        val bankShards =
+            getBankShards(uuid).getOrElse {
+                return Result.failure(it)
+            }
+        val newBalance = bankShards - shards
+        if (newBalance < 0) {
+            return Result.failure(InsufficientBalanceException(bankShards))
         }
 
-        return setPlayerShards(uuid, bankShards.getOrThrow() - shards, ShardType.BANK)
+        return setPlayerShards(uuid, newBalance, ShardType.BANK)
     }
 
     suspend fun getBankShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.BANK)
@@ -141,50 +164,37 @@ class PostgreSQL {
 
     suspend fun getEnderChestShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
-    suspend fun getTotalShards(uuid: UUID): Result<Int> {
-        var totalShards: Int?
+    suspend fun getTotalShards(uuid: UUID): Result<Long> {
+        var totalShards: Long?
         try {
             val connection = pool.asSuspending.connect()
 
             val preparedStatement =
                 connection.sendPreparedStatement(
-                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
+                    "SELECT total_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
                     listOf(uuid),
                 )
             val result = preparedStatement.await()
 
             totalShards =
                 if (result.rows.isNotEmpty()) {
-                    val rowData = result.rows[0] as ArrayRowData
-                    val bankShards =
-                        if (rowData.columns[0] != null) {
-                            rowData.columns[0] as Int
-                        } else 0
-                    val inventoryShards =
-                        if (rowData.columns[1] != null) {
-                            rowData.columns[1] as Int
-                        } else 0
-                    val enderChestShards =
-                        if (rowData.columns[2] != null) {
-                            rowData.columns[2] as Int
-                        } else 0
-
-                    bankShards + inventoryShards + enderChestShards
+                    val row = result.rows[0]
+                    row.getLong("total_shards") ?: 0
                 } else {
                     0
                 }
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            plugin.logger.severe(e.toString())
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
         return Result.success(totalShards)
     }
 
     suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
-        var bankShards: Int?
-        var inventoryShards: Int?
-        var enderChestShards: Int?
+        var bankShards: Long?
+        var inventoryShards: Long?
+        var enderChestShards: Long?
         try {
             val connection = pool.asSuspending.connect()
 
@@ -196,34 +206,25 @@ class PostgreSQL {
             val result = preparedStatement.await()
 
             if (result.rows.isNotEmpty()) {
-                val rowData = result.rows[0] as ArrayRowData
-                bankShards =
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as Int
-                    } else 0
-                inventoryShards =
-                    if (rowData.columns[1] != null) {
-                        rowData.columns[1] as Int
-                    } else 0
-                enderChestShards =
-                    if (rowData.columns[2] != null) {
-                        rowData.columns[2] as Int
-                    } else 0
+                val row = result.rows[0]
+                bankShards = row.getLong("bank_shards") ?: 0
+                inventoryShards = row.getLong("inventory_shards") ?: 0
+                enderChestShards = row.getLong("ender_chest_shards") ?: 0
             } else {
                 bankShards = 0
                 inventoryShards = 0
                 enderChestShards = 0
             }
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            plugin.logger.severe(e.toString())
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
         return Result.success(PlayerShards(bankShards, inventoryShards, enderChestShards))
     }
 
-    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Int> {
-        var shards: Int?
+    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
+        var shards: Long?
         try {
             val connection = pool.asSuspending.connect()
 
@@ -236,22 +237,20 @@ class PostgreSQL {
 
             shards =
                 if (result.rows.isNotEmpty()) {
-                    val rowData = result.rows[0] as ArrayRowData
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as Int
-                    } else 0
+                    val row = result.rows[0]
+                    row.getLong(type.string) ?: 0
                 } else {
                     0
                 }
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            plugin.logger.severe(e.toString())
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
         return Result.success(shards)
     }
 
-    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Int>> {
+    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> {
         try {
             val connection = pool.asSuspending.connect()
             val preparedStatement =
@@ -262,24 +261,16 @@ class PostgreSQL {
                     listOf(offset),
                 )
             val result = preparedStatement.await()
-            val baltop = mutableMapOf<UUID?, Int>()
+            val baltop = mutableMapOf<UUID?, Long>()
             result.rows.forEach {
-                val rowData = it as ArrayRowData
-                val uuid =
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as UUID
-                    } else null
-                val totalShards =
-                    if (rowData.columns[1] != null) {
-                        rowData.columns[1] as Int
-                    } else 0
-
+                val uuid = it.getAs<UUID>("uuid")
+                val totalShards = it.getLong("total_shards") ?: 0
                 baltop[uuid] = totalShards
             }
             return Result.success(baltop)
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            plugin.logger.severe(e.toString())
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
 
@@ -287,7 +278,7 @@ class PostgreSQL {
      * @return Pair with as the first value a map with the player name and total balance and as the second value the
      *   offset
      */
-    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Int>, Long>> {
+    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Long>, Long>> {
         try {
             val connection = pool.asSuspending.connect()
             // @formatter:off
@@ -309,30 +300,18 @@ class PostgreSQL {
                 )
             // @formatter:on
             val result = preparedStatement.await()
-            val baltop = mutableMapOf<UUID?, Int>()
+            val baltop = mutableMapOf<UUID?, Long>()
             var offset = 0L
             result.rows.forEach {
-                val rowData = it as ArrayRowData
-                val uuid =
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as UUID
-                    } else null
-                val totalShards =
-                    if (rowData.columns[1] != null) {
-                        rowData.columns[1] as Int
-                    } else 0
-
-                offset =
-                    if (rowData.columns[2] != null) {
-                        rowData.columns[2] as Long
-                    } else 0L
-
+                val uuid = it.getAs<UUID>("uuid")
+                val totalShards = it.getLong("total_shards") ?: 0
+                offset = it.getLong("page_offset") ?: 0
                 baltop[uuid] = totalShards
             }
             return Result.success(Pair(baltop, offset))
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            plugin.logger.severe(e.toString())
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
 
@@ -345,24 +324,21 @@ class PostgreSQL {
             val result = preparedStatement.await()
 
             if (result.rows.isNotEmpty()) {
-                val rowData = result.rows[0] as ArrayRowData
-                number =
-                    if (rowData.columns[0] != null) {
-                        rowData.columns[0] as Long
-                    } else 0
+                val row = result.rows[0]
+                number = row.getLong(0) ?: 0
             } else {
                 return Result.failure(NoRowsException)
             }
             return Result.success(number)
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.severe(e.toString())
-            return Result.failure(e)
+            plugin.logger.severe(e.toString())
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
 
     suspend fun insertTransactionLog(
         playerUuid: UUID,
-        transferredShards: Int,
+        transferredShards: Long,
         playerToUuid: UUID?,
         transactionReason: String,
         notes: String?,
@@ -377,9 +353,25 @@ class PostgreSQL {
                     listOf(playerUuid, transferredShards, playerToUuid, transactionReason, notes),
                 )
             preparedStatement.await()
-        } catch (_: Exception) {
-            return Result.failure(Exception())
+        } catch (e: Exception) {
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
         return Result.success(Unit)
+    }
+
+    suspend fun hasEntry(uuid: UUID): Result<Boolean> {
+        try {
+            val connection = pool.asSuspending.connect()
+            val preparedStatement =
+                connection.sendPreparedStatement("SELECT 1 FROM ${config.postgresTable} WHERE uuid = ?", listOf(uuid))
+            val result = preparedStatement.await()
+
+            if (result.rows.size == 1) {
+                return Result.success(true)
+            }
+        } catch (e: Exception) {
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
+        }
+        return Result.success(false)
     }
 }

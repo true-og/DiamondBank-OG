@@ -2,6 +2,7 @@ package net.trueog.diamondbankog
 
 import java.util.*
 import kotlinx.coroutines.future.await
+import net.trueog.diamondbankog.DiamondBankOG.Companion.luckPerms
 
 internal object PlayerPrefix {
     private val legacyToMmMap =
@@ -38,9 +39,7 @@ internal object PlayerPrefix {
     }
 
     suspend fun getPrefix(uuid: UUID): String {
-        val user =
-            DiamondBankOG.luckPerms.userManager.getUser(uuid)
-                ?: DiamondBankOG.luckPerms.userManager.loadUser(uuid).await()
+        val user = luckPerms.userManager.getUser(uuid) ?: luckPerms.userManager.loadUser(uuid).await()
         val prefixNode = user.nodes.singleOrNull { node -> node.key.startsWith("prefix.1.") }
         if (prefixNode == null) return ""
         return legacyToMm(prefixNode.key.split(".").last()) + " "
