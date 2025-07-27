@@ -4,6 +4,10 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
+import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -81,12 +85,12 @@ internal object InventoryExtensions {
 
         if (addMap.isEmpty()) return false
 
-        val leftOver = addMap[0]!!.amount
+        val leftOver = addMap[0]!!.amount.toLong()
 
-        val result = DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, leftOver, ShardType.BANK)
+        val result = postgreSQL.addToPlayerShards(player.uniqueId, leftOver, ShardType.BANK)
         player.sendMessage(
-            DiamondBankOG.mm.deserialize(
-                "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been deposited into your bank."
+            mm.deserialize(
+                "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1L) "Shard" else "Shards"} <reset>has been deposited into your bank."
             )
         )
         return result.isFailure
@@ -107,18 +111,18 @@ internal object InventoryExtensions {
 
         if (inventoryAddMap.isNotEmpty()) {
             val inventoryLeftOver = inventoryAddMap[0]!!.amount
-            DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, inventoryLeftOver, ShardType.BANK).getOrElse {
+            postgreSQL.addToPlayerShards(player.uniqueId, inventoryLeftOver.toLong(), ShardType.BANK).getOrElse {
                 return true
             }
             player.sendMessage(
-                DiamondBankOG.mm.deserialize(
+                mm.deserialize(
                     "${config.prefix}<reset>: The change of ${leftOver - inventoryLeftOver} <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been added to your inventory, and the remaining $inventoryLeftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset> has been deposited into your bank."
                 )
             )
             return false
         }
         player.sendMessage(
-            DiamondBankOG.mm.deserialize(
+            mm.deserialize(
                 "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1) "Shard" else "Shards"} <reset>has been added to your inventory."
             )
         )
@@ -152,7 +156,7 @@ internal object InventoryExtensions {
         }
 
         player.sendMessage(
-            DiamondBankOG.mm.deserialize(
+            mm.deserialize(
                 "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond${if (leftOver != 1) "s" else ""} <reset>has been added to your inventory."
             )
         )
@@ -194,15 +198,15 @@ internal object InventoryExtensions {
         if (this.type == InventoryType.PLAYER) {
             object : BukkitRunnable() {
                     override fun run() {
-                        DiamondBankOG.scope.launch {
-                            DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
+                        scope.launch {
+                            transactionLock.withLockSuspend(player.uniqueId) {
                                 val inventoryShards = player.inventory.countTotal()
-                                DiamondBankOG.postgreSQL
+                                postgreSQL
                                     .setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY)
                                     .getOrElse {
                                         handleError(player.uniqueId, inventoryShards, null)
                                         player.sendMessage(
-                                            DiamondBankOG.mm.deserialize(
+                                            mm.deserialize(
                                                 "${config.prefix}<reset>: <red>Something went wrong while trying to recount the <aqua>Diamonds<red> amount in your inventory, try opening and closing your inventory to force a recount."
                                             )
                                         )
@@ -233,7 +237,7 @@ internal object InventoryExtensions {
         return 0
     }
 
-    fun Inventory.countTotal(): Int {
+    fun Inventory.countTotal(): Long {
         return this.countShards() +
             this.countDiamonds() * 9 +
             this.countDiamondBlocks() * 81 +
@@ -242,22 +246,22 @@ internal object InventoryExtensions {
             }
     }
 
-    fun Inventory.countShards(): Int {
+    fun Inventory.countShards(): Long {
         val inventoryShards =
             this.all(Material.PRISMARINE_SHARD)
                 .values
                 .filter { it.persistentDataContainer.has(Shard.namespacedKey) }
                 .sumOf { it.amount }
-        return inventoryShards
+        return inventoryShards.toLong()
     }
 
-    fun Inventory.countDiamonds(): Int {
+    fun Inventory.countDiamonds(): Long {
         val inventoryDiamonds = this.all(Material.DIAMOND).values.sumOf { it.amount }
-        return inventoryDiamonds
+        return inventoryDiamonds.toLong()
     }
 
-    fun Inventory.countDiamondBlocks(): Int {
+    fun Inventory.countDiamondBlocks(): Long {
         val inventoryDiamondBlocks = this.all(Material.DIAMOND_BLOCK).values.sumOf { it.amount }
-        return inventoryDiamondBlocks
+        return inventoryDiamondBlocks.toLong()
     }
 }

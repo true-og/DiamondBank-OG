@@ -2,6 +2,10 @@ package net.trueog.diamondbankog
 
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
+import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
@@ -16,20 +20,18 @@ internal object AutoDeposit {
         }
 
         if (!player.hasPermission("diamondbank-og.deposit")) {
-            player.sendMessage(
-                DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to deposit.")
-            )
+            player.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to deposit."))
             return
         }
 
         val itemStack = item.itemStack
         val shards =
             if (itemStack.type == Material.DIAMOND_BLOCK) {
-                itemStack.amount * 9 * 9
+                (itemStack.amount * 9 * 9).toLong()
             } else if (itemStack.type == Material.DIAMOND) {
-                itemStack.amount * 9
+                (itemStack.amount * 9).toLong()
             } else if (itemStack.persistentDataContainer.has(Shard.namespacedKey)) {
-                itemStack.amount
+                itemStack.amount.toLong()
             } else {
                 return
             }
@@ -37,12 +39,12 @@ internal object AutoDeposit {
         itemStack.amount = 0
         item.itemStack = itemStack
 
-        DiamondBankOG.scope.launch {
-            DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
-                DiamondBankOG.postgreSQL.addToPlayerShards(player.uniqueId, shards, ShardType.BANK).getOrElse {
+        scope.launch {
+            transactionLock.withLockSuspend(player.uniqueId) {
+                postgreSQL.addToPlayerShards(player.uniqueId, shards, ShardType.BANK).getOrElse {
                     handleError(player.uniqueId, shards, null)
                     player.sendMessage(
-                        DiamondBankOG.mm.deserialize(
+                        mm.deserialize(
                             "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                         )
                     )

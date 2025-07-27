@@ -1,8 +1,10 @@
 package net.trueog.diamondbankog.commands
 
 import net.trueog.diamondbankog.Config
-import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
+import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.PostgreSQL
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -15,31 +17,25 @@ internal class DiamondBankReload : CommandExecutor {
             Config.create()
                 ?: run {
                     sender.sendMessage(
-                        DiamondBankOG.mm.deserialize(
-                            "<red>Failed to reload the config. Check the console for more information."
-                        )
+                        mm.deserialize("<red>Failed to reload the config. Check the console for more information.")
                     )
-                    Bukkit.getPluginManager().disablePlugin(DiamondBankOG.plugin)
+                    Bukkit.getPluginManager().disablePlugin(plugin)
                     return true
                 }
 
-        DiamondBankOG.postgreSQL = PostgreSQL()
+        postgreSQL = PostgreSQL()
         try {
-            DiamondBankOG.postgreSQL.initDB()
+            postgreSQL.initDB()
         } catch (e: Exception) {
-            DiamondBankOG.plugin.logger.info(e.toString())
+            plugin.logger.info(e.toString())
             sender.sendMessage(
-                DiamondBankOG.mm.deserialize(
-                    "<red>Failed to reload the config. Check the console for more information."
-                )
+                mm.deserialize("<red>Failed to reload the config. Check the console for more information.")
             )
-            Bukkit.getPluginManager().disablePlugin(DiamondBankOG.plugin)
+            Bukkit.getPluginManager().disablePlugin(plugin)
             return true
         }
 
-        sender.sendMessage(
-            DiamondBankOG.mm.deserialize("${config.prefix}<reset>: <green>Successfully reloaded the config.")
-        )
+        sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <green>Successfully reloaded the config."))
         return true
     }
 }
