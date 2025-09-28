@@ -1,25 +1,13 @@
 package net.trueog.diamondbankog
 
 sealed class DiamondBankException(message: String) : Exception(message) {
-    object TransactionsLockedException : DiamondBankException("Transactions for player are locked") {
-        @Suppress("unused") private fun readResolve(): Any = TransactionsLockedException
-    }
+    class EconomyDisabledException : DiamondBankException("Economy is disabled")
 
-    object EconomyDisabledException : DiamondBankException("Economy is disabled") {
-        @Suppress("unused") private fun readResolve(): Any = EconomyDisabledException
-    }
+    class InvalidPlayerException : DiamondBankException("Invalid player")
 
-    object InvalidPlayerException : DiamondBankException("Invalid player") {
-        @Suppress("unused") private fun readResolve(): Any = InvalidPlayerException
-    }
+    class PayerNotOnlineException : DiamondBankException("Payer is not online")
 
-    object PayerNotOnlineException : DiamondBankException("Payer is not online") {
-        @Suppress("unused") private fun readResolve(): Any = PayerNotOnlineException
-    }
-
-    object PlayerNotOnlineException : DiamondBankException("Player is not online") {
-        @Suppress("unused") private fun readResolve(): Any = PlayerNotOnlineException
-    }
+    class PlayerNotOnlineException : DiamondBankException("Player is not online")
 
     class DatabaseException(message: String) : DiamondBankException(message)
 
@@ -27,7 +15,5 @@ sealed class DiamondBankException(message: String) : Exception(message) {
 
     class CouldNotRemoveEnoughException(val notRemoved: Int) : Exception("Could not remove enough")
 
-    object OtherException : DiamondBankException("Other exception") {
-        @Suppress("unused") private fun readResolve(): Any = OtherException
-    }
+    class OtherException : DiamondBankException("Other exception")
 }

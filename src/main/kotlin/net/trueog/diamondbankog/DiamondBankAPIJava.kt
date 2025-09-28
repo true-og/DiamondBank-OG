@@ -29,7 +29,7 @@ class DiamondBankAPIJava() {
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
     fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
-        if (economyDisabled) throw EconomyDisabledException
+        if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
@@ -57,7 +57,7 @@ class DiamondBankAPIJava() {
     @Throws(EconomyDisabledException::class, DatabaseException::class, InsufficientBalanceException::class)
     @Suppress("unused")
     fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
-        if (economyDisabled) throw EconomyDisabledException
+        if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
@@ -134,7 +134,7 @@ class DiamondBankAPIJava() {
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
     fun getAllShards(uuid: UUID): PlayerShards {
-        if (economyDisabled) throw EconomyDisabledException
+        if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
@@ -146,7 +146,7 @@ class DiamondBankAPIJava() {
 
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     private fun getShardTypeShards(uuid: UUID, type: ShardType): Long {
-        if (economyDisabled) throw EconomyDisabledException
+        if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             val result =
@@ -174,7 +174,7 @@ class DiamondBankAPIJava() {
     @Throws(EconomyDisabledException::class, DatabaseException::class)
     @Suppress("unused")
     fun getBaltop(offset: Int): Map<UUID?, Long> {
-        if (economyDisabled) throw EconomyDisabledException
+        if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking { postgreSQL.getBaltop(offset).getOrElse { throw it } }
     }
@@ -204,14 +204,14 @@ class DiamondBankAPIJava() {
     )
     @Suppress("unused")
     fun withdrawFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
-        if (economyDisabled) throw EconomyDisabledException
+        if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
                 val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-                if (!player.hasPlayedBefore()) throw InvalidPlayerException
-                if (!player.isOnline) throw PlayerNotOnlineException
-                val playerPlayer = player.player ?: throw InvalidPlayerException
+                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+                if (!player.isOnline) throw PlayerNotOnlineException()
+                val playerPlayer = player.player ?: throw InvalidPlayerException()
 
                 val balance = postgreSQL.getTotalShards(uuid).getOrElse { throw it }
                 if (balance - shards < 0) {
@@ -257,17 +257,17 @@ class DiamondBankAPIJava() {
     )
     @Suppress("unused")
     fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?) {
-        if (economyDisabled) throw EconomyDisabledException
+        if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(payerUuid) {
                 val payer = Bukkit.getPlayer(payerUuid) ?: Bukkit.getOfflinePlayer(payerUuid)
-                if (!payer.hasPlayedBefore()) throw InvalidPlayerException
-                if (!payer.isOnline) throw PayerNotOnlineException
-                val payerPlayer = payer.player ?: throw InvalidPlayerException
+                if (!payer.hasPlayedBefore()) throw InvalidPlayerException()
+                if (!payer.isOnline) throw PayerNotOnlineException()
+                val payerPlayer = payer.player ?: throw InvalidPlayerException()
 
                 val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
-                if (!receiver.hasPlayedBefore()) throw InvalidPlayerException
+                if (!receiver.hasPlayedBefore()) throw InvalidPlayerException()
 
                 val balance = postgreSQL.getTotalShards(payerUuid).getOrElse { throw it }
                 if (balance - shards < 0) {

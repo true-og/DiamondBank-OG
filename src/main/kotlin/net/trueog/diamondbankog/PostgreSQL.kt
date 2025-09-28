@@ -16,13 +16,9 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
-    object InvalidArgumentException : Exception() {
-        @Suppress("unused") private fun readResolve(): Any = InvalidArgumentException
-    }
+    class InvalidArgumentException : Exception()
 
-    object NoRowsException : Exception() {
-        @Suppress("unused") private fun readResolve(): Any = NoRowsException
-    }
+    class NoRowsException : Exception()
 
     enum class ShardType(val string: String) {
         BANK("bank_shards"),
@@ -93,7 +89,7 @@ class PostgreSQL {
     data class PlayerShards(val bank: Long, val inventory: Long, val enderChest: Long)
 
     suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
-        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
+        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
         val playerShards: PlayerShards
 
         try {
@@ -123,12 +119,12 @@ class PostgreSQL {
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
-        DiamondBankOG.eventManager.sendUpdate(playerShards)
+        DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
         return Result.success(Unit)
     }
 
     suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
-        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException)
+        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
 
         val playerShards =
             when (type) {
@@ -136,7 +132,7 @@ class PostgreSQL {
                 ShardType.INVENTORY -> getInventoryShards(uuid)
                 ShardType.ENDER_CHEST -> getEnderChestShards(uuid)
                 else -> {
-                    return Result.failure(InvalidArgumentException)
+                    return Result.failure(InvalidArgumentException())
                 }
             }.getOrElse {
                 return Result.failure(it)
@@ -327,7 +323,7 @@ class PostgreSQL {
                 val row = result.rows[0]
                 number = row.getLong(0) ?: 0
             } else {
-                return Result.failure(NoRowsException)
+                return Result.failure(NoRowsException())
             }
             return Result.success(number)
         } catch (e: Exception) {
