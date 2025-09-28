@@ -48,7 +48,7 @@ internal object WithdrawHelper {
                     "${config.prefix}<reset>: <red>Cannot use <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <red>in a transaction because you only have <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}<red>."
                 )
             )
-            return Result.failure(OtherException)
+            return Result.failure(OtherException())
         }
 
         if (shards <= playerShards.bank) {

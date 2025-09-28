@@ -270,7 +270,7 @@ internal class Compress : CommandExecutor {
             val diamondsLine =
                 (if (changeInDiamonds > 0) "|<green>+$changeInDiamonds"
                 else if (changeInDiamonds < 0) "|<red>$changeInDiamonds" else "") +
-                    if (changeInDiamonds > 0 || changeInDiamonds < 0)
+                    if (changeInDiamonds != 0)
                         " Diamond${
                     if (abs(
                             changeInDiamonds
@@ -281,7 +281,7 @@ internal class Compress : CommandExecutor {
             val diamondBlocksLine =
                 (if (changeInDiamondBlocks > 0) "|<green>+$changeInDiamondBlocks"
                 else if (changeInDiamondBlocks < 0) "|<red>$changeInDiamondBlocks" else "") +
-                    if (changeInDiamondBlocks > 0 || changeInDiamondBlocks < 0)
+                    if (changeInDiamondBlocks != 0)
                         " Diamond Block${
                     if (abs(
                             changeInDiamondBlocks

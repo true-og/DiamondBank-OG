@@ -193,8 +193,7 @@ internal class Events : Listener {
 
         if (event.inventory.type == InventoryType.CRAFTING) return
 
-        val itemStack = event.currentItem
-        if (itemStack == null) return
+        val itemStack = event.currentItem ?: return
         val itemType = itemStack.type
 
         if (
@@ -228,8 +227,7 @@ internal class Events : Listener {
         val worldName = player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
 
-        val clickedBlock = event.clickedBlock
-        if (clickedBlock == null) return
+        val clickedBlock = event.clickedBlock ?: return
         if (clickedBlock.type == Material.AIR) return
 
         if (event.action.isLeftClick) {
@@ -237,8 +235,7 @@ internal class Events : Listener {
                 return
             }
         } else {
-            val itemStack = event.item
-            if (itemStack == null) return
+            val itemStack = event.item ?: return
             val itemType = itemStack.type
 
             if (
