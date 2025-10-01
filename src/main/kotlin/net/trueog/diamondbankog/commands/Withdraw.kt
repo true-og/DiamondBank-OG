@@ -5,10 +5,10 @@ import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.*
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
@@ -104,7 +104,7 @@ internal class Withdraw : CommandExecutor {
             val lockResult =
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
                     val playerShards =
-                        postgreSQL.getAllShards(sender.uniqueId).getOrElse {
+                        balanceManager.getAllShards(sender.uniqueId).getOrElse {
                             sender.sendMessage(
                                 mm.deserialize(
                                     "${config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
@@ -162,7 +162,7 @@ internal class Withdraw : CommandExecutor {
                         return@tryWithLockSuspend true
                     }
 
-                    postgreSQL.subtractFromBankShards(sender.uniqueId, shards).getOrElse {
+                    balanceManager.subtractFromBankShards(sender.uniqueId, shards).getOrElse {
                         handleError(sender.uniqueId, shards, PostgreSQL.PlayerShards(playerBankShards, -1, -1))
                         sender.sendMessage(
                             mm.deserialize(
@@ -192,7 +192,7 @@ internal class Withdraw : CommandExecutor {
                         return@tryWithLockSuspend true
                     }
 
-                    postgreSQL.addToPlayerShards(sender.uniqueId, shards, ShardType.INVENTORY).getOrElse {
+                    balanceManager.addToPlayerShards(sender.uniqueId, shards, ShardType.INVENTORY).getOrElse {
                         handleError(sender.uniqueId, shards, playerShards)
                         sender.sendMessage(
                             mm.deserialize(
@@ -225,7 +225,7 @@ internal class Withdraw : CommandExecutor {
                 )
             )
 
-            postgreSQL.insertTransactionLog(sender.uniqueId, shards, null, "Withdraw", null).getOrElse {
+            balanceManager.insertTransactionLog(sender.uniqueId, shards, null, "Withdraw", null).getOrElse {
                 handleError(sender.uniqueId, shards, null, null, true)
             }
         }

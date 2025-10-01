@@ -19,13 +19,13 @@ internal class DiamondBankOG : JavaPlugin() {
         lateinit var plugin: DiamondBankOG
         lateinit var config: Config
         lateinit var eventManager: EventManager
-        lateinit var postgreSQL: PostgreSQL
+        lateinit var balanceManager: BalanceManager
         lateinit var redis: Redis
         lateinit var luckPerms: LuckPerms
 
         fun isRedisInitialized() = ::redis.isInitialized
 
-        fun isPostgreSQLInitialized() = ::postgreSQL.isInitialized
+        fun isBalanceManagerInitialized() = ::balanceManager.isInitialized
 
         var mm =
             MiniMessage.builder()
@@ -55,11 +55,11 @@ internal class DiamondBankOG : JavaPlugin() {
 
         eventManager = EventManager()
 
-        postgreSQL = PostgreSQL()
+        balanceManager = BalanceManager()
         try {
-            postgreSQL.initDB()
+            balanceManager.init()
         } catch (e: Exception) {
-            logger.info(e.toString())
+            e.printStackTrace()
             Bukkit.getPluginManager().disablePlugin(this)
             return
         }
@@ -124,8 +124,8 @@ internal class DiamondBankOG : JavaPlugin() {
             redis.shutdown()
         }
 
-        if (isPostgreSQLInitialized()) {
-            postgreSQL.pool.disconnect().get()
+        if (isBalanceManagerInitialized()) {
+            balanceManager.shutdown()
         }
 
         scope.cancel()

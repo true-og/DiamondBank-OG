@@ -4,10 +4,10 @@ import java.util.*
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import org.bukkit.Bukkit
@@ -60,7 +60,7 @@ internal class Balance : CommandExecutor {
                 }
 
                 val balance =
-                    postgreSQL.getAllShards(otherPlayer.uniqueId).getOrElse {
+                    balanceManager.getAllShards(otherPlayer.uniqueId).getOrElse {
                         sender.sendMessage(
                             mm.deserialize(
                                 "${config.prefix}<reset>: <red>Something went wrong while trying to get their balance."
@@ -113,7 +113,7 @@ internal class Balance : CommandExecutor {
                     otherPlayer
                 }
             val balance =
-                postgreSQL.getAllShards(balancePlayer.uniqueId).getOrElse {
+                balanceManager.getAllShards(balancePlayer.uniqueId).getOrElse {
                     sender.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get ${

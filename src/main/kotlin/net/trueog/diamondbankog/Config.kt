@@ -18,10 +18,8 @@ internal class Config private constructor() {
     companion object {
         fun create(): Config? {
             val config = Config()
+            plugin.saveDefaultConfig()
             val file = File(plugin.dataFolder, "config.yml")
-            if (!file.exists()) {
-                plugin.saveDefaultConfig()
-            }
             val yamlConfig = YamlConfiguration.loadConfiguration(file)
 
             try {

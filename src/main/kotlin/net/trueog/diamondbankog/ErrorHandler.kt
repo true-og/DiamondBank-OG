@@ -22,7 +22,7 @@ internal object ErrorHandler {
 
             Player UUID: $uuid
             ${
-                if (otherUuid != null) "Other Player UUID: $otherUuid" else ""
+                if (otherUuid != null) "Other Player UUID: $otherUuid\n" else ""
             }Expected Mutated Shards = $expectedMutatedShards${
                 if (playerShards != null) {
                     if (playerShards.bank != -1L) "Player Bank Balance: ${playerShards.bank}" else ""

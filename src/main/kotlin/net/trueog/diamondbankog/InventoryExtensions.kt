@@ -3,9 +3,9 @@ package net.trueog.diamondbankog
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
@@ -87,7 +87,7 @@ internal object InventoryExtensions {
 
         val leftOver = addMap[0]!!.amount.toLong()
 
-        val result = postgreSQL.addToPlayerShards(player.uniqueId, leftOver, ShardType.BANK)
+        val result = balanceManager.addToPlayerShards(player.uniqueId, leftOver, ShardType.BANK)
         player.sendMessage(
             mm.deserialize(
                 "${config.prefix}<reset>: The change of $leftOver <aqua>Diamond ${if (leftOver == 1L) "Shard" else "Shards"} <reset>has been deposited into your bank."
@@ -111,7 +111,7 @@ internal object InventoryExtensions {
 
         if (inventoryAddMap.isNotEmpty()) {
             val inventoryLeftOver = inventoryAddMap[0]!!.amount
-            postgreSQL.addToPlayerShards(player.uniqueId, inventoryLeftOver.toLong(), ShardType.BANK).getOrElse {
+            balanceManager.addToPlayerShards(player.uniqueId, inventoryLeftOver.toLong(), ShardType.BANK).getOrElse {
                 return true
             }
             player.sendMessage(
@@ -201,7 +201,7 @@ internal object InventoryExtensions {
                         scope.launch {
                             transactionLock.withLockSuspend(player.uniqueId) {
                                 val inventoryShards = player.inventory.countTotal()
-                                postgreSQL
+                                balanceManager
                                     .setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY)
                                     .getOrElse {
                                         handleError(player.uniqueId, inventoryShards, null)

@@ -3,10 +3,10 @@ package net.trueog.diamondbankog.commands
 import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
@@ -73,7 +73,7 @@ internal class SetBankBalance : CommandExecutor {
                 return@launch
             }
 
-            postgreSQL.setPlayerShards(player.uniqueId, balance, ShardType.BANK).getOrElse {
+            balanceManager.setPlayerShards(player.uniqueId, balance, ShardType.BANK).getOrElse {
                 sender.sendMessage(
                     mm.deserialize(
                         "${config.prefix}<reset>: <red>Something went wrong while trying to set that player's balance."
@@ -92,7 +92,7 @@ internal class SetBankBalance : CommandExecutor {
                 )
             )
 
-            postgreSQL
+            balanceManager
                 .insertTransactionLog(
                     player.uniqueId,
                     balance,

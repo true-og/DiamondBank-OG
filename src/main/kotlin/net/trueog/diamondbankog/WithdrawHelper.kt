@@ -3,22 +3,22 @@ package net.trueog.diamondbankog
 import kotlin.math.floor
 import net.trueog.diamondbankog.DiamondBankException.CouldNotRemoveEnoughException
 import net.trueog.diamondbankog.DiamondBankException.OtherException
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.InventoryExtensions.withdraw
 import org.bukkit.entity.Player
 
 internal object WithdrawHelper {
     suspend fun withdrawFromPlayer(player: Player, shards: Long): Result<Unit> {
         val playerShards =
-            postgreSQL.getAllShards(player.uniqueId).getOrElse {
+            balanceManager.getAllShards(player.uniqueId).getOrElse {
                 return Result.failure(it)
             }
 
         // Withdraw everything
         if (shards == -1L) {
-            postgreSQL.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
+            balanceManager.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
                 player.sendMessage(
                     mm.deserialize(
                         "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
@@ -52,7 +52,7 @@ internal object WithdrawHelper {
         }
 
         if (shards <= playerShards.bank) {
-            postgreSQL.subtractFromBankShards(player.uniqueId, shards).getOrElse {
+            balanceManager.subtractFromBankShards(player.uniqueId, shards).getOrElse {
                 player.sendMessage(
                     mm.deserialize(
                         "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
@@ -64,13 +64,15 @@ internal object WithdrawHelper {
         }
 
         if (shards <= playerShards.bank + playerShards.inventory) {
-            postgreSQL.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
-                player.sendMessage(
-                    mm.deserialize(
-                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+            if (playerShards.bank != 0L) {
+                balanceManager.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
+                    player.sendMessage(
+                        mm.deserialize(
+                            "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                        )
                     )
-                )
-                return Result.failure(it)
+                    return Result.failure(it)
+                }
             }
 
             val notRemoved = player.inventory.withdraw((shards - playerShards.bank).toInt())
@@ -81,7 +83,7 @@ internal object WithdrawHelper {
             }
         }
 
-        postgreSQL.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
+        balanceManager.subtractFromBankShards(player.uniqueId, playerShards.bank).getOrElse {
             player.sendMessage(
                 mm.deserialize(
                     "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
