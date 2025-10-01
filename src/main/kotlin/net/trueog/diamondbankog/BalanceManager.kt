@@ -89,6 +89,23 @@ internal class BalanceManager {
         return Result.success(PlayerShards(cacheBankBalance, cacheInventoryBalance, cacheEnderChestBalance))
     }
 
+    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> = postgreSQL.getBaltop(offset)
+
+    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Long>, Long>> = postgreSQL.getBaltopWithUuid(uuid)
+
+    suspend fun getNumberOfRows(): Result<Long> = postgreSQL.getNumberOfRows()
+
+    suspend fun insertTransactionLog(
+        playerUuid: UUID,
+        transferredShards: Long,
+        playerToUuid: UUID?,
+        transactionReason: String,
+        notes: String?,
+    ): Result<Unit> =
+        postgreSQL.insertTransactionLog(playerUuid, transferredShards, playerToUuid, transactionReason, notes)
+
+    suspend fun hasEntry(uuid: UUID) = postgreSQL.hasEntry(uuid)
+
     suspend fun cacheForPlayer(uuid: UUID): Result<Unit> {
         val playerShards =
             postgreSQL.getAllShards(uuid).getOrElse {
@@ -107,21 +124,4 @@ internal class BalanceManager {
     fun shutdown() {
         postgreSQL.pool.disconnect().get()
     }
-
-    suspend fun hasEntry(uuid: UUID) = postgreSQL.hasEntry(uuid)
-
-    suspend fun insertTransactionLog(
-        playerUuid: UUID,
-        transferredShards: Long,
-        playerToUuid: UUID?,
-        transactionReason: String,
-        notes: String?,
-    ): Result<Unit> =
-        postgreSQL.insertTransactionLog(playerUuid, transferredShards, playerToUuid, transactionReason, notes)
-
-    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> = postgreSQL.getBaltop(offset)
-
-    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Long>, Long>> = postgreSQL.getBaltopWithUuid(uuid)
-
-    suspend fun getNumberOfRows(): Result<Long> = postgreSQL.getNumberOfRows()
 }
