@@ -4,10 +4,10 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.AutoCompress.compress
 import net.trueog.diamondbankog.AutoDeposit.deposit
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.redis
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
@@ -30,12 +30,13 @@ import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 @OptIn(DelicateCoroutinesApi::class)
 internal class Events : Listener {
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (economyDisabled) {
             event.player.sendMessage(
@@ -49,7 +50,7 @@ internal class Events : Listener {
 
         scope.launch {
             val hasEntry =
-                postgreSQL.hasEntry(event.player.uniqueId).getOrElse {
+                balanceManager.hasEntry(event.player.uniqueId).getOrElse {
                     economyDisabled = true
                     return@launch
                 }
@@ -60,7 +61,7 @@ internal class Events : Listener {
                         PersistentDataType.DOUBLE,
                     )
                 if (legacyBalance != null) {
-                    postgreSQL
+                    balanceManager
                         .setPlayerShards(event.player.uniqueId, legacyBalance.toLong() * 9, ShardType.BANK)
                         .getOrElse {
                             handleError(event.player.uniqueId, legacyBalance.toLong() * 9, null)
@@ -75,16 +76,31 @@ internal class Events : Listener {
                 )
             }
 
-            val inventoryShards = event.player.inventory.countTotal()
-            postgreSQL.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
-                handleError(event.player.uniqueId, inventoryShards, null)
-                return@launch
-            }
+            transactionLock.withLockSuspend(event.player.uniqueId) {
+                val inventoryShards = event.player.inventory.countTotal()
+                balanceManager.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                    handleError(event.player.uniqueId, inventoryShards, null)
+                    return@withLockSuspend
+                }
 
-            val enderChestDiamonds = event.player.enderChest.countTotal()
-            postgreSQL.setPlayerShards(event.player.uniqueId, enderChestDiamonds, ShardType.ENDER_CHEST).getOrElse {
-                handleError(event.player.uniqueId, enderChestDiamonds, null)
-                return@launch
+                val enderChestDiamonds = event.player.enderChest.countTotal()
+                balanceManager
+                    .setPlayerShards(event.player.uniqueId, enderChestDiamonds, ShardType.ENDER_CHEST)
+                    .getOrElse {
+                        handleError(event.player.uniqueId, enderChestDiamonds, null)
+                        return@withLockSuspend
+                    }
+
+                balanceManager.cacheForPlayer(event.player.uniqueId)
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        scope.launch {
+            transactionLock.withLockSuspend(event.player.uniqueId) {
+                balanceManager.removeCacheForPlayer(event.player.uniqueId)
             }
         }
     }
@@ -134,7 +150,7 @@ internal class Events : Listener {
             transactionLock.withLockSuspend(player.uniqueId) {
                 val inventoryShards = runOnMainThread { player.inventory.countTotal() }
 
-                postgreSQL.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                balanceManager.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
                     handleError(player.uniqueId, inventoryShards, null)
                     return@withLockSuspend
                 }
@@ -176,7 +192,7 @@ internal class Events : Listener {
         scope.launch {
             transactionLock.withLockSuspend(event.player.uniqueId) {
                 val inventoryShards = runOnMainThread { event.player.inventory.countTotal() }
-                postgreSQL.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                balanceManager.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
                     handleError(event.player.uniqueId, inventoryShards, null)
                     return@withLockSuspend
                 }
@@ -339,13 +355,13 @@ internal class Events : Listener {
                                 else null,
                             )
                         }
-                    postgreSQL.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                    balanceManager.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
                         handleError(player.uniqueId, inventoryShards, null)
                         return@withLockSuspend
                     }
 
                     if (enderChestShards == null) return@withLockSuspend
-                    postgreSQL.setPlayerShards(player.uniqueId, enderChestShards, ShardType.ENDER_CHEST).getOrElse {
+                    balanceManager.setPlayerShards(player.uniqueId, enderChestShards, ShardType.ENDER_CHEST).getOrElse {
                         handleError(player.uniqueId, enderChestShards, null)
                         return@withLockSuspend
                     }
@@ -354,7 +370,7 @@ internal class Events : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onPrepareItemCraft(event: PrepareItemCraftEvent) {
         val resultType = event.recipe?.result?.type
         if (

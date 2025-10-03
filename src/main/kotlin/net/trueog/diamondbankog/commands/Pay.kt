@@ -5,10 +5,10 @@ import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankException
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
@@ -145,7 +145,7 @@ internal class Pay : CommandExecutor {
                             )
                         }
 
-                        postgreSQL.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
+                        balanceManager.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
                             handleError(sender.uniqueId, shards, null, receiver.uniqueId)
                             sender.sendMessage(
                                 mm.deserialize(
@@ -196,7 +196,7 @@ internal class Pay : CommandExecutor {
                 )
             }
 
-            postgreSQL
+            balanceManager
                 .insertTransactionLog(
                     sender.uniqueId,
                     shards,

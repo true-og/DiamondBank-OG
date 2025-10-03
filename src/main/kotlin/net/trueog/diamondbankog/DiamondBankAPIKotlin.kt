@@ -3,9 +3,9 @@ package net.trueog.diamondbankog
 import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import net.trueog.diamondbankog.DiamondBankException.*
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.eventManager
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
@@ -30,11 +30,11 @@ class DiamondBankAPIKotlin() {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
-            postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
+            balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
                 return@withLockSuspend Result.failure(it)
             }
 
-            postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -58,11 +58,11 @@ class DiamondBankAPIKotlin() {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
-            postgreSQL.subtractFromBankShards(uuid, shards).getOrElse {
+            balanceManager.subtractFromBankShards(uuid, shards).getOrElse {
                 return@withLockSuspend Result.failure(it)
             }
 
-            postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -89,7 +89,7 @@ class DiamondBankAPIKotlin() {
     suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
-        return transactionLock.withLockSuspend(uuid) { postgreSQL.getAllShards(uuid) }
+        return transactionLock.withLockSuspend(uuid) { balanceManager.getAllShards(uuid) }
     }
 
     private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
@@ -98,10 +98,10 @@ class DiamondBankAPIKotlin() {
         return transactionLock.withLockSuspend(uuid) {
             val result =
                 when (type) {
-                    ShardType.BANK -> postgreSQL.getBankShards(uuid)
-                    ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
-                    ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
-                    ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
+                    ShardType.BANK -> balanceManager.getBankShards(uuid)
+                    ShardType.INVENTORY -> balanceManager.getInventoryShards(uuid)
+                    ShardType.ENDER_CHEST -> balanceManager.getEnderChestShards(uuid)
+                    ShardType.TOTAL -> balanceManager.getTotalShards(uuid)
                 }.getOrElse {
                     return@withLockSuspend Result.failure(it)
                 }
@@ -114,7 +114,7 @@ class DiamondBankAPIKotlin() {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         val baltop =
-            postgreSQL.getBaltop(offset).getOrElse {
+            balanceManager.getBaltop(offset).getOrElse {
                 return Result.failure(it)
             }
         return Result.success(baltop)
@@ -137,7 +137,7 @@ class DiamondBankAPIKotlin() {
             val playerPlayer = player.player ?: return@withLockSuspend Result.failure(InvalidPlayerException())
 
             val balance =
-                postgreSQL.getTotalShards(uuid).getOrElse {
+                balanceManager.getTotalShards(uuid).getOrElse {
                     return@withLockSuspend Result.failure(it)
                 }
             if (balance - shards < 0) {
@@ -149,7 +149,7 @@ class DiamondBankAPIKotlin() {
                 return@withLockSuspend Result.failure(it)
             }
 
-            postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                 handleError(uuid, shards, null, null, true)
             }
 
@@ -187,7 +187,7 @@ class DiamondBankAPIKotlin() {
             if (!receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
             val balance =
-                postgreSQL.getTotalShards(payerUuid).getOrElse {
+                balanceManager.getTotalShards(payerUuid).getOrElse {
                     return@withLockSuspend Result.failure(it)
                 }
             if (balance - shards < 0) {
@@ -199,12 +199,12 @@ class DiamondBankAPIKotlin() {
                 return@withLockSuspend Result.failure(it)
             }
 
-            postgreSQL.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
+            balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
                 handleError(payerUuid, shards, null)
                 return@withLockSuspend Result.failure(it)
             }
 
-            postgreSQL.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes).getOrElse {
+            balanceManager.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes).getOrElse {
                 handleError(payerUuid, shards, null, receiverUuid, true)
             }
 

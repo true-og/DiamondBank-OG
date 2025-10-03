@@ -5,10 +5,10 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import org.bukkit.Bukkit
@@ -75,7 +75,7 @@ internal class Balancetop : CommandExecutor {
 
             if (player != null) {
                 val baltopWithUuid =
-                    postgreSQL.getBaltopWithUuid(player.uniqueId).getOrElse {
+                    balanceManager.getBaltopWithUuid(player.uniqueId).getOrElse {
                         sender.sendMessage(
                             mm.deserialize(
                                 "${config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
@@ -113,7 +113,7 @@ internal class Balancetop : CommandExecutor {
             }
 
             val baltop =
-                postgreSQL.getBaltop(offset).getOrElse {
+                balanceManager.getBaltop(offset).getOrElse {
                     sender.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."
@@ -123,7 +123,7 @@ internal class Balancetop : CommandExecutor {
                 }
 
             val numberOfRows =
-                postgreSQL.getNumberOfRows().getOrElse {
+                balanceManager.getNumberOfRows().getOrElse {
                     sender.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get the information for balancetop."

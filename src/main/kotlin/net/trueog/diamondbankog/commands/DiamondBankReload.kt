@@ -1,11 +1,11 @@
 package net.trueog.diamondbankog.commands
 
+import net.trueog.diamondbankog.BalanceManager
 import net.trueog.diamondbankog.Config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
-import net.trueog.diamondbankog.PostgreSQL
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -23,11 +23,11 @@ internal class DiamondBankReload : CommandExecutor {
                     return true
                 }
 
-        postgreSQL = PostgreSQL()
+        balanceManager = BalanceManager()
         try {
-            postgreSQL.initDB()
+            balanceManager.init()
         } catch (e: Exception) {
-            plugin.logger.info(e.toString())
+            e.printStackTrace()
             sender.sendMessage(
                 mm.deserialize("<red>Failed to reload the config. Check the console for more information.")
             )

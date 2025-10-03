@@ -16,4 +16,6 @@ sealed class DiamondBankException(message: String) : Exception(message) {
     class CouldNotRemoveEnoughException(val notRemoved: Int) : Exception("Could not remove enough")
 
     class OtherException : DiamondBankException("Other exception")
+
+    class InvalidArgumentException : Exception()
 }

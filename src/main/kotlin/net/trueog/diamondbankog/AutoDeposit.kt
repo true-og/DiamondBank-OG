@@ -1,9 +1,9 @@
 package net.trueog.diamondbankog
 
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
@@ -41,7 +41,7 @@ internal object AutoDeposit {
 
         scope.launch {
             transactionLock.withLockSuspend(player.uniqueId) {
-                postgreSQL.addToPlayerShards(player.uniqueId, shards, ShardType.BANK).getOrElse {
+                balanceManager.addToPlayerShards(player.uniqueId, shards, ShardType.BANK).getOrElse {
                     handleError(player.uniqueId, shards, null)
                     player.sendMessage(
                         mm.deserialize(

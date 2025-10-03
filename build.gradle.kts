@@ -57,6 +57,7 @@ dependencies {
     compileOnly("net.luckperms:api:5.5") // Import the LuckPerms API.
     implementation("io.lettuce:lettuce-core:6.7.1.RELEASE") // Import the Lettuce API for keydb.
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4") // Import the jasync Postgres API.
+    implementation("it.unimi.dsi:fastutil-core:8.5.16")
     implementation("org.jetbrains.kotlin:kotlin-stdlib") // Import the Kotlin standard library.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }

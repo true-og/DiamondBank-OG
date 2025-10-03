@@ -4,9 +4,9 @@ import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import net.trueog.diamondbankog.DiamondBankException.*
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.eventManager
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
@@ -33,9 +33,9 @@ class DiamondBankAPIJava() {
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
-                postgreSQL.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse { throw it }
+                balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse { throw it }
 
-                postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+                balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                     handleError(uuid, shards, null, null, true)
                 }
             }
@@ -61,9 +61,9 @@ class DiamondBankAPIJava() {
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
-                postgreSQL.subtractFromBankShards(uuid, shards).getOrElse { throw it }
+                balanceManager.subtractFromBankShards(uuid, shards).getOrElse { throw it }
 
-                postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+                balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                     handleError(uuid, shards, null, null, true)
                 }
             }
@@ -138,7 +138,7 @@ class DiamondBankAPIJava() {
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
-                val result = postgreSQL.getAllShards(uuid)
+                val result = balanceManager.getAllShards(uuid)
                 result.getOrThrow()
             }
         }
@@ -152,10 +152,10 @@ class DiamondBankAPIJava() {
             val result =
                 transactionLock.withLockSuspend(uuid) {
                     when (type) {
-                        ShardType.BANK -> postgreSQL.getBankShards(uuid)
-                        ShardType.INVENTORY -> postgreSQL.getInventoryShards(uuid)
-                        ShardType.ENDER_CHEST -> postgreSQL.getEnderChestShards(uuid)
-                        ShardType.TOTAL -> postgreSQL.getTotalShards(uuid)
+                        ShardType.BANK -> balanceManager.getBankShards(uuid)
+                        ShardType.INVENTORY -> balanceManager.getInventoryShards(uuid)
+                        ShardType.ENDER_CHEST -> balanceManager.getEnderChestShards(uuid)
+                        ShardType.TOTAL -> balanceManager.getTotalShards(uuid)
                     }
                 }
             result.getOrThrow()
@@ -176,7 +176,7 @@ class DiamondBankAPIJava() {
     fun getBaltop(offset: Int): Map<UUID?, Long> {
         if (economyDisabled) throw EconomyDisabledException()
 
-        return runBlocking { postgreSQL.getBaltop(offset).getOrElse { throw it } }
+        return runBlocking { balanceManager.getBaltop(offset).getOrElse { throw it } }
     }
 
     /**
@@ -213,7 +213,7 @@ class DiamondBankAPIJava() {
                 if (!player.isOnline) throw PlayerNotOnlineException()
                 val playerPlayer = player.player ?: throw InvalidPlayerException()
 
-                val balance = postgreSQL.getTotalShards(uuid).getOrElse { throw it }
+                val balance = balanceManager.getTotalShards(uuid).getOrElse { throw it }
                 if (balance - shards < 0) {
                     throw InsufficientBalanceException(balance)
                 }
@@ -223,7 +223,7 @@ class DiamondBankAPIJava() {
                     throw it
                 }
 
-                postgreSQL.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+                balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                     handleError(uuid, shards, null, null, true)
                 }
             }
@@ -269,7 +269,7 @@ class DiamondBankAPIJava() {
                 val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
                 if (!receiver.hasPlayedBefore()) throw InvalidPlayerException()
 
-                val balance = postgreSQL.getTotalShards(payerUuid).getOrElse { throw it }
+                val balance = balanceManager.getTotalShards(payerUuid).getOrElse { throw it }
                 if (balance - shards < 0) {
                     throw InsufficientBalanceException(balance)
                 }
@@ -279,14 +279,14 @@ class DiamondBankAPIJava() {
                     throw it
                 }
 
-                postgreSQL.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
+                balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
                     handleError(payerUuid, shards, null)
                     throw it
                 }
 
-                postgreSQL.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes).getOrElse {
-                    handleError(payerUuid, shards, null, receiverUuid, true)
-                }
+                balanceManager
+                    .insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes)
+                    .getOrElse { handleError(payerUuid, shards, null, receiverUuid, true) }
             }
         }
     }

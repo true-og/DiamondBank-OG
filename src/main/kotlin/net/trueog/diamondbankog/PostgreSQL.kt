@@ -9,14 +9,14 @@ import java.util.*
 import kotlinx.coroutines.future.await
 import net.trueog.diamondbankog.DiamondBankException.DatabaseException
 import net.trueog.diamondbankog.DiamondBankException.InsufficientBalanceException
+import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
 
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
-
-    class InvalidArgumentException : Exception()
 
     class NoRowsException : Exception()
 
@@ -36,7 +36,7 @@ class PostgreSQL {
                 )
             val createTable =
                 pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards BIGINT, inventory_shards BIGINT, ender_chest_shards BIGINT, total_shards BIGINT GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
+                    "CREATE TABLE IF NOT EXISTS ${config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards BIGINT DEFAULT 0, inventory_shards BIGINT DEFAULT 0, ender_chest_shards BIGINT DEFAULT 0, total_shards BIGINT GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
                 )
             createTable.join()
             val createTotalShardsIndex =
@@ -125,40 +125,45 @@ class PostgreSQL {
 
     suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
+        val playerShards: PlayerShards
 
-        val playerShards =
-            when (type) {
-                ShardType.BANK -> getBankShards(uuid)
-                ShardType.INVENTORY -> getInventoryShards(uuid)
-                ShardType.ENDER_CHEST -> getEnderChestShards(uuid)
-                else -> {
-                    return Result.failure(InvalidArgumentException())
-                }
-            }.getOrElse {
-                return Result.failure(it)
+        try {
+            val connection = pool.asSuspending.connect()
+
+            val preparedStatement =
+                connection.sendPreparedStatement(
+                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = ${config.postgresTable}.${type.string} + excluded.${type.string} " +
+                        "WHERE ${config.postgresTable}.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                    listOf(uuid, shards),
+                )
+            val result = preparedStatement.await()
+
+            if (result.rows.isEmpty()) {
+                val shards =
+                    balanceManager.getShardTypeShards(uuid, type).getOrElse {
+                        return Result.failure(it)
+                    }
+                throw InsufficientBalanceException(shards)
+            }
+            val row = result.rows[0]
+            val bankShards = row.getLong("bank_shards")
+            val inventoryShards = row.getLong("inventory_shards")
+            val enderChestShards = row.getLong("ender_chest_shards")
+            if (bankShards == null || inventoryShards == null || enderChestShards == null) {
+                throw Exception()
             }
 
-        return setPlayerShards(uuid, playerShards + shards, type)
-    }
-
-    suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit> {
-        val bankShards =
-            getBankShards(uuid).getOrElse {
-                return Result.failure(it)
+            playerShards = PlayerShards(bankShards, inventoryShards, enderChestShards)
+        } catch (e: Exception) {
+            if (e is InsufficientBalanceException) {
+                return Result.failure(e)
             }
-        val newBalance = bankShards - shards
-        if (newBalance < 0) {
-            return Result.failure(InsufficientBalanceException(bankShards))
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
 
-        return setPlayerShards(uuid, newBalance, ShardType.BANK)
+        DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
+        return Result.success(Unit)
     }
-
-    suspend fun getBankShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.BANK)
-
-    suspend fun getInventoryShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.INVENTORY)
-
-    suspend fun getEnderChestShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     suspend fun getTotalShards(uuid: UUID): Result<Long> {
         var totalShards: Long?
@@ -219,7 +224,7 @@ class PostgreSQL {
         return Result.success(PlayerShards(bankShards, inventoryShards, enderChestShards))
     }
 
-    private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
+    suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
         var shards: Long?
         try {
             val connection = pool.asSuspending.connect()

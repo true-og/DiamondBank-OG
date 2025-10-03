@@ -3,10 +3,10 @@ package net.trueog.diamondbankog.commands
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.postgreSQL
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
@@ -70,7 +70,7 @@ internal class Deposit : CommandExecutor {
             }
 
             val playerInventoryShards =
-                postgreSQL.getInventoryShards(sender.uniqueId).getOrElse {
+                balanceManager.getInventoryShards(sender.uniqueId).getOrElse {
                     sender.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
@@ -149,7 +149,7 @@ internal class Deposit : CommandExecutor {
                             )
                         }
 
-                        postgreSQL.addToPlayerShards(sender.uniqueId, shards, ShardType.BANK).getOrElse {
+                        balanceManager.addToPlayerShards(sender.uniqueId, shards, ShardType.BANK).getOrElse {
                             handleError(sender.uniqueId, shards, PlayerShards(-1, playerInventoryShards, -1))
                             sender.sendMessage(
                                 mm.deserialize(
@@ -182,7 +182,7 @@ internal class Deposit : CommandExecutor {
                 )
             )
 
-            postgreSQL
+            balanceManager
                 .insertTransactionLog(
                     sender.uniqueId,
                     shards,
