@@ -77,11 +77,12 @@ class PostgreSQL {
                         "EXECUTE FUNCTION fifo_limit_trigger();"
                 )
             createTrigger.join()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             economyDisabled = true
             plugin.logger.severe(
                 "ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?"
             )
+            e.printStackTrace()
             return
         }
     }
