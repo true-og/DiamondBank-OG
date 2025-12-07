@@ -1,12 +1,12 @@
 package net.trueog.diamondbankog
 
-import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
-import net.trueog.diamondbankog.PostgreSQL.PlayerShards
-import net.trueog.diamondbankog.PostgreSQL.ShardType
 import java.sql.SQLException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
+import net.trueog.diamondbankog.PostgreSQL.PlayerShards
+import net.trueog.diamondbankog.PostgreSQL.ShardType
 
 internal class BalanceManager {
     val cache = Cache()
@@ -81,9 +81,7 @@ internal class BalanceManager {
     }
 
     suspend fun getTotalShards(uuid: UUID): Result<Long> {
-        val anyBeingModified = beingModified.any {
-            it.key.first == uuid && it.value.get() > 0
-        }
+        val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
         if (anyBeingModified) {
             return postgreSQL.getTotalShards(uuid)
         }
@@ -102,9 +100,7 @@ internal class BalanceManager {
     }
 
     suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
-        val anyBeingModified = beingModified.any {
-            it.key.first == uuid && it.value.get() > 0
-        }
+        val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
         if (anyBeingModified) {
             return postgreSQL.getAllShards(uuid)
         }
