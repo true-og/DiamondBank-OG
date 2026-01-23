@@ -37,7 +37,7 @@ internal class SetBankBalance : CommandExecutor {
                 return@launch
             }
 
-            if (args == null || args.isEmpty()) {
+            if (args.isNullOrEmpty()) {
                 sender.sendMessage(
                     mm.deserialize(
                         "${config.prefix}<reset>: <red>You did not provide the name or the UUID of a player and the amount of <aqua>Shards<red>."

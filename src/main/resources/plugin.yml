@@ -51,6 +51,9 @@ commands:
   autodeposit:
     description: Toggles auto-deposit, automatically deposits picked up Diamond currency items, mutually exclusive with auto-compress
     usage: /autodeposit
+  dbogtests:
+    description: Run the DiamondBank-OG tests, only available in dev builds
+    usage: /dbogtests
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials ]

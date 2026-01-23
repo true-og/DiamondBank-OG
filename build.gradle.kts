@@ -10,6 +10,14 @@ plugins {
     kotlin("jvm") version "2.1.21" // Import Kotlin JVM plugin.
 }
 
+sourceSets {
+    create("dev") {
+        java.srcDir("src/dev/kotlin")
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+}
+
 /* ---------------------------- Java / Kotlin -------------------------- */
 java {
     toolchain {
@@ -18,7 +26,15 @@ java {
     }
 }
 
-kotlin { jvmToolchain(17) }
+kotlin {
+    jvmToolchain(17)
+    target { compilations { getByName("dev") { associateWith(target.compilations.getByName("main")) } } }
+}
+
+configurations {
+    named("devCompileOnly") { extendsFrom(configurations.compileOnly.get()) }
+    named("devRuntimeOnly") { extendsFrom(configurations.runtimeOnly.get()) }
+}
 
 /* ----------------------------- Metadata ------------------------------ */
 val commitHash =
@@ -98,4 +114,18 @@ spotless {
 
 tasks.named("spotlessCheck") {
     dependsOn("spotlessApply") // Run spotless before checking if spotless ran.
+}
+
+tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJarDev") {
+    from(sourceSets.main.get().output)
+    from(sourceSets["dev"].output)
+    configurations = listOf(project.configurations.runtimeClasspath.get())
+
+    relocate("io.lettuce", "net.trueog.diamondbankog.shaded.io.lettuce")
+    relocate("com.github.jasync", "net.trueog.diamondbankog.shaded.com.github.jasync")
+}
+
+tasks.register("buildDev") {
+    version = "$version-dev"
+    dependsOn(tasks.spotlessApply, tasks.named("shadowJarDev"))
 }

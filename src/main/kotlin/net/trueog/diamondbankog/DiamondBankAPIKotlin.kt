@@ -10,7 +10,6 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
-import org.bukkit.Bukkit
 
 @OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPIKotlin() {
@@ -118,98 +117,6 @@ class DiamondBankAPIKotlin() {
                 return Result.failure(it)
             }
         return Result.success(baltop)
-    }
-
-    /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
-     *
-     * @param transactionReason the reason for this transaction for in the transaction log
-     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
-     */
-    @Suppress("unused")
-    suspend fun withdrawFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit> {
-        if (economyDisabled) return Result.failure(EconomyDisabledException())
-
-        return transactionLock.withLockSuspend(uuid) {
-            val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
-            if (!player.isOnline) return@withLockSuspend Result.failure(PlayerNotOnlineException())
-            val playerPlayer = player.player ?: return@withLockSuspend Result.failure(InvalidPlayerException())
-
-            val balance =
-                balanceManager.getTotalShards(uuid).getOrElse {
-                    return@withLockSuspend Result.failure(it)
-                }
-            if (balance - shards < 0) {
-                return@withLockSuspend Result.failure(InsufficientBalanceException(balance))
-            }
-
-            WithdrawHelper.withdrawFromPlayer(playerPlayer, shards).getOrElse {
-                handleError(uuid, shards, null)
-                return@withLockSuspend Result.failure(it)
-            }
-
-            balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                handleError(uuid, shards, null, null, true)
-            }
-
-            Result.success(Unit)
-        }
-    }
-
-    /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
-     *
-     * WARNING: This function can return a CouldNotRemoveEnoughException, make sure you handle it properly. It has a
-     * field called notRemoved that has the amount of shards not removed, you should continue with the originally
-     * requested amount of shards minus notRemoved
-     *
-     * @param transactionReason the reason for this transaction for in the transaction log
-     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
-     */
-    @Suppress("unused")
-    suspend fun playerPayPlayer(
-        payerUuid: UUID,
-        receiverUuid: UUID,
-        shards: Long,
-        transactionReason: String,
-        notes: String?,
-    ): Result<Unit> {
-        if (economyDisabled) return Result.failure(EconomyDisabledException())
-
-        return transactionLock.withLockSuspend(payerUuid) {
-            val payer = Bukkit.getPlayer(payerUuid) ?: Bukkit.getOfflinePlayer(payerUuid)
-            if (!payer.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
-            if (!payer.isOnline) return@withLockSuspend Result.failure(PayerNotOnlineException())
-            val payerPlayer = payer.player ?: return@withLockSuspend Result.failure(InvalidPlayerException())
-
-            val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
-            if (!receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
-
-            val balance =
-                balanceManager.getTotalShards(payerUuid).getOrElse {
-                    return@withLockSuspend Result.failure(it)
-                }
-            if (balance - shards < 0) {
-                return@withLockSuspend Result.failure(InsufficientBalanceException(balance))
-            }
-
-            WithdrawHelper.withdrawFromPlayer(payerPlayer, shards).getOrElse {
-                handleError(payerUuid, shards, null)
-                return@withLockSuspend Result.failure(it)
-            }
-
-            balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
-                handleError(payerUuid, shards, null)
-                return@withLockSuspend Result.failure(it)
-            }
-
-            balanceManager.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes).getOrElse {
-                handleError(payerUuid, shards, null, receiverUuid, true)
-            }
-
-            Result.success(Unit)
-        }
     }
 
     @Suppress("unused")

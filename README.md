@@ -1,6 +1,6 @@
 # DiamondBank-OG
 
-A free and open source Diamond Economy plugin for Spigot inspired by [The Diamond Bank](https://www.spigotmc.org/resources/the-diamond-bank.72020/).\
+A FOSS and reliable Diamond Economy plugin for Spigot inspired by [The Diamond Bank](https://www.spigotmc.org/resources/the-diamond-bank.72020/).\
 Maintained for TrueOG.
 
 ## PostgreSQL

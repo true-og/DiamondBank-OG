@@ -13,6 +13,7 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.InventoryExtensions.isLocked
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
@@ -118,7 +119,7 @@ internal class Events : Listener {
             itemType != Material.DIAMOND &&
                 itemType != Material.DIAMOND_BLOCK &&
                 itemType != Material.SHULKER_BOX &&
-                !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(Shard.namespacedKey))
+                !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
         ) {
             return
         }
@@ -133,7 +134,7 @@ internal class Events : Listener {
             return
         }
 
-        if (transactionLock.isLocked(player.uniqueId)) {
+        if (player.inventory.isLocked()) {
             event.isCancelled = true
             return
         }
@@ -169,7 +170,7 @@ internal class Events : Listener {
             itemType != Material.DIAMOND &&
                 itemType != Material.DIAMOND_BLOCK &&
                 itemType != Material.SHULKER_BOX &&
-                !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(Shard.namespacedKey))
+                !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
         ) {
             return
         }
@@ -184,7 +185,7 @@ internal class Events : Listener {
             return
         }
 
-        if (transactionLock.isLocked(event.player.uniqueId)) {
+        if (event.player.inventory.isLocked()) {
             event.isCancelled = true
             return
         }
@@ -231,7 +232,7 @@ internal class Events : Listener {
             return
         }
 
-        if (transactionLock.isLocked(player.uniqueId)) {
+        if (player.inventory.isLocked()) {
             event.isCancelled = true
             return
         }
@@ -258,8 +259,7 @@ internal class Events : Listener {
                 itemType != Material.DIAMOND &&
                     itemType != Material.DIAMOND_BLOCK &&
                     itemType != Material.SHULKER_BOX &&
-                    !(itemType == Material.PRISMARINE_SHARD &&
-                        itemStack.persistentDataContainer.has(Shard.namespacedKey))
+                    !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
             ) {
                 return
             }
@@ -275,7 +275,7 @@ internal class Events : Listener {
             return
         }
 
-        if (transactionLock.isLocked(event.player.uniqueId)) {
+        if (player.inventory.isLocked()) {
             event.isCancelled = true
             return
         }
@@ -297,13 +297,11 @@ internal class Events : Listener {
             (itemTypeInMainHand != Material.DIAMOND &&
                 itemTypeInMainHand != Material.DIAMOND_BLOCK &&
                 itemTypeInMainHand != Material.SHULKER_BOX &&
-                !(itemTypeInMainHand == Material.PRISMARINE_SHARD &&
-                    itemStackInMainHand.persistentDataContainer.has(Shard.namespacedKey)) &&
+                !(itemTypeInMainHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInMainHand)) &&
                 (itemTypeInOffHand != Material.DIAMOND &&
                     itemTypeInOffHand != Material.DIAMOND_BLOCK &&
                     itemTypeInOffHand != Material.SHULKER_BOX &&
-                    !(itemTypeInOffHand == Material.PRISMARINE_SHARD &&
-                        itemStackInOffHand.persistentDataContainer.has(Shard.namespacedKey))))
+                    !(itemTypeInOffHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInOffHand))))
         ) {
             return
         }
@@ -318,7 +316,7 @@ internal class Events : Listener {
             return
         }
 
-        if (transactionLock.isLocked(event.player.uniqueId)) {
+        if (player.inventory.isLocked()) {
             event.isCancelled = true
             return
         }
@@ -333,7 +331,7 @@ internal class Events : Listener {
         val player = event.player
         if (player !is Player) return
 
-        if (transactionLock.isLocked(player.uniqueId)) {
+        if (player.inventory.isLocked()) {
             return
         }
 

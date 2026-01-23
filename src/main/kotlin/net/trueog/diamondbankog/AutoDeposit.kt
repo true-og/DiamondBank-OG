@@ -30,7 +30,7 @@ internal object AutoDeposit {
                 (itemStack.amount * 9 * 9).toLong()
             } else if (itemStack.type == Material.DIAMOND) {
                 (itemStack.amount * 9).toLong()
-            } else if (itemStack.persistentDataContainer.has(Shard.namespacedKey)) {
+            } else if (Shard.isShardItem(itemStack)) {
                 itemStack.amount.toLong()
             } else {
                 return
