@@ -122,7 +122,7 @@ class PostgreSQL {
         return Result.success(Unit)
     }
 
-    suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
+    suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Long> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
         val playerShards: PlayerShards
 
@@ -161,7 +161,12 @@ class PostgreSQL {
         }
 
         DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
-        return Result.success(Unit)
+        return when (type) {
+            ShardType.BANK -> Result.success(playerShards.bank)
+            ShardType.INVENTORY -> Result.success(playerShards.inventory)
+            ShardType.ENDER_CHEST -> Result.success(playerShards.enderChest)
+            else -> Result.failure(InvalidArgumentException())
+        }
     }
 
     suspend fun getTotalShards(uuid: UUID): Result<Long> {

@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import net.trueog.diamondbankog.DiamondBankException.EconomyDisabledException
 import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 
@@ -49,10 +50,17 @@ internal class BalanceManager {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         increment(uuid, type)
-        postgreSQL.addToPlayerShards(uuid, shards, type).getOrElse {
-            return Result.failure(it)
+        val newBalanceDb =
+            postgreSQL.addToPlayerShards(uuid, shards, type).getOrElse {
+                return Result.failure(it)
+            }
+        val newBalanceCache =
+            cache.addBalance(uuid, shards, type).getOrElse {
+                return Result.failure(it)
+            }
+        if (newBalanceDb != newBalanceCache) {
+            handleError(IllegalStateException("Database and cache balances do not match"))
         }
-        cache.addBalance(uuid, shards, type)
         decrement(uuid, type)
         return Result.success(Unit)
     }
