@@ -192,6 +192,10 @@ internal class Pay : CommandExecutor {
                             )
                         )
                     }
+
+                    balanceManager
+                        .insertTransactionLog(sender.uniqueId, shards, receiver.uniqueId, "Pay", null)
+                        .getOrElse { handleError(it) }
                 }
             ) {
                 is TransactionLock.LockResult.Failed -> {

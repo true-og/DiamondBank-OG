@@ -147,6 +147,10 @@ internal class Withdraw : CommandExecutor {
                             "${config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <green>from your bank account."
                         )
                     )
+
+                    balanceManager.insertTransactionLog(sender.uniqueId, shards, null, "Withdraw", null).getOrElse {
+                        handleError(it)
+                    }
                 }
             ) {
                 is TransactionLock.LockResult.Failed -> {

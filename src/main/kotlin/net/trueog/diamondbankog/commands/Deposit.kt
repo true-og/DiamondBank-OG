@@ -127,6 +127,10 @@ internal class Deposit : CommandExecutor {
                             "${config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>Diamond${if (diamondsDeposited != "1.0") "s" else ""} <green>into your bank account."
                         )
                     )
+
+                    balanceManager.insertTransactionLog(sender.uniqueId, shards, null, "Deposit", null).getOrElse {
+                        handleError(it)
+                    }
                 }
             ) {
                 is TransactionLock.LockResult.Failed -> {
