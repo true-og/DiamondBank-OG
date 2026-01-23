@@ -1,5 +1,6 @@
 package net.trueog.diamondbankog.commands
 
+import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
@@ -19,7 +20,6 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.inventory.ItemStack
-import kotlin.math.floor
 
 internal class Withdraw : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
@@ -115,7 +115,7 @@ internal class Withdraw : CommandExecutor {
 
                     if (
                         inventorySnapshot.addItem(ItemStack(Material.DIAMOND, diamondsToAdd)).isNotEmpty() ||
-                        inventorySnapshot.addItem(Shard.createItemStack(shardsChange)).isNotEmpty()
+                            inventorySnapshot.addItem(Shard.createItemStack(shardsChange)).isNotEmpty()
                     ) {
                         sender.inventory.unlock()
                         sender.sendMessage(

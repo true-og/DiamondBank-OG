@@ -1,5 +1,6 @@
 package net.trueog.diamondbankog.commands
 
+import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
@@ -15,7 +16,6 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import java.util.*
 
 internal class SetBankBalance : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)

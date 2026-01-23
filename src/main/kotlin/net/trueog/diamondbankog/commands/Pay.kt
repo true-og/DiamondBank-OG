@@ -1,5 +1,7 @@
 package net.trueog.diamondbankog.commands
 
+import java.util.*
+import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.CommonOperations
@@ -21,8 +23,6 @@ import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import java.util.*
-import kotlin.math.floor
 
 internal class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)

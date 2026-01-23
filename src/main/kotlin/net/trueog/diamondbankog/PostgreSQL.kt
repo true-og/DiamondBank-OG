@@ -4,14 +4,14 @@ import com.github.jasync.sql.db.asSuspending
 import com.github.jasync.sql.db.pool.ConnectionPool
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnection
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
+import java.sql.SQLException
+import java.util.*
 import kotlinx.coroutines.future.await
 import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
-import java.sql.SQLException
-import java.util.*
 
 class PostgreSQL {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
@@ -70,9 +70,9 @@ class PostgreSQL {
             val createTrigger =
                 pool.sendPreparedStatement(
                     "CREATE OR REPLACE TRIGGER fifo_limit_trigger\n" +
-                            "AFTER INSERT ON ${config.postgresLogTable}\n" +
-                            "FOR EACH STATEMENT\n" +
-                            "EXECUTE FUNCTION fifo_limit_trigger();"
+                        "AFTER INSERT ON ${config.postgresLogTable}\n" +
+                        "FOR EACH STATEMENT\n" +
+                        "EXECUTE FUNCTION fifo_limit_trigger();"
                 )
             createTrigger.join()
         } catch (e: Exception) {
@@ -97,7 +97,7 @@ class PostgreSQL {
             val preparedStatement =
                 connection.sendPreparedStatement(
                     "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
-                            "RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                        "RETURNING bank_shards, inventory_shards, ender_chest_shards",
                     listOf(uuid, shards),
                 )
             val result = preparedStatement.await()
@@ -132,7 +132,7 @@ class PostgreSQL {
             val preparedStatement =
                 connection.sendPreparedStatement(
                     "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = ${config.postgresTable}.${type.string} + excluded.${type.string} " +
-                            "WHERE ${config.postgresTable}.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                        "WHERE ${config.postgresTable}.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
                     listOf(uuid, shards),
                 )
             val result = preparedStatement.await()
@@ -256,8 +256,8 @@ class PostgreSQL {
             val preparedStatement =
                 connection.sendPreparedStatement(
                     "SELECT uuid, total_shards " +
-                            "FROM ${config.postgresTable} " +
-                            "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 9",
+                        "FROM ${config.postgresTable} " +
+                        "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 9",
                     listOf(offset),
                 )
             val result = preparedStatement.await()
@@ -349,7 +349,7 @@ class PostgreSQL {
             val preparedStatement =
                 connection.sendPreparedStatement(
                     "INSERT INTO ${config.postgresLogTable}(player_uuid, transferred_shards, player_to_uuid, transaction_reason, notes) " +
-                            "VALUES(?, ?, ?, ?, ?)",
+                        "VALUES(?, ?, ?, ?, ?)",
                     listOf(playerUuid, transferredShards, playerToUuid, transactionReason, notes),
                 )
             preparedStatement.await()

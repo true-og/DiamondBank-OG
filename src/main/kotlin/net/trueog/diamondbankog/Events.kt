@@ -113,9 +113,9 @@ internal class Events : Listener {
         val itemType = itemStack.type
         if (
             itemType != Material.DIAMOND &&
-            itemType != Material.DIAMOND_BLOCK &&
-            itemType != Material.SHULKER_BOX &&
-            !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
+                itemType != Material.DIAMOND_BLOCK &&
+                itemType != Material.SHULKER_BOX &&
+                !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
         ) {
             return
         }
@@ -164,9 +164,9 @@ internal class Events : Listener {
         val itemType = itemStack.type
         if (
             itemType != Material.DIAMOND &&
-            itemType != Material.DIAMOND_BLOCK &&
-            itemType != Material.SHULKER_BOX &&
-            !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
+                itemType != Material.DIAMOND_BLOCK &&
+                itemType != Material.SHULKER_BOX &&
+                !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
         ) {
             return
         }
@@ -211,9 +211,9 @@ internal class Events : Listener {
 
         if (
             itemType != Material.DIAMOND &&
-            itemType != Material.DIAMOND_BLOCK &&
-            itemType != Material.SHULKER_BOX &&
-            !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(Shard.namespacedKey))
+                itemType != Material.DIAMOND_BLOCK &&
+                itemType != Material.SHULKER_BOX &&
+                !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(Shard.namespacedKey))
         ) {
             return
         }
@@ -253,9 +253,9 @@ internal class Events : Listener {
 
             if (
                 itemType != Material.DIAMOND &&
-                itemType != Material.DIAMOND_BLOCK &&
-                itemType != Material.SHULKER_BOX &&
-                !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
+                    itemType != Material.DIAMOND_BLOCK &&
+                    itemType != Material.SHULKER_BOX &&
+                    !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
             ) {
                 return
             }
@@ -291,13 +291,13 @@ internal class Events : Listener {
 
         if (
             (itemTypeInMainHand != Material.DIAMOND &&
-                    itemTypeInMainHand != Material.DIAMOND_BLOCK &&
-                    itemTypeInMainHand != Material.SHULKER_BOX &&
-                    !(itemTypeInMainHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInMainHand)) &&
-                    (itemTypeInOffHand != Material.DIAMOND &&
-                            itemTypeInOffHand != Material.DIAMOND_BLOCK &&
-                            itemTypeInOffHand != Material.SHULKER_BOX &&
-                            !(itemTypeInOffHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInOffHand))))
+                itemTypeInMainHand != Material.DIAMOND_BLOCK &&
+                itemTypeInMainHand != Material.SHULKER_BOX &&
+                !(itemTypeInMainHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInMainHand)) &&
+                (itemTypeInOffHand != Material.DIAMOND &&
+                    itemTypeInOffHand != Material.DIAMOND_BLOCK &&
+                    itemTypeInOffHand != Material.SHULKER_BOX &&
+                    !(itemTypeInOffHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInOffHand))))
         ) {
             return
         }
@@ -369,8 +369,8 @@ internal class Events : Listener {
         val resultType = event.recipe?.result?.type
         if (
             resultType != Material.PRISMARINE &&
-            resultType != Material.DARK_PRISMARINE &&
-            resultType != Material.SEA_LANTERN
+                resultType != Material.DARK_PRISMARINE &&
+                resultType != Material.SEA_LANTERN
         ) {
             return
         }

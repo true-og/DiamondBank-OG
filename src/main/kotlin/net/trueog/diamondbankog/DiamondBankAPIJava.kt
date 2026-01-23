@@ -1,5 +1,6 @@
 package net.trueog.diamondbankog
 
+import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import net.trueog.diamondbankog.DiamondBankException.*
@@ -14,7 +15,6 @@ import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
-import java.util.*
 
 @OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPIJava {
@@ -282,10 +282,9 @@ class DiamondBankAPIJava {
                     payer.inventory.unlock()
                 }
 
-                balanceManager.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes)
-                    .getOrElse {
-                        handleError(it)
-                    }
+                balanceManager
+                    .insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes)
+                    .getOrElse { handleError(it) }
             }
         }
     }

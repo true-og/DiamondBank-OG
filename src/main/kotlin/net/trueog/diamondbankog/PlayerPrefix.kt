@@ -1,8 +1,8 @@
 package net.trueog.diamondbankog
 
+import java.util.*
 import kotlinx.coroutines.future.await
 import net.trueog.diamondbankog.DiamondBankOG.Companion.luckPerms
-import java.util.*
 
 internal object PlayerPrefix {
     private val legacyToMmMap =

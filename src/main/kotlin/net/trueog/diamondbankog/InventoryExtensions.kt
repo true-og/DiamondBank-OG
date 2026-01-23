@@ -1,20 +1,20 @@
 package net.trueog.diamondbankog
 
+import java.util.*
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.PlayerInventory
 import org.bukkit.inventory.meta.BlockStateMeta
-import java.util.*
 
 internal object InventoryExtensions {
     fun Inventory.countTotal(): Long {
         return this.countShards() +
-                this.countDiamonds() * 9 +
-                this.countDiamondBlocks() * 81 +
-                this.all(Material.SHULKER_BOX).values.sumOf {
-                    ((it.itemMeta as BlockStateMeta).blockState as ShulkerBox).inventory.countTotal()
-                }
+            this.countDiamonds() * 9 +
+            this.countDiamondBlocks() * 81 +
+            this.all(Material.SHULKER_BOX).values.sumOf {
+                ((it.itemMeta as BlockStateMeta).blockState as ShulkerBox).inventory.countTotal()
+            }
     }
 
     fun Inventory.countShards(): Long {

@@ -1,5 +1,6 @@
 package net.trueog.diamondbankog
 
+import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
@@ -13,7 +14,6 @@ import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
-import java.util.*
 
 @OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPIKotlin {
@@ -74,8 +74,7 @@ class DiamondBankAPIKotlin {
     }
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
-    @Suppress("unused")
-    suspend fun getBankShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.BANK)
+    @Suppress("unused") suspend fun getBankShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.BANK)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")
@@ -86,8 +85,7 @@ class DiamondBankAPIKotlin {
     suspend fun getEnderChestShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
-    @Suppress("unused")
-    suspend fun getTotalShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.TOTAL)
+    @Suppress("unused") suspend fun getTotalShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.TOTAL)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")

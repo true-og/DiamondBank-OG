@@ -1,12 +1,12 @@
 package net.trueog.diamondbankog.commands
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 
 object CommonCommandInterlude {
     /** @return should return */

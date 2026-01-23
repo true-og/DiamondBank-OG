@@ -1,9 +1,9 @@
 package net.trueog.diamondbankog
 
+import java.util.*
 import net.trueog.diamondbankog.DiamondBankException.InsufficientFundsException
 import net.trueog.diamondbankog.DiamondBankException.InsufficientInventorySpaceException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
-import java.util.*
 
 object CommonOperations {
     suspend fun consume(uuid: UUID, shards: Long, inventorySnapshot: InventorySnapshot): Result<Unit> {
