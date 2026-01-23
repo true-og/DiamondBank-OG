@@ -10,6 +10,7 @@ plugins {
     kotlin("jvm") version "2.1.21" // Import Kotlin JVM plugin.
 }
 
+/* ----------------------------- Source sets --------------------------- */
 sourceSets {
     create("dev") {
         java.srcDir("src/dev/kotlin")
@@ -114,6 +115,7 @@ tasks.named("spotlessCheck") {
     dependsOn("spotlessApply") // Run spotless before checking if spotless ran.
 }
 
+/* ----------------------------- Shadow Dev -------------------------------- */
 tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJarDev") {
     from(sourceSets.main.get().output)
     from(sourceSets["dev"].output)
