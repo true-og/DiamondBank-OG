@@ -6,7 +6,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
@@ -23,33 +22,11 @@ import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 
 internal class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (economyDisabled) {
-            sender.sendMessage(
-                mm.deserialize("${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member.")
-            )
-            return true
-        }
-
-        if (sender !is Player) {
-            sender.sendMessage("You can only execute this command as a player.")
-            return true
-        }
-
-        val worldName = sender.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
-            sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>You cannot use /pay when in a minigame."))
-            return true
-        }
-
-        if (!sender.hasPermission("diamondbank-og.pay")) {
-            sender.sendMessage(
-                mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to use this command.")
-            )
+        if (CommonCommandInterlude.run(sender, "pay")) {
             return true
         }
 
@@ -125,7 +102,7 @@ internal class Pay : CommandExecutor {
 
                     val bankShards =
                         balanceManager.getBankShards(sender.uniqueId).getOrElse {
-                            handleError(sender.uniqueId, shards, null, receiver.uniqueId)
+                            handleError(it)
                             sender.sendMessage(
                                 mm.deserialize(
                                     "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
@@ -138,16 +115,17 @@ internal class Pay : CommandExecutor {
                         if (bankShards < shards) {
                             val toRemoveShards = shards - bankShards
                             val removedInShards =
-                                InventorySnapshotUtils.removeShards(inventorySnapshot, toRemoveShards).toLong()
-                            if (removedInShards == -1L) {
-                                sender.sendMessage(
-                                    mm.deserialize(
-                                        "${config.prefix}<reset>: <red>You do not have enough inventory space for the change."
-                                    )
-                                )
-                                sender.inventory.unlock()
-                                return@tryWithLockSuspend
-                            }
+                                InventorySnapshotUtils.removeShards(inventorySnapshot, toRemoveShards)
+                                    .getOrElse {
+                                        sender.sendMessage(
+                                            mm.deserialize(
+                                                "${config.prefix}<reset>: <red>You do not have enough inventory space for the change."
+                                            )
+                                        )
+                                        sender.inventory.unlock()
+                                        return@tryWithLockSuspend
+                                    }
+                                    .toLong()
                             if (removedInShards != toRemoveShards) {
                                 val short = toRemoveShards - removedInShards
                                 val shortInDiamonds = String.format("%.1f", floor((short / 9.0) * 10) / 10.0)
@@ -164,7 +142,7 @@ internal class Pay : CommandExecutor {
                             shards
                         }
                     balanceManager.subtractFromBankShards(sender.uniqueId, shardsToSubtract).getOrElse {
-                        handleError(sender.uniqueId, shards, null, receiver.uniqueId)
+                        handleError(it)
                         sender.sendMessage(
                             mm.deserialize(
                                 "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
@@ -175,7 +153,7 @@ internal class Pay : CommandExecutor {
                     }
 
                     balanceManager.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
-                        handleError(sender.uniqueId, shards, null, receiver.uniqueId)
+                        handleError(it)
                         sender.sendMessage(
                             mm.deserialize(
                                 "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."

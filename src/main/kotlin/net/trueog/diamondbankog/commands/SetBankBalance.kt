@@ -100,7 +100,7 @@ internal class SetBankBalance : CommandExecutor {
                     "Set Bank Balance",
                     "Bank Balance set by ${if (sender is Player) "${sender.uniqueId}" else "console"}",
                 )
-                .getOrElse { handleError(player.uniqueId, balance, null, null, true) }
+                .getOrElse { handleError(it) }
         }
         return true
     }

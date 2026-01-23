@@ -4,7 +4,9 @@ import java.sql.SQLException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import net.trueog.diamondbankog.DiamondBankException.EconomyDisabledException
 import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
+import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 
@@ -31,6 +33,7 @@ internal class BalanceManager {
 
     suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
+        if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         increment(uuid, type)
         postgreSQL.setPlayerShards(uuid, shards, type).getOrElse {
@@ -43,6 +46,7 @@ internal class BalanceManager {
 
     suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
+        if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         increment(uuid, type)
         postgreSQL.addToPlayerShards(uuid, shards, type).getOrElse {

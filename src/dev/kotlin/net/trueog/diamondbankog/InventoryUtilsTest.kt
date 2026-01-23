@@ -38,7 +38,11 @@ object InventoryUtilsTest : Test {
 
     fun testShardRemoval(): Array<CriteriaResult> {
         val inventorySnapshot = InventorySnapshot.withContents(arrayOf(Shard.createItemStack(9)))
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 3)
+        val removed =
+            InventorySnapshotUtils.removeShards(inventorySnapshot, 3).getOrElse {
+                val noFailureCriteria = CriteriaResult("isFailure == false", "true", false)
+                return arrayOf(noFailureCriteria)
+            }
 
         val removedCountCriteria = CriteriaResult("removed == 3", removed.toString(), removed == 3)
         val shardCount = inventorySnapshot.countShards()
@@ -49,7 +53,11 @@ object InventoryUtilsTest : Test {
 
     fun testDiamondRemoval(): Array<CriteriaResult> {
         val inventorySnapshot = InventorySnapshot.withContents(arrayOf(ItemStack(Material.DIAMOND, 2)))
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 9)
+        val removed =
+            InventorySnapshotUtils.removeShards(inventorySnapshot, 9).getOrElse {
+                val noFailureCriteria = CriteriaResult("isFailure == false", "true", false)
+                return arrayOf(noFailureCriteria)
+            }
 
         val removedCountCriteria = CriteriaResult("removed == 9", removed.toString(), removed == 9)
         val diamondCount = inventorySnapshot.countDiamonds()
@@ -60,7 +68,11 @@ object InventoryUtilsTest : Test {
 
     fun testDiamondBlockRemoval(): Array<CriteriaResult> {
         val inventorySnapshot = InventorySnapshot.withContents(arrayOf(ItemStack(Material.DIAMOND_BLOCK, 2)))
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 81)
+        val removed =
+            InventorySnapshotUtils.removeShards(inventorySnapshot, 81).getOrElse {
+                val noFailureCriteria = CriteriaResult("isFailure == false", "true", false)
+                return arrayOf(noFailureCriteria)
+            }
 
         val removedCountCriteria = CriteriaResult("removed == 81", removed.toString(), removed == 81)
         val diamondBlockAmount = inventorySnapshot.countDiamondBlocks()
@@ -76,7 +88,11 @@ object InventoryUtilsTest : Test {
     fun testShardAndDiamondRemoval(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1)))
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 11)
+        val removed =
+            InventorySnapshotUtils.removeShards(inventorySnapshot, 11).getOrElse {
+                val noFailureCriteria = CriteriaResult("isFailure == false", "true", false)
+                return arrayOf(noFailureCriteria)
+            }
 
         val removedCountCriteria = CriteriaResult("removed == 11", removed.toString(), removed == 11)
         val noContentsCriteria =
@@ -93,7 +109,11 @@ object InventoryUtilsTest : Test {
             InventorySnapshot.withContents(
                 arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1), ItemStack(Material.DIAMOND_BLOCK, 1))
             )
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 92)
+        val removed =
+            InventorySnapshotUtils.removeShards(inventorySnapshot, 92).getOrElse {
+                val noFailureCriteria = CriteriaResult("isFailure == false", "true", false)
+                return arrayOf(noFailureCriteria)
+            }
 
         val removedCountCriteria = CriteriaResult("removed == 92", removed.toString(), removed == 92)
         val noContentsCriteria =
@@ -108,7 +128,11 @@ object InventoryUtilsTest : Test {
     fun testShardAndDiamondRemovalWithShardChange(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1)))
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 10)
+        val removed =
+            InventorySnapshotUtils.removeShards(inventorySnapshot, 10).getOrElse {
+                val noFailureCriteria = CriteriaResult("isFailure == false", "true", false)
+                return arrayOf(noFailureCriteria)
+            }
 
         val removedCountCriteria = CriteriaResult("removed == 10", removed.toString(), removed == 10)
         val shardCount = inventorySnapshot.countShards()
@@ -132,7 +156,11 @@ object InventoryUtilsTest : Test {
             InventorySnapshot.withContents(
                 arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1), ItemStack(Material.DIAMOND_BLOCK, 1))
             )
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 12)
+        val removed =
+            InventorySnapshotUtils.removeShards(inventorySnapshot, 12).getOrElse {
+                val noFailureCriteria = CriteriaResult("isFailure == false", "true", false)
+                return arrayOf(noFailureCriteria)
+            }
 
         val removedCountCriteria = CriteriaResult("removed == 12", removed.toString(), removed == 12)
         val shardCount = inventorySnapshot.countShards()
@@ -207,15 +235,19 @@ object InventoryUtilsTest : Test {
         repeat(35) { contents.add(ItemStack(Material.DIRT)) }
         contents.add(ItemStack(Material.DIAMOND_BLOCK))
         val inventorySnapshot = InventorySnapshot.withContents(contents.toTypedArray())
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 1)
-        val removedCriteriaResult = CriteriaResult("removed == -1", removed.toString(), removed == -1)
-        return arrayOf(removedCriteriaResult)
+        val result = InventorySnapshotUtils.removeShards(inventorySnapshot, 1)
+        val failureCriteria = CriteriaResult("isFailure == true", result.isFailure.toString(), result.isFailure)
+        return arrayOf(failureCriteria)
     }
 
     fun testEmptyRemoveShards(): Array<CriteriaResult> {
         val contents = emptyArray<ItemStack?>()
         val inventorySnapshot = InventorySnapshot.withContents(contents)
-        val removed = InventorySnapshotUtils.removeShards(inventorySnapshot, 10)
+        val removed =
+            InventorySnapshotUtils.removeShards(inventorySnapshot, 10).getOrElse {
+                val noFailureCriteria = CriteriaResult("isFailure == false", "true", false)
+                return arrayOf(noFailureCriteria)
+            }
         val removedCriteriaResult = CriteriaResult("removed == 0", removed.toString(), removed == 0)
         return arrayOf(removedCriteriaResult)
     }

@@ -2,7 +2,7 @@ package net.trueog.diamondbankog
 
 import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
-import net.trueog.diamondbankog.DiamondBankException.*
+import net.trueog.diamondbankog.DiamondBankException.EconomyDisabledException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.eventManager
@@ -34,7 +34,7 @@ class DiamondBankAPIKotlin() {
             }
 
             balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                handleError(uuid, shards, null, null, true)
+                handleError(it)
             }
 
             Result.success(Unit)
@@ -62,7 +62,7 @@ class DiamondBankAPIKotlin() {
             }
 
             balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                handleError(uuid, shards, null, null, true)
+                handleError(it)
             }
 
             Result.success(Unit)

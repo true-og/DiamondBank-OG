@@ -1,6 +1,6 @@
 package net.trueog.diamondbankog
 
-import java.util.Spliterator
+import java.util.*
 import java.util.function.Consumer
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
@@ -49,9 +49,7 @@ class InventorySnapshot private constructor(private val original: Inventory, pri
         val uuid = targetInventory.holder!!.uniqueId
         val inventoryShards = targetInventory.countTotal()
         scope.launch {
-            balanceManager.setPlayerShards(uuid, inventoryShards, ShardType.INVENTORY).getOrElse {
-                handleError(uuid, inventoryShards, null)
-            }
+            balanceManager.setPlayerShards(uuid, inventoryShards, ShardType.INVENTORY).getOrElse { handleError(it) }
         }
     }
 

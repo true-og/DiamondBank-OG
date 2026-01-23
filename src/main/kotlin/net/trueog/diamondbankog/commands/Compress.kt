@@ -3,7 +3,6 @@ package net.trueog.diamondbankog.commands
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
@@ -21,36 +20,12 @@ import org.bukkit.block.ShulkerBox
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 
 internal class Compress : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (economyDisabled) {
-            sender.sendMessage(
-                mm.deserialize("${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member.")
-            )
-            return true
-        }
-
-        if (sender !is Player) {
-            sender.sendMessage("You can only execute this command as a player.")
-            return true
-        }
-
-        val worldName = sender.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
-            sender.sendMessage(
-                mm.deserialize("${config.prefix}<reset>: <red>You cannot use /compress when in a minigame.")
-            )
-            return true
-        }
-
-        if (!sender.hasPermission("diamondbank-og.compress")) {
-            sender.sendMessage(
-                mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to use this command.")
-            )
+        if (CommonCommandInterlude.run(sender, "compress")) {
             return true
         }
 

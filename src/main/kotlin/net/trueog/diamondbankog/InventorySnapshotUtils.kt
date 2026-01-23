@@ -6,13 +6,13 @@ import org.bukkit.inventory.ItemStack
 
 object InventorySnapshotUtils {
     /** @return the amount of shards that could be removed. -1 if the change could not be put back */
-    fun removeShards(inventory: InventorySnapshot, shards: Long): Int {
+    fun removeShards(inventory: InventorySnapshot, shards: Long): Result<Int> {
         require(shards > 0)
 
         val shards = shards.toInt()
 
         val notRemovedShards = inventory.removeItem(Shard.createItemStack(shards)).values.sumOf { it.amount }
-        if (notRemovedShards == 0) return shards
+        if (notRemovedShards == 0) return Result.success(shards)
 
         val diamondsToBeRemoved = ceil(notRemovedShards / 9.0).toInt()
         val diamondsRemainder = notRemovedShards % 9
@@ -20,8 +20,9 @@ object InventorySnapshotUtils {
         val notRemovedDiamonds =
             inventory.removeItem(ItemStack(Material.DIAMOND, diamondsToBeRemoved)).values.sumOf { it.amount }
         if (notRemovedDiamonds == 0) {
-            if (inventory.addItem(Shard.createItemStack(shardsChange)).isNotEmpty()) return -1
-            return shards
+            if (inventory.addItem(Shard.createItemStack(shardsChange)).isNotEmpty())
+                return Result.failure(IllegalStateException("Change does not fit in inventory"))
+            return Result.success(shards)
         }
 
         val diamondBlocksToBeRemoved = ceil(notRemovedDiamonds / 9.0).toInt()
@@ -30,11 +31,13 @@ object InventorySnapshotUtils {
         val notRemovedDiamondBlocks =
             inventory.removeItem(ItemStack(Material.DIAMOND_BLOCK, diamondBlocksToBeRemoved)).values.sumOf { it.amount }
         if (notRemovedDiamondBlocks == 0) {
-            if (inventory.addItem(Shard.createItemStack(shardsChange)).isNotEmpty()) return -1
-            if (inventory.addItem(ItemStack(Material.DIAMOND, diamondsChange)).isNotEmpty()) return -1
-            return shards
+            if (inventory.addItem(Shard.createItemStack(shardsChange)).isNotEmpty())
+                return Result.failure(IllegalStateException("Change does not fit in inventory"))
+            if (inventory.addItem(ItemStack(Material.DIAMOND, diamondsChange)).isNotEmpty())
+                return Result.failure(IllegalStateException("Change does not fit in inventory"))
+            return Result.success(shards)
         }
-        return shards - (notRemovedDiamondBlocks * 81 - diamondsChange * 9 - shardsChange)
+        return Result.success(shards - (notRemovedDiamondBlocks * 81 - diamondsChange * 9 - shardsChange))
     }
 
     /** @return the amount of currency items that could be removed in shards */

@@ -42,7 +42,7 @@ internal object AutoDeposit {
         scope.launch {
             transactionLock.withLockSuspend(player.uniqueId) {
                 balanceManager.addToPlayerShards(player.uniqueId, shards, ShardType.BANK).getOrElse {
-                    handleError(player.uniqueId, shards, null)
+                    handleError(it)
                     player.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."

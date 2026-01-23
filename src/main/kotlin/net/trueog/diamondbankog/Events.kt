@@ -27,11 +27,7 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.inventory.PrepareItemCraftEvent
-import org.bukkit.event.player.PlayerDropItemEvent
-import org.bukkit.event.player.PlayerInteractEntityEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.player.*
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
@@ -65,7 +61,7 @@ internal class Events : Listener {
                     balanceManager
                         .setPlayerShards(event.player.uniqueId, legacyBalance.toLong() * 9, ShardType.BANK)
                         .getOrElse {
-                            handleError(event.player.uniqueId, legacyBalance.toLong() * 9, null)
+                            handleError(it)
                             return@launch
                         }
                 }
@@ -80,7 +76,7 @@ internal class Events : Listener {
             transactionLock.withLockSuspend(event.player.uniqueId) {
                 val inventoryShards = event.player.inventory.countTotal()
                 balanceManager.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
-                    handleError(event.player.uniqueId, inventoryShards, null)
+                    handleError(it)
                     return@withLockSuspend
                 }
 
@@ -88,7 +84,7 @@ internal class Events : Listener {
                 balanceManager
                     .setPlayerShards(event.player.uniqueId, enderChestDiamonds, ShardType.ENDER_CHEST)
                     .getOrElse {
-                        handleError(event.player.uniqueId, enderChestDiamonds, null)
+                        handleError(it)
                         return@withLockSuspend
                     }
 
@@ -152,7 +148,7 @@ internal class Events : Listener {
                 val inventoryShards = runOnMainThread { player.inventory.countTotal() }
 
                 balanceManager.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
-                    handleError(player.uniqueId, inventoryShards, null)
+                    handleError(it)
                     return@withLockSuspend
                 }
             }
@@ -194,7 +190,7 @@ internal class Events : Listener {
             transactionLock.withLockSuspend(event.player.uniqueId) {
                 val inventoryShards = runOnMainThread { event.player.inventory.countTotal() }
                 balanceManager.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
-                    handleError(event.player.uniqueId, inventoryShards, null)
+                    handleError(it)
                     return@withLockSuspend
                 }
             }
@@ -354,13 +350,13 @@ internal class Events : Listener {
                             )
                         }
                     balanceManager.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
-                        handleError(player.uniqueId, inventoryShards, null)
+                        handleError(it)
                         return@withLockSuspend
                     }
 
                     if (enderChestShards == null) return@withLockSuspend
                     balanceManager.setPlayerShards(player.uniqueId, enderChestShards, ShardType.ENDER_CHEST).getOrElse {
-                        handleError(player.uniqueId, enderChestShards, null)
+                        handleError(it)
                         return@withLockSuspend
                     }
                 }

@@ -35,7 +35,7 @@ class DiamondBankAPIJava() {
                 balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse { throw it }
 
                 balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                    handleError(uuid, shards, null, null, true)
+                    handleError(it)
                 }
             }
         }
@@ -63,7 +63,7 @@ class DiamondBankAPIJava() {
                 balanceManager.subtractFromBankShards(uuid, shards).getOrElse { throw it }
 
                 balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                    handleError(uuid, shards, null, null, true)
+                    handleError(it)
                 }
             }
         }

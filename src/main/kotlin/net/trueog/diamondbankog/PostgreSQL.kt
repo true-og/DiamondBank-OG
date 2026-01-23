@@ -7,9 +7,7 @@ import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
 import java.sql.SQLException
 import java.util.*
 import kotlinx.coroutines.future.await
-import net.trueog.diamondbankog.DiamondBankException.DatabaseException
-import net.trueog.diamondbankog.DiamondBankException.InsufficientBalanceException
-import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
+import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled

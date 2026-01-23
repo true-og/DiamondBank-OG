@@ -3,51 +3,28 @@ package net.trueog.diamondbankog.commands
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
+import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.lock
 import net.trueog.diamondbankog.InventoryExtensions.unlock
+import net.trueog.diamondbankog.InventorySnapshot
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
+import net.trueog.diamondbankog.Shard
 import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 
 internal class Withdraw : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (economyDisabled) {
-            sender.sendMessage(
-                mm.deserialize("${config.prefix}<reset>: <red>The economy is disabled. Please notify a staff member.")
-            )
-            return true
-        }
-
-        if (sender !is Player) {
-            sender.sendMessage("You can only execute this command as a player.")
-            return true
-        }
-
-        val worldName = sender.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
-            sender.sendMessage(
-                mm.deserialize("${config.prefix}<reset>: <red>You cannot use /withdraw when in a minigame.")
-            )
-            return true
-        }
-
-        if (!sender.hasPermission("diamondbank-og.withdraw")) {
-            sender.sendMessage(
-                mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to use this command.")
-            )
+        if (CommonCommandInterlude.run(sender, "withdraw")) {
             return true
         }
 
@@ -149,7 +126,16 @@ internal class Withdraw : CommandExecutor {
                         return@tryWithLockSuspend
                     }
 
-                    balanceManager.subtractFromBankShards(sender.uniqueId, shardsToWithdraw)
+                    balanceManager.subtractFromBankShards(sender.uniqueId, shardsToWithdraw).getOrElse {
+                        handleError(it)
+                        sender.sendMessage(
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                            )
+                        )
+                        sender.inventory.unlock()
+                        return@tryWithLockSuspend
+                    }
 
                     runOnMainThread {
                         inventorySnapshot.restoreTo(sender.inventory)
