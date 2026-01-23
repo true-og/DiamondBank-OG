@@ -1,6 +1,6 @@
 package net.trueog.diamondbankog
 
-import java.util.UUID
+import java.util.*
 
 internal class EventManager {
     private var listeners = listOf<PlayerBalanceChangedListener>()

@@ -12,7 +12,7 @@ import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
 
-internal class DiamondBankOG : JavaPlugin() {
+internal open class DiamondBankOG : JavaPlugin() {
     companion object {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -99,6 +99,12 @@ internal class DiamondBankOG : JavaPlugin() {
 
         this.getCommand("enableeconomy")?.setExecutor(EnableEconomy())
         this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
+
+        try {
+            val devCommandsClass = Class.forName("net.trueog.diamondbankog.TestCommands")
+            val registerMethod = devCommandsClass.getMethod("register", JavaPlugin::class.java)
+            registerMethod.invoke(null, this)
+        } catch (_: ClassNotFoundException) {}
 
         Shard.createCraftingRecipes()
 

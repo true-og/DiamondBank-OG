@@ -8,12 +8,15 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.eventManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
+import net.trueog.diamondbankog.InventoryExtensions.lock
+import net.trueog.diamondbankog.InventoryExtensions.unlock
+import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 
 @OptIn(DelicateCoroutinesApi::class)
-class DiamondBankAPIKotlin() {
+class DiamondBankAPIKotlin {
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released
      *
@@ -35,7 +38,7 @@ class DiamondBankAPIKotlin() {
             }
 
             balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                handleError(uuid, shards, null, null, true)
+                handleError(it)
             }
 
             Result.success(Unit)
@@ -63,7 +66,7 @@ class DiamondBankAPIKotlin() {
             }
 
             balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                handleError(uuid, shards, null, null, true)
+                handleError(it)
             }
 
             Result.success(Unit)
@@ -127,30 +130,29 @@ class DiamondBankAPIKotlin() {
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      */
     @Suppress("unused")
-    suspend fun withdrawFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit> {
+    suspend fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit> {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
-            val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+            val player = Bukkit.getPlayer(uuid) ?: return@withLockSuspend Result.failure(PlayerNotOnlineException())
             if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
-            if (!player.isOnline) return@withLockSuspend Result.failure(PlayerNotOnlineException())
-            val playerPlayer = player.player ?: return@withLockSuspend Result.failure(InvalidPlayerException())
 
-            val balance =
-                balanceManager.getTotalShards(uuid).getOrElse {
-                    return@withLockSuspend Result.failure(it)
-                }
-            if (balance - shards < 0) {
-                return@withLockSuspend Result.failure(InsufficientBalanceException(balance))
+            val inventorySnapshot = runOnMainThread {
+                player.inventory.lock()
+                InventorySnapshot.from(player.inventory)
             }
 
-            WithdrawHelper.withdrawFromPlayer(playerPlayer, shards).getOrElse {
-                handleError(uuid, shards, null)
+            CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrElse {
                 return@withLockSuspend Result.failure(it)
             }
 
+            runOnMainThread {
+                inventorySnapshot.restoreTo(player.inventory)
+                player.inventory.unlock()
+            }
+
             balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                handleError(uuid, shards, null, null, true)
+                handleError(it)
             }
 
             Result.success(Unit)
@@ -178,34 +180,33 @@ class DiamondBankAPIKotlin() {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(payerUuid) {
-            val payer = Bukkit.getPlayer(payerUuid) ?: Bukkit.getOfflinePlayer(payerUuid)
+            val payer = Bukkit.getPlayer(payerUuid) ?: return@withLockSuspend Result.failure(PlayerNotOnlineException())
             if (!payer.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
-            if (!payer.isOnline) return@withLockSuspend Result.failure(PayerNotOnlineException())
-            val payerPlayer = payer.player ?: return@withLockSuspend Result.failure(InvalidPlayerException())
 
             val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
             if (!receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
-            val balance =
-                balanceManager.getTotalShards(payerUuid).getOrElse {
-                    return@withLockSuspend Result.failure(it)
-                }
-            if (balance - shards < 0) {
-                return@withLockSuspend Result.failure(InsufficientBalanceException(balance))
+            val inventorySnapshot = runOnMainThread {
+                payer.inventory.lock()
+                InventorySnapshot.from(payer.inventory)
             }
 
-            WithdrawHelper.withdrawFromPlayer(payerPlayer, shards).getOrElse {
-                handleError(payerUuid, shards, null)
+            CommonOperations.consume(payer.uniqueId, shards, inventorySnapshot).getOrElse {
                 return@withLockSuspend Result.failure(it)
             }
 
             balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
-                handleError(payerUuid, shards, null)
+                handleError(it)
                 return@withLockSuspend Result.failure(it)
             }
 
+            runOnMainThread {
+                inventorySnapshot.restoreTo(payer.inventory)
+                payer.inventory.unlock()
+            }
+
             balanceManager.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes).getOrElse {
-                handleError(payerUuid, shards, null, receiverUuid, true)
+                handleError(it)
             }
 
             Result.success(Unit)

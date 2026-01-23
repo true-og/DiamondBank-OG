@@ -9,12 +9,15 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.eventManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
+import net.trueog.diamondbankog.InventoryExtensions.lock
+import net.trueog.diamondbankog.InventoryExtensions.unlock
+import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
 
 @OptIn(DelicateCoroutinesApi::class)
-class DiamondBankAPIJava() {
+class DiamondBankAPIJava {
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released.
      *
@@ -36,7 +39,7 @@ class DiamondBankAPIJava() {
                 balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse { throw it }
 
                 balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                    handleError(uuid, shards, null, null, true)
+                    handleError(it)
                 }
             }
         }
@@ -64,7 +67,7 @@ class DiamondBankAPIJava() {
                 balanceManager.subtractFromBankShards(uuid, shards).getOrElse { throw it }
 
                 balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                    handleError(uuid, shards, null, null, true)
+                    handleError(it)
                 }
             }
         }
@@ -190,41 +193,41 @@ class DiamondBankAPIJava() {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
-     * @throws DiamondBankException.InsufficientBalanceException
-     * @throws DiamondBankException.CouldNotRemoveEnoughException
+     * @throws DiamondBankException.InsufficientFundsException
+     * @throws DiamondBankException.InsufficientInventorySpaceException
      * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         EconomyDisabledException::class,
         InvalidPlayerException::class,
         PlayerNotOnlineException::class,
-        InsufficientBalanceException::class,
-        CouldNotRemoveEnoughException::class,
+        InsufficientFundsException::class,
+        InsufficientInventorySpaceException::class,
         DatabaseException::class,
     )
     @Suppress("unused")
-    fun withdrawFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
+    fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
-                val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+                val player = Bukkit.getPlayer(uuid) ?: throw PlayerNotOnlineException()
                 if (!player.hasPlayedBefore()) throw InvalidPlayerException()
-                if (!player.isOnline) throw PlayerNotOnlineException()
-                val playerPlayer = player.player ?: throw InvalidPlayerException()
 
-                val balance = balanceManager.getTotalShards(uuid).getOrElse { throw it }
-                if (balance - shards < 0) {
-                    throw InsufficientBalanceException(balance)
+                val inventorySnapshot = runOnMainThread {
+                    player.inventory.lock()
+                    InventorySnapshot.from(player.inventory)
                 }
 
-                WithdrawHelper.withdrawFromPlayer(playerPlayer, shards).getOrElse {
-                    handleError(uuid, shards, null)
-                    throw it
+                CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrThrow()
+
+                runOnMainThread {
+                    inventorySnapshot.restoreTo(player.inventory)
+                    player.inventory.unlock()
                 }
 
                 balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
-                    handleError(uuid, shards, null, null, true)
+                    handleError(it)
                 }
             }
         }
@@ -241,19 +244,17 @@ class DiamondBankAPIJava() {
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PayerNotOnlineException
+     * @throws DiamondBankException.InsufficientFundsException
+     * @throws DiamondBankException.InsufficientInventorySpaceException
      * @throws DiamondBankException.DatabaseException
-     * @throws DiamondBankException.InsufficientBalanceException
-     * @throws DiamondBankException.CouldNotRemoveEnoughException
-     * @throws DiamondBankException.OtherException
      */
     @Throws(
         EconomyDisabledException::class,
         InvalidPlayerException::class,
         PayerNotOnlineException::class,
+        InsufficientFundsException::class,
+        InsufficientInventorySpaceException::class,
         DatabaseException::class,
-        InsufficientBalanceException::class,
-        CouldNotRemoveEnoughException::class,
-        OtherException::class,
     )
     @Suppress("unused")
     fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?) {
@@ -261,32 +262,29 @@ class DiamondBankAPIJava() {
 
         return runBlocking {
             transactionLock.withLockSuspend(payerUuid) {
-                val payer = Bukkit.getPlayer(payerUuid) ?: Bukkit.getOfflinePlayer(payerUuid)
+                val payer = Bukkit.getPlayer(payerUuid) ?: throw PayerNotOnlineException()
                 if (!payer.hasPlayedBefore()) throw InvalidPlayerException()
-                if (!payer.isOnline) throw PayerNotOnlineException()
-                val payerPlayer = payer.player ?: throw InvalidPlayerException()
 
                 val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
                 if (!receiver.hasPlayedBefore()) throw InvalidPlayerException()
 
-                val balance = balanceManager.getTotalShards(payerUuid).getOrElse { throw it }
-                if (balance - shards < 0) {
-                    throw InsufficientBalanceException(balance)
+                val inventorySnapshot = runOnMainThread {
+                    payer.inventory.lock()
+                    InventorySnapshot.from(payer.inventory)
                 }
 
-                WithdrawHelper.withdrawFromPlayer(payerPlayer, shards).getOrElse {
-                    handleError(payerUuid, shards, null)
-                    throw it
-                }
+                CommonOperations.consume(payer.uniqueId, shards, inventorySnapshot).getOrThrow()
 
-                balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
-                    handleError(payerUuid, shards, null)
-                    throw it
+                balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrThrow()
+
+                runOnMainThread {
+                    inventorySnapshot.restoreTo(payer.inventory)
+                    payer.inventory.unlock()
                 }
 
                 balanceManager
                     .insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes)
-                    .getOrElse { handleError(payerUuid, shards, null, receiverUuid, true) }
+                    .getOrElse { handleError(it) }
             }
         }
     }

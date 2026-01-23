@@ -1,7 +1,7 @@
 package net.trueog.diamondbankog
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -22,32 +22,46 @@ internal class Cache {
             ShardType.BANK -> {
                 bankBalanceCacheLock.write { bankBalanceCache.put(uuid, value) }
             }
+
             ShardType.INVENTORY -> {
                 inventoryBalanceCacheLock.write { inventoryBalanceCache.put(uuid, value) }
             }
+
             ShardType.ENDER_CHEST -> {
                 enderChestBalanceCacheLock.write { enderChestBalanceCache.put(uuid, value) }
             }
+
             else -> {}
         }
         return Result.success(Unit)
     }
 
-    fun addBalance(uuid: UUID, value: Long, type: ShardType): Result<Unit> {
+    fun addBalance(uuid: UUID, value: Long, type: ShardType): Result<Long> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
-        when (type) {
+        return when (type) {
             ShardType.BANK -> {
-                bankBalanceCacheLock.write { bankBalanceCache.addTo(uuid, value) }
+                bankBalanceCacheLock.write {
+                    val old = bankBalanceCache.addTo(uuid, value)
+                    return Result.success(old + value)
+                }
             }
+
             ShardType.INVENTORY -> {
-                inventoryBalanceCacheLock.write { inventoryBalanceCache.addTo(uuid, value) }
+                inventoryBalanceCacheLock.write {
+                    val old = inventoryBalanceCache.addTo(uuid, value)
+                    return Result.success(old + value)
+                }
             }
+
             ShardType.ENDER_CHEST -> {
-                enderChestBalanceCacheLock.write { enderChestBalanceCache.addTo(uuid, value) }
+                enderChestBalanceCacheLock.write {
+                    val old = enderChestBalanceCache.addTo(uuid, value)
+                    return Result.success(old + value)
+                }
             }
-            else -> {}
+
+            else -> Result.failure(IllegalArgumentException())
         }
-        return Result.success(Unit)
     }
 
     fun getBalance(uuid: UUID, type: ShardType): Long {
@@ -55,12 +69,15 @@ internal class Cache {
             ShardType.BANK -> {
                 bankBalanceCacheLock.read { bankBalanceCache.getLong(uuid) }
             }
+
             ShardType.INVENTORY -> {
                 inventoryBalanceCacheLock.read { inventoryBalanceCache.getLong(uuid) }
             }
+
             ShardType.ENDER_CHEST -> {
                 enderChestBalanceCacheLock.read { enderChestBalanceCache.getLong(uuid) }
             }
+
             ShardType.TOTAL -> {
                 bankBalanceCacheLock.read {
                     inventoryBalanceCacheLock.read {
@@ -81,12 +98,15 @@ internal class Cache {
             ShardType.BANK -> {
                 bankBalanceCacheLock.write { bankBalanceCache.removeLong(uuid) }
             }
+
             ShardType.INVENTORY -> {
                 inventoryBalanceCacheLock.write { inventoryBalanceCache.removeLong(uuid) }
             }
+
             ShardType.ENDER_CHEST -> {
                 enderChestBalanceCacheLock.write { enderChestBalanceCache.removeLong(uuid) }
             }
+
             else -> {}
         }
         return Result.success(Unit)

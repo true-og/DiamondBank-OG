@@ -30,7 +30,7 @@ internal object AutoDeposit {
                 (itemStack.amount * 9 * 9).toLong()
             } else if (itemStack.type == Material.DIAMOND) {
                 (itemStack.amount * 9).toLong()
-            } else if (itemStack.persistentDataContainer.has(Shard.namespacedKey)) {
+            } else if (Shard.isShardItem(itemStack)) {
                 itemStack.amount.toLong()
             } else {
                 return
@@ -42,7 +42,7 @@ internal object AutoDeposit {
         scope.launch {
             transactionLock.withLockSuspend(player.uniqueId) {
                 balanceManager.addToPlayerShards(player.uniqueId, shards, ShardType.BANK).getOrElse {
-                    handleError(player.uniqueId, shards, null)
+                    handleError(it)
                     player.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
