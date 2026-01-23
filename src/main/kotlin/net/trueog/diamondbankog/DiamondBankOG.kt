@@ -104,7 +104,8 @@ internal open class DiamondBankOG : JavaPlugin() {
             val devCommandsClass = Class.forName("net.trueog.diamondbankog.TestCommands")
             val registerMethod = devCommandsClass.getMethod("register", JavaPlugin::class.java)
             registerMethod.invoke(null, this)
-        } catch (_: ClassNotFoundException) {}
+        } catch (_: ClassNotFoundException) {
+        }
 
         Shard.createCraftingRecipes()
 

@@ -1,7 +1,5 @@
 package net.trueog.diamondbankog
 
-import java.util.*
-import java.util.function.Consumer
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
@@ -14,6 +12,8 @@ import org.bukkit.Material
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
+import java.util.*
+import java.util.function.Consumer
 
 class InventorySnapshot private constructor(private val original: Inventory, private val heldItemSlot: Int) :
     Inventory by original {

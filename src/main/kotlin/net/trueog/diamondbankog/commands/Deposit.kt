@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog.commands
 
-import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
@@ -19,6 +18,7 @@ import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import kotlin.math.floor
 
 internal class Deposit : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)

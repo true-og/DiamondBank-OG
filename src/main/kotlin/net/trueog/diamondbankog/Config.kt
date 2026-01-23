@@ -1,9 +1,9 @@
 package net.trueog.diamondbankog
 
-import java.io.File
-import kotlin.properties.Delegates
 import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
 import org.bukkit.configuration.file.YamlConfiguration
+import java.io.File
+import kotlin.properties.Delegates
 
 internal class Config private constructor() {
     lateinit var prefix: String

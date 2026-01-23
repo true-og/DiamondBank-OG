@@ -45,7 +45,7 @@ val commitHash =
         output.trim()
     }
 
-group = "net.trueog.diamondbank-og" // Declare bundle identifier.
+group = "net.trueog.diamondbankog" // Declare bundle identifier.
 
 val apiVersion = "1.19" // Declare plugin version (will be in .jar).
 
@@ -119,8 +119,8 @@ tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shad
     from(sourceSets["dev"].output)
     configurations = listOf(project.configurations.runtimeClasspath.get())
 
-    relocate("io.lettuce", "net.trueog.diamondbankog.shaded.io.lettuce")
-    relocate("com.github.jasync", "net.trueog.diamondbankog.shaded.com.github.jasync")
+    isEnableRelocation = true
+    relocationPrefix = "${project.group}.shadow"
 }
 
 tasks.register("buildDev") {

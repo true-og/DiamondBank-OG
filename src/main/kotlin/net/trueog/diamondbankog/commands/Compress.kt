@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog.commands
 
-import kotlin.math.abs
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
@@ -22,6 +21,7 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
+import kotlin.math.abs
 
 internal class Compress : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
@@ -240,34 +240,34 @@ internal class Compress : CommandExecutor {
                     val diamondsLine =
                         (if (changeInDiamonds > 0) "|<green>+$changeInDiamonds"
                         else if (changeInDiamonds < 0) "|<red>$changeInDiamonds" else "") +
-                            if (changeInDiamonds != 0)
-                                " Diamond${
+                                if (changeInDiamonds != 0)
+                                    " Diamond${
                                         if (abs(
                                                 changeInDiamonds
                                             ) != 1
                                         ) "s" else ""
                                     }\n"
-                            else ""
+                                else ""
                     val diamondBlocksLine =
                         (if (changeInDiamondBlocks > 0) "|<green>+$changeInDiamondBlocks"
                         else if (changeInDiamondBlocks < 0) "|<red>$changeInDiamondBlocks" else "") +
-                            if (changeInDiamondBlocks != 0)
-                                " Diamond Block${
+                                if (changeInDiamondBlocks != 0)
+                                    " Diamond Block${
                                         if (abs(
                                                 changeInDiamondBlocks
                                             ) != 1
                                         ) "s" else ""
                                     }"
-                            else ""
+                                else ""
 
                     sender.sendMessage(
                         mm.deserialize(
                             buildString {
-                                    append("${config.prefix}<reset>: Compression Summary:\n")
-                                    if (shardsLine.isNotEmpty()) append(shardsLine)
-                                    if (diamondsLine.isNotEmpty()) append(diamondsLine)
-                                    if (diamondBlocksLine.isNotEmpty()) append(diamondBlocksLine)
-                                }
+                                append("${config.prefix}<reset>: Compression Summary:\n")
+                                if (shardsLine.isNotEmpty()) append(shardsLine)
+                                if (diamondsLine.isNotEmpty()) append(diamondsLine)
+                                if (diamondBlocksLine.isNotEmpty()) append(diamondBlocksLine)
+                            }
                                 .trimMargin("|")
                         )
                     )

@@ -1,12 +1,12 @@
 package net.trueog.diamondbankog
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
+import net.trueog.diamondbankog.PostgreSQL.ShardType
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
-import net.trueog.diamondbankog.PostgreSQL.ShardType
 
 internal class Cache {
     val bankBalanceCache = Object2LongOpenHashMap<UUID>().apply { defaultReturnValue(-1L) }
@@ -75,8 +75,8 @@ internal class Cache {
                     inventoryBalanceCacheLock.read {
                         enderChestBalanceCacheLock.read {
                             bankBalanceCache.getLong(uuid) +
-                                inventoryBalanceCache.getLong(uuid) +
-                                enderChestBalanceCache.getLong(uuid)
+                                    inventoryBalanceCache.getLong(uuid) +
+                                    enderChestBalanceCache.getLong(uuid)
                         }
                     }
                 }

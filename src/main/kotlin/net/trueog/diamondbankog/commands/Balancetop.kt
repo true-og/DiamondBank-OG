@@ -1,8 +1,5 @@
 package net.trueog.diamondbankog.commands
 
-import java.util.*
-import kotlin.math.ceil
-import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
@@ -16,6 +13,9 @@ import org.bukkit.OfflinePlayer
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import java.util.*
+import kotlin.math.ceil
+import kotlin.math.floor
 
 internal class Balancetop : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)

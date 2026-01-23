@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog
 
-import kotlin.math.abs
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
@@ -15,6 +14,7 @@ import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import kotlin.math.abs
 
 internal object AutoCompress {
     fun compress(player: Player) {

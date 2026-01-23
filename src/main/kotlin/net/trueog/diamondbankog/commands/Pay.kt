@@ -1,9 +1,9 @@
 package net.trueog.diamondbankog.commands
 
-import java.util.*
-import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.CommonOperations
+import net.trueog.diamondbankog.DiamondBankException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
@@ -13,7 +13,6 @@ import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.lock
 import net.trueog.diamondbankog.InventoryExtensions.unlock
 import net.trueog.diamondbankog.InventorySnapshot
-import net.trueog.diamondbankog.InventorySnapshotUtils
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
@@ -22,6 +21,8 @@ import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import java.util.*
+import kotlin.math.floor
 
 internal class Pay : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
@@ -100,35 +101,10 @@ internal class Pay : CommandExecutor {
                         InventorySnapshot.from(sender.inventory)
                     }
 
-                    val bankShards =
-                        balanceManager.getBankShards(sender.uniqueId).getOrElse {
-                            handleError(it)
-                            sender.sendMessage(
-                                mm.deserialize(
-                                    "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
-                                )
-                            )
-                            sender.inventory.unlock()
-                            return@tryWithLockSuspend
-                        }
-                    val shardsToSubtract =
-                        if (bankShards < shards) {
-                            val toRemoveShards = shards - bankShards
-                            val removedInShards =
-                                InventorySnapshotUtils.removeShards(inventorySnapshot, toRemoveShards)
-                                    .getOrElse {
-                                        sender.sendMessage(
-                                            mm.deserialize(
-                                                "${config.prefix}<reset>: <red>You do not have enough inventory space for the change."
-                                            )
-                                        )
-                                        sender.inventory.unlock()
-                                        return@tryWithLockSuspend
-                                    }
-                                    .toLong()
-                            if (removedInShards != toRemoveShards) {
-                                val short = toRemoveShards - removedInShards
-                                val shortInDiamonds = String.format("%.1f", floor((short / 9.0) * 10) / 10.0)
+                    CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot).getOrElse {
+                        when (it) {
+                            is DiamondBankException.InsufficientFundsException -> {
+                                val shortInDiamonds = String.format("%.1f", floor((it.short / 9.0) * 10) / 10.0)
                                 sender.sendMessage(
                                     mm.deserialize(
                                         "${config.prefix}<reset>: <red>You are <yellow>$shortInDiamonds <aqua>Diamond${if (shortInDiamonds != "1.0") "s" else ""} <red>short for that payment."
@@ -137,19 +113,27 @@ internal class Pay : CommandExecutor {
                                 sender.inventory.unlock()
                                 return@tryWithLockSuspend
                             }
-                            bankShards
-                        } else {
-                            shards
+
+                            is DiamondBankException.InsufficientInventorySpaceException -> {
+                                sender.sendMessage(
+                                    mm.deserialize(
+                                        "${config.prefix}<reset>: <red>You do not have enough inventory space for the change."
+                                    )
+                                )
+                                sender.inventory.unlock()
+                                return@tryWithLockSuspend
+                            }
+
+                            else -> {
+                                sender.sendMessage(
+                                    mm.deserialize(
+                                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                    )
+                                )
+                                sender.inventory.unlock()
+                                return@tryWithLockSuspend
+                            }
                         }
-                    balanceManager.subtractFromBankShards(sender.uniqueId, shardsToSubtract).getOrElse {
-                        handleError(it)
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
-                            )
-                        )
-                        sender.inventory.unlock()
-                        return@tryWithLockSuspend
                     }
 
                     balanceManager.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {

@@ -1,10 +1,10 @@
 package net.trueog.diamondbankog
 
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.bukkit.Bukkit
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 internal object MainThreadBlock {
     @OptIn(ExperimentalCoroutinesApi::class)

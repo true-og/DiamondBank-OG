@@ -13,9 +13,9 @@ sealed class DiamondBankException(message: String) : Exception(message) {
 
     class InsufficientBalanceException(val balance: Long) : DiamondBankException("Insufficient balance")
 
-    class CouldNotRemoveEnoughException(val notRemoved: Int) : Exception("Could not remove enough")
+    class InsufficientFundsException(val short: Long) : DiamondBankException("Insufficient funds")
 
-    class OtherException : DiamondBankException("Other exception")
+    class InsufficientInventorySpaceException : DiamondBankException("Insufficient inventory space for the change")
 
     class InvalidArgumentException : Exception()
 }

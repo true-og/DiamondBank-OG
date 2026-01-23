@@ -1,18 +1,22 @@
 package net.trueog.diamondbankog
 
-import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
-import net.trueog.diamondbankog.DiamondBankException.EconomyDisabledException
+import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.eventManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
+import net.trueog.diamondbankog.InventoryExtensions.lock
+import net.trueog.diamondbankog.InventoryExtensions.unlock
+import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
+import org.bukkit.Bukkit
+import java.util.*
 
 @OptIn(DelicateCoroutinesApi::class)
-class DiamondBankAPIKotlin() {
+class DiamondBankAPIKotlin {
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released
      *
@@ -70,7 +74,8 @@ class DiamondBankAPIKotlin() {
     }
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
-    @Suppress("unused") suspend fun getBankShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.BANK)
+    @Suppress("unused")
+    suspend fun getBankShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.BANK)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")
@@ -81,7 +86,8 @@ class DiamondBankAPIKotlin() {
     suspend fun getEnderChestShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
-    @Suppress("unused") suspend fun getTotalShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.TOTAL)
+    @Suppress("unused")
+    suspend fun getTotalShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.TOTAL)
 
     /** WARNING: if the player has a transaction lock applied this function will wait until its released */
     @Suppress("unused")
@@ -117,6 +123,96 @@ class DiamondBankAPIKotlin() {
                 return Result.failure(it)
             }
         return Result.success(baltop)
+    }
+
+    /**
+     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     *
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
+     */
+    @Suppress("unused")
+    suspend fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit> {
+        if (economyDisabled) return Result.failure(EconomyDisabledException())
+
+        return transactionLock.withLockSuspend(uuid) {
+            val player = Bukkit.getPlayer(uuid) ?: return@withLockSuspend Result.failure(PlayerNotOnlineException())
+            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+
+            val inventorySnapshot = runOnMainThread {
+                player.inventory.lock()
+                InventorySnapshot.from(player.inventory)
+            }
+
+            CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrElse {
+                return@withLockSuspend Result.failure(it)
+            }
+
+            runOnMainThread {
+                inventorySnapshot.restoreTo(player.inventory)
+                player.inventory.unlock()
+            }
+
+            balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+                handleError(it)
+            }
+
+            Result.success(Unit)
+        }
+    }
+
+    /**
+     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     *
+     * WARNING: This function can return a CouldNotRemoveEnoughException, make sure you handle it properly. It has a
+     * field called notRemoved that has the amount of shards not removed, you should continue with the originally
+     * requested amount of shards minus notRemoved
+     *
+     * @param transactionReason the reason for this transaction for in the transaction log
+     * @param notes any specifics for this transaction that may be nice to know for in the transaction log
+     */
+    @Suppress("unused")
+    suspend fun playerPayPlayer(
+        payerUuid: UUID,
+        receiverUuid: UUID,
+        shards: Long,
+        transactionReason: String,
+        notes: String?,
+    ): Result<Unit> {
+        if (economyDisabled) return Result.failure(EconomyDisabledException())
+
+        return transactionLock.withLockSuspend(payerUuid) {
+            val payer = Bukkit.getPlayer(payerUuid) ?: return@withLockSuspend Result.failure(PlayerNotOnlineException())
+            if (!payer.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+
+            val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
+            if (!receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+
+            val inventorySnapshot = runOnMainThread {
+                payer.inventory.lock()
+                InventorySnapshot.from(payer.inventory)
+            }
+
+            CommonOperations.consume(payer.uniqueId, shards, inventorySnapshot).getOrElse {
+                return@withLockSuspend Result.failure(it)
+            }
+
+            balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
+                handleError(it)
+                return@withLockSuspend Result.failure(it)
+            }
+
+            runOnMainThread {
+                inventorySnapshot.restoreTo(payer.inventory)
+                payer.inventory.unlock()
+            }
+
+            balanceManager.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes).getOrElse {
+                handleError(it)
+            }
+
+            Result.success(Unit)
+        }
     }
 
     @Suppress("unused")
