@@ -38,4 +38,8 @@ internal object Shard {
         shardToDiamondRecipe.setIngredient('S', createItemStack())
         Bukkit.addRecipe(shardToDiamondRecipe)
     }
+
+    fun isShardItem(it: ItemStack): Boolean {
+        return it.itemMeta.persistentDataContainer.has(namespacedKey)
+    }
 }

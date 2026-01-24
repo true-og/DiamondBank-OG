@@ -103,10 +103,10 @@ internal class Balancetop : CommandExecutor {
                     val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
                     baltopMessage +=
                         "\n<green>${baltopMessage.lines().size + offset}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
-                        getPrefix(
-                            uuid
-                        )
-                    }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
+                            getPrefix(
+                                uuid
+                            )
+                        }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
                 }
                 sender.sendMessage(mm.deserialize(baltopMessage))
                 return@launch
@@ -163,10 +163,10 @@ internal class Balancetop : CommandExecutor {
                 val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
                 baltopMessage +=
                     "\n<green>${baltopMessage.lines().size + (9 * (index - 1))}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
-                    getPrefix(
-                        uuid
-                    )
-                }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
+                        getPrefix(
+                            uuid
+                        )
+                    }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
             }
 
             sender.sendMessage(mm.deserialize(baltopMessage))

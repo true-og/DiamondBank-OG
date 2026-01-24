@@ -10,6 +10,15 @@ plugins {
     kotlin("jvm") version "2.1.21" // Import Kotlin JVM plugin.
 }
 
+/* ----------------------------- Source sets --------------------------- */
+sourceSets {
+    create("dev") {
+        java.srcDir("src/dev/kotlin")
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+}
+
 /* ---------------------------- Java / Kotlin -------------------------- */
 java {
     toolchain {
@@ -18,7 +27,15 @@ java {
     }
 }
 
-kotlin { jvmToolchain(17) }
+kotlin {
+    jvmToolchain(17)
+    target { compilations { getByName("dev") { associateWith(target.compilations.getByName("main")) } } }
+}
+
+configurations {
+    named("devCompileOnly") { extendsFrom(configurations.compileOnly.get()) }
+    named("devRuntimeOnly") { extendsFrom(configurations.runtimeOnly.get()) }
+}
 
 /* ----------------------------- Metadata ------------------------------ */
 val commitHash =
@@ -29,7 +46,7 @@ val commitHash =
         output.trim()
     }
 
-group = "net.trueog.diamondbank-og" // Declare bundle identifier.
+group = "net.trueog.diamondbankog" // Declare bundle identifier.
 
 val apiVersion = "1.19" // Declare plugin version (will be in .jar).
 
@@ -96,4 +113,19 @@ spotless {
 
 tasks.named("spotlessCheck") {
     dependsOn("spotlessApply") // Run spotless before checking if spotless ran.
+}
+
+/* ----------------------------- Shadow Dev -------------------------------- */
+tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJarDev") {
+    from(sourceSets.main.get().output)
+    from(sourceSets["dev"].output)
+    configurations = listOf(project.configurations.runtimeClasspath.get())
+
+    isEnableRelocation = true
+    relocationPrefix = "${project.group}.shadow"
+}
+
+tasks.register("buildDev") {
+    version = "$version-dev"
+    dependsOn(tasks.spotlessApply, tasks.named("shadowJarDev"))
 }

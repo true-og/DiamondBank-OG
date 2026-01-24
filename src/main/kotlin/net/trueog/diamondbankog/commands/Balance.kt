@@ -117,8 +117,8 @@ internal class Balance : CommandExecutor {
                     sender.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get ${
-                            if (balancePlayer.uniqueId != sender.uniqueId) "their" else "your"
-                        } balance."
+                                if (balancePlayer.uniqueId != sender.uniqueId) "their" else "your"
+                            } balance."
                         )
                     )
                     return@launch

@@ -7,9 +7,7 @@ import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
 import java.sql.SQLException
 import java.util.*
 import kotlinx.coroutines.future.await
-import net.trueog.diamondbankog.DiamondBankException.DatabaseException
-import net.trueog.diamondbankog.DiamondBankException.InsufficientBalanceException
-import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
+import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -124,7 +122,7 @@ class PostgreSQL {
         return Result.success(Unit)
     }
 
-    suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
+    suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Long> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
         val playerShards: PlayerShards
 
@@ -163,7 +161,12 @@ class PostgreSQL {
         }
 
         DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
-        return Result.success(Unit)
+        return when (type) {
+            ShardType.BANK -> Result.success(playerShards.bank)
+            ShardType.INVENTORY -> Result.success(playerShards.inventory)
+            ShardType.ENDER_CHEST -> Result.success(playerShards.enderChest)
+            else -> Result.failure(InvalidArgumentException())
+        }
     }
 
     suspend fun getTotalShards(uuid: UUID): Result<Long> {
