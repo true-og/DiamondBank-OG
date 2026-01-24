@@ -5,7 +5,7 @@ import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
 object InventorySnapshotUtils {
-    /** @return the amount of shards that could be removed. -1 if the change could not be put back */
+    /** @return the amount of shards that could be removed */
     fun removeShards(inventory: InventorySnapshot, shards: Long): Result<Int> {
         require(shards > 0)
 
