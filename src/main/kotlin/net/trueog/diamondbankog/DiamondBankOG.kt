@@ -5,6 +5,8 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
 import net.luckperms.api.LuckPerms
+import net.trueog.diamondbankog.api.DiamondBankAPIJava
+import net.trueog.diamondbankog.api.DiamondBankAPIKotlin
 import net.trueog.diamondbankog.commands.*
 import net.trueog.diamondbankog.commands.AutoCompress
 import net.trueog.diamondbankog.commands.AutoDeposit

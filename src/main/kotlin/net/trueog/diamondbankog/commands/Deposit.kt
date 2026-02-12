@@ -3,6 +3,7 @@ package net.trueog.diamondbankog.commands
 import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.CommonOperations
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
@@ -59,16 +60,15 @@ internal class Deposit : CommandExecutor {
                 sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
                 return true
             }
-            val split = amount.toString().split(".")
-            if (split[1].length > 1) {
-                sender.sendMessage(
-                    mm.deserialize(
-                        "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+            shards =
+                CommonOperations.diamondsToShards(amount).getOrElse {
+                    sender.sendMessage(
+                        mm.deserialize(
+                            "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+                        )
                     )
-                )
-                return true
-            }
-            shards = (split[0].toLong() * 9) + split[1].toLong()
+                    return true
+                }
         }
 
         scope.launch {

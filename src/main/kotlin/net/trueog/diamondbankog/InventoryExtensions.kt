@@ -35,7 +35,6 @@ internal object InventoryExtensions {
 
     val lockMap: MutableSet<PlayerInventory> = Collections.newSetFromMap(Collections.synchronizedMap(WeakHashMap()))
 
-    /** @return true is the inventory was locked, else false */
     fun PlayerInventory.lock(): Boolean {
         val added = lockMap.add(this)
         if (!added) throw IllegalStateException("Inventory was already locked")

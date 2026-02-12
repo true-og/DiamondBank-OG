@@ -82,16 +82,15 @@ internal class Pay : CommandExecutor {
             sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
             return true
         }
-        val split = amount.toString().split(".")
-        if (split[1].length > 1) {
-            sender.sendMessage(
-                mm.deserialize(
-                    "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+        val shards =
+            CommonOperations.diamondsToShards(amount).getOrElse {
+                sender.sendMessage(
+                    mm.deserialize(
+                        "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+                    )
                 )
-            )
-            return true
-        }
-        val shards = (split[0].toLong() * 9) + split[1].toLong()
+                return true
+            }
 
         scope.launch {
             when (
