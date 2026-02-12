@@ -23,7 +23,7 @@ if (provider == null) {
 
 ## Available functions
 > [!IMPORTANT]
-> Always convert Diamonds to Shards using [`diamondsToShards`](#diamondstoshards)
+> Always convert Diamonds to Shards before using the API using [`diamondsToShards`](#diamondstoshards)
 
 Exceptions are only applicable when using the Java API, when using the Kotlin API the function will return a `Result` instead.
 ### addToPlayerShards
