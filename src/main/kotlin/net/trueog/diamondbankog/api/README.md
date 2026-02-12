@@ -39,7 +39,14 @@ Exceptions are only applicable when using the Java API, when using the Kotlin AP
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.DatabaseException
  */
-fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?)
+```
+Kotlin:
+```kotlin
+suspend fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit>
+```
+Java:
+```java
+public void addToPlayerBankShards(UUID uuid, long shards, String transactionReason, @Nullable String notes)
 ```
 
 ### subtractFromPlayerBankShards
@@ -56,7 +63,14 @@ fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, n
  * @throws DiamondBankException.DatabaseException
  * @throws DiamondBankException.InsufficientBalanceException
  */
-fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?)
+```
+Kotlin:
+```kotlin
+suspend fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit>
+```
+Java:
+```java
+public void subtractFromPlayerBankShards(UUID uuid, long shards, String transactionReason)
 ```
 
 ### getBankShards
@@ -70,7 +84,14 @@ fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: St
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.DatabaseException
  */
-fun getBankShards(uuid: UUID): Long
+```
+Kotlin:
+```kotlin
+suspend fun getBankShards(uuid: UUID): Result<Long>
+```
+Java:
+```java
+public long getBankShards(UUID uuid)
 ```
 
 ### getInventoryShards
@@ -84,7 +105,14 @@ fun getBankShards(uuid: UUID): Long
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.DatabaseException
  */
-fun getInventoryShards(uuid: UUID): Long
+```
+Kotlin:
+```kotlin
+suspend fun getInventoryShards(uuid: UUID): Result<Long>
+```
+Java:
+```java
+public long getInventoryShards(UUID uuid)
 ```
 
 ### getEnderChestShards
@@ -98,7 +126,14 @@ fun getInventoryShards(uuid: UUID): Long
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.DatabaseException
  */
-fun getEnderChestShards(uuid: UUID): Long
+```
+Kotlin:
+```kotlin
+suspend fun getEnderChestShards(uuid: UUID): Result<Long>
+```
+Java:
+```java
+public long getEnderChestShards(UUID uuid)
 ```
 
 ### getTotalShards
@@ -112,7 +147,15 @@ fun getEnderChestShards(uuid: UUID): Long
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.DatabaseException
  */
-fun getTotalShards(uuid: UUID): Long
+
+```
+Kotlin:
+```kotlin
+suspend fun getTotalShards(uuid: UUID): Result<Long>
+```
+Java:
+```java
+public long getTotalShards(UUID uuid)
 ```
 
 ### getBaltop
@@ -126,7 +169,14 @@ fun getTotalShards(uuid: UUID): Long
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.DatabaseException
  */
-fun getBaltop(offset: Int): Map<UUID?, Long>
+```
+Kotlin:
+```kotlin
+suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>>
+```
+Java:
+```java
+public Map<@Nullable UUID, Long> getBaltop(int offset)
 ```
 
 ### consumeFromPlayer
@@ -146,7 +196,14 @@ fun getBaltop(offset: Int): Map<UUID?, Long>
  * @throws DiamondBankException.InsufficientInventorySpaceException
  * @throws DiamondBankException.DatabaseException
  */
-fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?)
+```
+Kotlin:
+```kotlin
+suspend fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit>
+```
+Java:
+```java
+public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, @Nullable String notes)
 ```
 
 ### playerPayPlayer
@@ -166,7 +223,14 @@ fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes
  * @throws DiamondBankException.InsufficientInventorySpaceException
  * @throws DiamondBankException.DatabaseException
  */
-fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?)
+```
+Kotlin:
+```kotlin
+suspend fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit>
+```
+Java:
+```java
+public void playerPayPlayer(UUID payerUuid, UUID receiverUuid, long shards, String transactionReason, @Nullable String notes)
 ```
 
 ### registerEventListener
@@ -174,7 +238,14 @@ fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transacti
 /**
  * Register a PlayerBalanceChangedListener to listen for player balance changes
  */
+```
+Kotlin:
+```kotlin
 fun registerEventListener(eventListener: PlayerBalanceChangedListener)
+```
+Java:
+```java
+public void registerEventListener(PlayerBalanceChangedListener eventListener)
 ```
 
 ### diamondsToShards
@@ -184,5 +255,12 @@ fun registerEventListener(eventListener: PlayerBalanceChangedListener)
  *
  * @throws DiamondBankException.MoreThanOneDecimalDigitException
  */
+```
+Kotlin:
+```kotlin
 fun diamondsToShards(diamonds: Float): Long
+```
+Java:
+```java
+public long diamondsToShards(float diamonds)
 ```
