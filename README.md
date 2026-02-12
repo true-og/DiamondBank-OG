@@ -1,7 +1,9 @@
 # DiamondBank-OG
 
 A FOSS and reliable Diamond Economy plugin for Spigot inspired by [The Diamond Bank](https://www.spigotmc.org/resources/the-diamond-bank.72020/).\
-Maintained for TrueOG.
+Maintained for TrueOG Network.
+
+**For developers: see the [API README](src/main/kotlin/net/trueog/diamondbankog/api/README.md).**
 
 ## PostgreSQL
 This plugin uses PostgreSQL which needs to be set up first. The Arch Linux wiki has a [pretty good guide](https://wiki.archlinux.org/title/PostgreSQL#Initial_configuration).\

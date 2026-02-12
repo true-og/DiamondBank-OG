@@ -1,8 +1,10 @@
-package net.trueog.diamondbankog
+package net.trueog.diamondbankog.api
 
 import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import net.trueog.diamondbankog.CommonOperations
+import net.trueog.diamondbankog.DiamondBankException
 import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -11,7 +13,9 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.lock
 import net.trueog.diamondbankog.InventoryExtensions.unlock
+import net.trueog.diamondbankog.InventorySnapshot
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
+import net.trueog.diamondbankog.PlayerBalanceChangedListener
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Bukkit
@@ -289,8 +293,18 @@ class DiamondBankAPIJava {
         }
     }
 
+    /** Register a PlayerBalanceChangedListener to listen for player balance changes */
     @Suppress("unused")
     fun registerEventListener(eventListener: PlayerBalanceChangedListener) {
         eventManager.register(eventListener)
     }
+
+    /**
+     * Converts a Diamond value to Shards
+     *
+     * @throws MoreThanOneDecimalDigitException
+     */
+    @Throws(MoreThanOneDecimalDigitException::class)
+    @Suppress("unused")
+    fun diamondsToShards(diamonds: Float): Long = CommonOperations.diamondsToShards(diamonds).getOrThrow()
 }

@@ -3,6 +3,7 @@ package net.trueog.diamondbankog
 import java.util.*
 import net.trueog.diamondbankog.DiamondBankException.InsufficientFundsException
 import net.trueog.diamondbankog.DiamondBankException.InsufficientInventorySpaceException
+import net.trueog.diamondbankog.DiamondBankException.MoreThanOneDecimalDigitException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 
 object CommonOperations {
@@ -32,5 +33,13 @@ object CommonOperations {
             return Result.failure(it)
         }
         return Result.success(Unit)
+    }
+
+    fun diamondsToShards(diamonds: Float): Result<Long> {
+        val split = diamonds.toString().split('.')
+        if (split[1].length > 1) {
+            return Result.failure(MoreThanOneDecimalDigitException())
+        }
+        return Result.success((split[0].toLong() * 9) + split[1].toLong())
     }
 }
