@@ -222,8 +222,7 @@ class DiamondBankAPIKotlin {
     }
 
     /** Converts a Diamond float to Shards */
-    @Suppress("unused")
-    fun diamondsToShards(diamonds: Float) = CommonOperations.diamondsToShards(diamonds)
+    @Suppress("unused") fun diamondsToShards(diamonds: Float) = CommonOperations.diamondsToShards(diamonds)
 
     /** Converts Shards into a formatted Diamonds string */
     @Suppress("unused") fun shardsToDiamonds(shards: Long) = CommonOperations.shardsToDiamonds(shards)

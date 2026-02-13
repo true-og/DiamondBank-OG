@@ -2,9 +2,9 @@ package net.trueog.diamondbankog.commands
 
 import java.util.*
 import kotlin.math.ceil
-import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.CommonOperations
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -100,7 +100,7 @@ internal class Balancetop : CommandExecutor {
                     val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
                     val playerName = player.name ?: player.uniqueId.toString()
 
-                    val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
+                    val diamonds = CommonOperations.shardsToDiamonds(it.value)
                     baltopMessage +=
                         "\n<green>${baltopMessage.lines().size + offset}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
                             getPrefix(
@@ -160,7 +160,7 @@ internal class Balancetop : CommandExecutor {
                 val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
                 val playerName = player.name ?: player.uniqueId.toString()
 
-                val diamonds = String.format("%.1f", floor((it.value / 9.0) * 10) / 10.0)
+                val diamonds = CommonOperations.shardsToDiamonds(it.value)
                 baltopMessage +=
                     "\n<green>${baltopMessage.lines().size + (9 * (index - 1))}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
                         getPrefix(

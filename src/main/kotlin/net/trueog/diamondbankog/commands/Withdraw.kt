@@ -96,8 +96,8 @@ internal class Withdraw : CommandExecutor {
                             shards
                         }
 
-                    val diamonds = String.format("%.1f", floor((shardsToWithdraw / 9.0) * 10) / 10.0)
-                    val bankDiamonds = String.format("%.1f", floor((bankShards / 9.0) * 10) / 10.0)
+                    val diamonds = CommonOperations.shardsToDiamonds(shardsToWithdraw)
+                    val bankDiamonds = CommonOperations.shardsToDiamonds(bankShards)
 
                     if (shards != -1L && shards > bankShards) {
                         sender.inventory.unlock()

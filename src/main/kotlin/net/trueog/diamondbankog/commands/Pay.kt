@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.commands
 
 import java.util.*
-import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.CommonOperations
@@ -103,7 +102,7 @@ internal class Pay : CommandExecutor {
                     CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot).getOrElse {
                         when (it) {
                             is DiamondBankException.InsufficientFundsException -> {
-                                val shortInDiamonds = String.format("%.1f", floor((it.short / 9.0) * 10) / 10.0)
+                                val shortInDiamonds = CommonOperations.shardsToDiamonds(it.short)
                                 sender.sendMessage(
                                     mm.deserialize(
                                         "${config.prefix}<reset>: <red>You are <yellow>$shortInDiamonds <aqua>Diamond${if (shortInDiamonds != "1.0") "s" else ""} <red>short for that payment."
@@ -146,7 +145,7 @@ internal class Pay : CommandExecutor {
                         return@tryWithLockSuspend
                     }
 
-                    val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+                    val diamondsPaid = CommonOperations.shardsToDiamonds(shards)
 
                     runOnMainThread {
                         inventorySnapshot.restoreTo(sender.inventory)

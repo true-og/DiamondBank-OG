@@ -1,9 +1,9 @@
 package net.trueog.diamondbankog.commands
 
 import java.util.*
-import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import net.trueog.diamondbankog.CommonOperations
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -70,10 +70,10 @@ internal class Balance : CommandExecutor {
                     }
 
                 val totalBalance = balance.bank + balance.inventory + balance.enderChest
-                val totalDiamonds = String.format("%.1f", floor((totalBalance / 9.0) * 10) / 10.0)
-                val bankDiamonds = String.format("%.1f", floor((balance.bank / 9.0) * 10) / 10.0)
-                val inventoryDiamonds = String.format("%.1f", floor((balance.inventory / 9.0) * 10) / 10.0)
-                val enderChestDiamonds = String.format("%.1f", floor((balance.enderChest / 9.0) * 10) / 10.0)
+                val totalDiamonds = CommonOperations.shardsToDiamonds(totalBalance)
+                val bankDiamonds = CommonOperations.shardsToDiamonds(balance.bank)
+                val inventoryDiamonds = CommonOperations.shardsToDiamonds(balance.inventory)
+                val enderChestDiamonds = CommonOperations.shardsToDiamonds(balance.enderChest)
                 sender.sendMessage(
                     mm.deserialize(
                         "<green>Balance of ${getPrefix(otherPlayer.uniqueId)}${otherPlayer.name}<reset><green>:\n" +
@@ -125,10 +125,10 @@ internal class Balance : CommandExecutor {
                 }
 
             val totalBalance = balance.bank + balance.inventory + balance.enderChest
-            val totalDiamonds = String.format("%.1f", floor((totalBalance / 9.0) * 10) / 10.0)
-            val bankDiamonds = String.format("%.1f", floor((balance.bank / 9.0) * 10) / 10.0)
-            val inventoryDiamonds = String.format("%.1f", floor((balance.inventory / 9.0) * 10) / 10.0)
-            val enderChestDiamonds = String.format("%.1f", floor((balance.enderChest / 9.0) * 10) / 10.0)
+            val totalDiamonds = CommonOperations.shardsToDiamonds(totalBalance)
+            val bankDiamonds = CommonOperations.shardsToDiamonds(balance.bank)
+            val inventoryDiamonds = CommonOperations.shardsToDiamonds(balance.inventory)
+            val enderChestDiamonds = CommonOperations.shardsToDiamonds(balance.enderChest)
             sender.sendMessage(
                 mm.deserialize(
                     "${config.prefix}<reset>: <green>${
