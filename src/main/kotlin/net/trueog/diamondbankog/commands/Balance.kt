@@ -38,49 +38,10 @@ internal class Balance : CommandExecutor {
 
             if (args == null) return@launch
 
-            if (sender !is Player) {
-                if (args.isEmpty()) {
-                    sender.sendMessage(
-                        mm.deserialize(
-                            "${config.prefix}<reset>: <red>Please provide that name or UUID of the player that you want to check the balance of."
-                        )
-                    )
-                    return@launch
-                }
-
-                val otherPlayer =
-                    try {
-                        Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
-                    } catch (_: Exception) {
-                        Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
-                    }
-                if (!otherPlayer.hasPlayedBefore()) {
-                    sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>That player doesn't exist."))
-                    return@launch
-                }
-
-                val balance =
-                    balanceManager.getAllShards(otherPlayer.uniqueId).getOrElse {
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>Something went wrong while trying to get their balance."
-                            )
-                        )
-                        return@launch
-                    }
-
-                val totalBalance = balance.bank + balance.inventory + balance.enderChest
-                val totalDiamonds = CommonOperations.shardsToDiamonds(totalBalance)
-                val bankDiamonds = CommonOperations.shardsToDiamonds(balance.bank)
-                val inventoryDiamonds = CommonOperations.shardsToDiamonds(balance.inventory)
-                val enderChestDiamonds = CommonOperations.shardsToDiamonds(balance.enderChest)
+            if (args.isEmpty() && sender !is Player) {
                 sender.sendMessage(
                     mm.deserialize(
-                        "<green>Balance of ${getPrefix(otherPlayer.uniqueId)}${otherPlayer.name}<reset><green>:\n" +
-                            "Bank: <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}\n" +
-                            "<green>Inventory: <yellow>$inventoryDiamonds <aqua>Diamond${if (inventoryDiamonds != "1.0") "s" else ""}\n" +
-                            "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>Diamond${if (enderChestDiamonds != "1.0") "s" else ""}\n" +
-                            "<bold><green>Total: <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}"
+                        "${config.prefix}<reset>: <red>Please provide that name or UUID of the player that you want to check the balance of."
                     )
                 )
                 return@launch
@@ -88,7 +49,7 @@ internal class Balance : CommandExecutor {
 
             val balancePlayer =
                 if (args.isEmpty()) {
-                    sender
+                    sender as Player
                 } else {
                     if (!sender.hasPermission("diamondbank-og.balance.others")) {
                         sender.sendMessage(
@@ -117,7 +78,7 @@ internal class Balance : CommandExecutor {
                     sender.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <red>Something went wrong while trying to get ${
-                                if (balancePlayer.uniqueId != sender.uniqueId) "their" else "your"
+                                if (if (sender is Player) sender.uniqueId == balancePlayer.uniqueId else false) "your" else "their"
                             } balance."
                         )
                     )
@@ -132,7 +93,7 @@ internal class Balance : CommandExecutor {
             sender.sendMessage(
                 mm.deserialize(
                     "${config.prefix}<reset>: <green>${
-                        if (balancePlayer.uniqueId == sender.uniqueId) "Your Balance" else "Balance of ${
+                        if (if (sender is Player) sender.uniqueId == balancePlayer.uniqueId else false) "Your Balance" else "Balance of ${
                             getPrefix(
                                 balancePlayer.uniqueId
                             )
