@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog.commands
 
-import java.util.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.CommonOperations
@@ -10,7 +9,6 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
-import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -60,13 +58,7 @@ internal class Balance : CommandExecutor {
                         return@launch
                     }
 
-                    val otherPlayer =
-                        try {
-                            Bukkit.getPlayer(UUID.fromString(args[0]))
-                                ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
-                        } catch (_: Exception) {
-                            Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
-                        }
+                    val otherPlayer = CommonOperations.getPlayerUsingUuidOrName(args[0])
                     if (!otherPlayer.hasPlayedBefore()) {
                         sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>That player doesn't exist."))
                         return@launch

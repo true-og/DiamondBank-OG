@@ -6,6 +6,8 @@ import net.trueog.diamondbankog.DiamondBankException.InsufficientFundsException
 import net.trueog.diamondbankog.DiamondBankException.InsufficientInventorySpaceException
 import net.trueog.diamondbankog.DiamondBankException.MoreThanOneDecimalDigitException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
+import org.bukkit.Bukkit
+import org.bukkit.OfflinePlayer
 
 object CommonOperations {
     suspend fun consume(uuid: UUID, shards: Long, inventorySnapshot: InventorySnapshot): Result<Unit> {
@@ -45,4 +47,13 @@ object CommonOperations {
     }
 
     fun shardsToDiamonds(shards: Long) = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+
+    fun getPlayerUsingUuidOrName(value: String): OfflinePlayer {
+        return try {
+            val uuid = UUID.fromString(value)
+            Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+        } catch (_: Exception) {
+            Bukkit.getPlayer(value) ?: Bukkit.getOfflinePlayer(value)
+        }
+    }
 }

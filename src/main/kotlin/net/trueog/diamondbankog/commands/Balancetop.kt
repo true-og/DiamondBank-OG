@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog.commands
 
-import java.util.*
 import kotlin.math.ceil
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
@@ -55,13 +54,7 @@ internal class Balancetop : CommandExecutor {
                     index = args[0].toInt()
                     offset = 9 * (index - 1)
                 } catch (_: Exception) {
-                    player =
-                        try {
-                            Bukkit.getPlayer(UUID.fromString(args[0]))
-                                ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
-                        } catch (_: Exception) {
-                            Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
-                        }
+                    player = CommonOperations.getPlayerUsingUuidOrName(args[0])
                     if (!player.hasPlayedBefore()) {
                         sender.sendMessage(
                             mm.deserialize(
