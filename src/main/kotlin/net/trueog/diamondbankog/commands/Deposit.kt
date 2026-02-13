@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog.commands
 
-import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.CommonOperations
@@ -96,7 +95,7 @@ internal class Deposit : CommandExecutor {
                                 .toLong()
                         }
                     if (shards != -1L && removedInShards != shards) {
-                        val shardsInDiamonds = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+                        val shardsInDiamonds = CommonOperations.shardsToDiamonds(shards)
                         sender.sendMessage(
                             mm.deserialize(
                                 "${config.prefix}<reset>: <red>You do not have <yellow>$shardsInDiamonds <aqua>Diamond${if (shardsInDiamonds != "1.0") "s" else ""} <red>to deposit."
@@ -121,7 +120,7 @@ internal class Deposit : CommandExecutor {
                         sender.inventory.unlock()
                     }
 
-                    val diamondsDeposited = String.format("%.1f", floor((removedInShards / 9.0) * 10) / 10.0)
+                    val diamondsDeposited = CommonOperations.shardsToDiamonds(removedInShards)
                     sender.sendMessage(
                         mm.deserialize(
                             "${config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>Diamond${if (diamondsDeposited != "1.0") "s" else ""} <green>into your bank account."

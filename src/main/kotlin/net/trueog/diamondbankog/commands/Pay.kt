@@ -1,7 +1,5 @@
 package net.trueog.diamondbankog.commands
 
-import java.util.*
-import kotlin.math.floor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.CommonOperations
@@ -19,7 +17,6 @@ import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock
-import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -48,13 +45,7 @@ internal class Pay : CommandExecutor {
             return true
         }
 
-        val receiver =
-            try {
-                Bukkit.getPlayer(UUID.fromString(args[0])) ?: Bukkit.getOfflinePlayer(UUID.fromString(args[0]))
-            } catch (_: Exception) {
-                Bukkit.getPlayer(args[0]) ?: Bukkit.getOfflinePlayer(args[0])
-            }
-
+        val receiver = CommonOperations.getPlayerUsingUuidOrName(args[0])
         if (sender.uniqueId == receiver.uniqueId) {
             sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>You cannot pay yourself."))
             return true
@@ -103,7 +94,7 @@ internal class Pay : CommandExecutor {
                     CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot).getOrElse {
                         when (it) {
                             is DiamondBankException.InsufficientFundsException -> {
-                                val shortInDiamonds = String.format("%.1f", floor((it.short / 9.0) * 10) / 10.0)
+                                val shortInDiamonds = CommonOperations.shardsToDiamonds(it.short)
                                 sender.sendMessage(
                                     mm.deserialize(
                                         "${config.prefix}<reset>: <red>You are <yellow>$shortInDiamonds <aqua>Diamond${if (shortInDiamonds != "1.0") "s" else ""} <red>short for that payment."
@@ -146,7 +137,7 @@ internal class Pay : CommandExecutor {
                         return@tryWithLockSuspend
                     }
 
-                    val diamondsPaid = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+                    val diamondsPaid = CommonOperations.shardsToDiamonds(shards)
 
                     runOnMainThread {
                         inventorySnapshot.restoreTo(sender.inventory)
