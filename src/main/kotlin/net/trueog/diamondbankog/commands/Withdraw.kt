@@ -110,8 +110,7 @@ internal class Withdraw : CommandExecutor {
                     }
 
                     val diamondsToAdd = floor(shardsToWithdraw / 9.0).toInt()
-                    val diamondsRemainder = shardsToWithdraw.toInt() % 9
-                    val shardsChange = if (diamondsRemainder == 0) 0 else 9 - diamondsRemainder
+                    val shardsChange = shardsToWithdraw.toInt() % 9
 
                     if (
                         inventorySnapshot.addItem(ItemStack(Material.DIAMOND, diamondsToAdd)).isNotEmpty() ||
