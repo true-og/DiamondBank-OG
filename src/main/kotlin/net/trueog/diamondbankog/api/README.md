@@ -258,7 +258,7 @@ public void registerEventListener(PlayerBalanceChangedListener eventListener)
 ```
 Kotlin:
 ```kotlin
-fun diamondsToShards(diamonds: Float): Long
+fun diamondsToShards(diamonds: Float): Result<Long>
 ```
 Java:
 ```java
