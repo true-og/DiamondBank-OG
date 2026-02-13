@@ -251,7 +251,7 @@ public void registerEventListener(PlayerBalanceChangedListener eventListener)
 ### diamondsToShards
 ```kotlin
 /**
- * Converts a Diamond value to Shards
+ * Converts a Diamond float to Shards
  *
  * @throws DiamondBankException.MoreThanOneDecimalDigitException
  */
@@ -263,4 +263,17 @@ fun diamondsToShards(diamonds: Float): Long
 Java:
 ```java
 public long diamondsToShards(float diamonds)
+```
+
+### shardsToDiamonds
+```kotlin
+/** Converts Shards into a formatted Diamonds string */
+```
+Kotlin:
+```kotlin
+fun shardsToDiamonds(shards: Long): String
+```
+Java:
+```java
+public String shardsToDiamonds(long shards)
 ```

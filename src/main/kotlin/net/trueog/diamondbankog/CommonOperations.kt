@@ -1,6 +1,7 @@
 package net.trueog.diamondbankog
 
 import java.util.*
+import kotlin.math.floor
 import net.trueog.diamondbankog.DiamondBankException.InsufficientFundsException
 import net.trueog.diamondbankog.DiamondBankException.InsufficientInventorySpaceException
 import net.trueog.diamondbankog.DiamondBankException.MoreThanOneDecimalDigitException
@@ -42,4 +43,6 @@ object CommonOperations {
         }
         return Result.success((split[0].toLong() * 9) + split[1].toLong())
     }
+
+    fun shardsToDiamonds(shards: Long) = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
 }
