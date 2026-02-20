@@ -249,6 +249,8 @@ public void registerEventListener(PlayerBalanceChangedListener eventListener)
 ```
 
 ### diamondsToShards
+> [!NOTE]
+> This function also has an overload for a double.
 ```kotlin
 /**
  * Converts a Diamond float to Shards
