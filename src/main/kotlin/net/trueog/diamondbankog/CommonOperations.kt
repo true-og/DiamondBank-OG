@@ -4,8 +4,8 @@ import java.util.*
 import kotlin.math.floor
 import net.trueog.diamondbankog.DiamondBankException.InsufficientFundsException
 import net.trueog.diamondbankog.DiamondBankException.InsufficientInventorySpaceException
-import net.trueog.diamondbankog.DiamondBankException.MoreThanOneDecimalDigitException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
+import net.trueog.diamondbankog.DiamondBankRuntimeException.MoreThanOneDecimalDigitRuntimeException
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 
@@ -41,7 +41,7 @@ object CommonOperations {
     fun diamondsToShards(diamonds: Float): Result<Long> {
         val split = diamonds.toString().split('.')
         if (split[1].length > 1) {
-            return Result.failure(MoreThanOneDecimalDigitException())
+            return Result.failure(MoreThanOneDecimalDigitRuntimeException())
         }
         return Result.success((split[0].toLong() * 9) + split[1].toLong())
     }

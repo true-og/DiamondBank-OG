@@ -253,9 +253,10 @@ public void registerEventListener(PlayerBalanceChangedListener eventListener)
 > This function also has an overload for a double.
 ```kotlin
 /**
- * Converts a Diamond float to Shards
+ * WARNING: This function can throw a MoreThanOneDecimalDigitRuntimeException,
+ * make sure it's checked when handling arbitrary input
  *
- * @throws DiamondBankException.MoreThanOneDecimalDigitException
+ * Converts a Diamond float to Shards
  */
 ```
 Kotlin:
