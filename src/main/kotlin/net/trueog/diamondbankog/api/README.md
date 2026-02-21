@@ -70,7 +70,7 @@ suspend fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionRe
 ```
 Java:
 ```java
-public void subtractFromPlayerBankShards(UUID uuid, long shards, String transactionReason)
+public void subtractFromPlayerBankShards(UUID uuid, long shards, String transactionReason, @Nullable String notes)
 ```
 
 ### getBankShards
