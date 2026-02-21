@@ -70,7 +70,7 @@ suspend fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionRe
 ```
 Java:
 ```java
-public void subtractFromPlayerBankShards(UUID uuid, long shards, String transactionReason)
+public void subtractFromPlayerBankShards(UUID uuid, long shards, String transactionReason, @Nullable String notes)
 ```
 
 ### getBankShards
@@ -249,11 +249,14 @@ public void registerEventListener(PlayerBalanceChangedListener eventListener)
 ```
 
 ### diamondsToShards
+> [!NOTE]
+> This function also has an overload for a double.
 ```kotlin
 /**
- * Converts a Diamond float to Shards
+ * WARNING: This function can throw a MoreThanOneDecimalDigitRuntimeException,
+ * make sure it's checked when handling arbitrary input
  *
- * @throws DiamondBankException.MoreThanOneDecimalDigitException
+ * Converts a Diamond float to Shards
  */
 ```
 Kotlin:

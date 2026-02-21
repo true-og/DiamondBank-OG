@@ -221,6 +221,9 @@ class DiamondBankAPIKotlin {
         eventManager.register(eventListener)
     }
 
+    /** Converts a Diamond double to Shards */
+    @Suppress("unused") fun diamondsToShards(diamonds: Double) = diamondsToShards(diamonds.toFloat())
+
     /** Converts a Diamond float to Shards */
     @Suppress("unused") fun diamondsToShards(diamonds: Float) = CommonOperations.diamondsToShards(diamonds)
 

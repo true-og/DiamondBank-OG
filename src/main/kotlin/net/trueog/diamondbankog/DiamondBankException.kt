@@ -17,7 +17,9 @@ sealed class DiamondBankException(message: String) : Exception(message) {
 
     class InsufficientInventorySpaceException : DiamondBankException("Insufficient inventory space for the change")
 
-    class MoreThanOneDecimalDigitException : DiamondBankException("More than one decimal digit")
-
     class InvalidArgumentException : Exception()
+}
+
+sealed class DiamondBankRuntimeException(message: String) : RuntimeException(message) {
+    class MoreThanOneDecimalDigitRuntimeException : DiamondBankException("More than one decimal digit")
 }

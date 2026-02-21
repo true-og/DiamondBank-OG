@@ -300,13 +300,20 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * Converts a Diamond float to Shards
+     * WARNING: This function can throw a MoreThanOneDecimalDigitRuntimeException, make sure it's checked when handling
+     * arbitrary input
      *
-     * @throws MoreThanOneDecimalDigitException
+     * Converts a Diamond double to Shards
      */
-    @Throws(MoreThanOneDecimalDigitException::class)
-    @Suppress("unused")
-    fun diamondsToShards(diamonds: Float) = CommonOperations.diamondsToShards(diamonds).getOrThrow()
+    @Suppress("unused") fun diamondsToShards(diamonds: Double) = diamondsToShards(diamonds.toFloat())
+
+    /**
+     * WARNING: This function can throw a MoreThanOneDecimalDigitRuntimeException, make sure it's checked when handling
+     * arbitrary input
+     *
+     * Converts a Diamond float to Shards
+     */
+    @Suppress("unused") fun diamondsToShards(diamonds: Float) = CommonOperations.diamondsToShards(diamonds).getOrThrow()
 
     /** Converts Shards into a formatted Diamonds string */
     @Suppress("unused") fun shardsToDiamonds(shards: Long) = CommonOperations.shardsToDiamonds(shards)
