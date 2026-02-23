@@ -9,16 +9,17 @@ if (diamondBankAPIProvider == null) {
     Bukkit.getPluginManager().disablePlugin(this)
     return
 }
-val diamondBankAPI = diamondBankAPIProvider.getProvider()
+val diamondBankAPI = diamondBankAPIProvider.provider
 ```
 Java:
 ```java
-final RegisteredServiceProvider<DiamondBankAPIJava> provider = getServer().getServicesManager().getRegistration(DiamondBankAPIJava.class);
-if (provider == null) {
-    getLogger().severe("DiamondBank-OG API is null – disabling plugin.");
+final RegisteredServiceProvider<DiamondBankAPIJava> diamondBankAPIProvider = getServer().getServicesManager().getRegistration(DiamondBankAPIJava.class);
+if (diamondBankAPIProvider == null) {
+    getLogger().severe("DiamondBank-OG API is null");
     Bukkit.getPluginManager().disablePlugin(this);
     return;
 }
+DiamondBankAPIJava diamondBankAPI = diamondBankAPIProvider.getProvider();
 ```
 
 ## Available functions
