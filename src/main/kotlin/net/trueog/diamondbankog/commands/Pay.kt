@@ -15,7 +15,6 @@ import net.trueog.diamondbankog.InventoryExtensions.unlock
 import net.trueog.diamondbankog.InventorySnapshot
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
-import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -126,7 +125,7 @@ internal class Pay : CommandExecutor {
                         }
                     }
 
-                    balanceManager.addToPlayerShards(receiver.uniqueId, shards, ShardType.BANK).getOrElse {
+                    balanceManager.addToBankShards(receiver.uniqueId, shards).getOrElse {
                         handleError(it)
                         sender.sendMessage(
                             mm.deserialize(

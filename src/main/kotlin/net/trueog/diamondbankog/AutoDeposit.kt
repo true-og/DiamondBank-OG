@@ -7,7 +7,6 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.ErrorHandler.handleError
-import net.trueog.diamondbankog.PostgreSQL.ShardType
 import org.bukkit.Material
 import org.bukkit.entity.Item
 import org.bukkit.entity.Player
@@ -41,7 +40,7 @@ internal object AutoDeposit {
 
         scope.launch {
             transactionLock.withLockSuspend(player.uniqueId) {
-                balanceManager.addToPlayerShards(player.uniqueId, shards, ShardType.BANK).getOrElse {
+                balanceManager.addToBankShards(player.uniqueId, shards).getOrElse {
                     handleError(it)
                     player.sendMessage(
                         mm.deserialize(

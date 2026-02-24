@@ -39,7 +39,7 @@ class DiamondBankAPIJava {
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
-                balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
+                balanceManager.addToBankShards(uuid, shards).getOrElse {
                     handleError(it)
                     throw EconomyDisabledException()
                 }
@@ -297,7 +297,7 @@ class DiamondBankAPIJava {
                     throw it
                 }
 
-                balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
+                balanceManager.addToBankShards(receiverUuid, shards).getOrElse {
                     payer.inventory.unlock()
                     handleError(it)
                     throw EconomyDisabledException()

@@ -37,7 +37,7 @@ class DiamondBankAPIKotlin {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
-            balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
+            balanceManager.addToBankShards(uuid, shards).getOrElse {
                 handleError(it)
                 return@withLockSuspend Result.failure(EconomyDisabledException())
             }
@@ -220,7 +220,7 @@ class DiamondBankAPIKotlin {
                 return@withLockSuspend Result.failure(it)
             }
 
-            balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
+            balanceManager.addToBankShards(receiverUuid, shards).getOrElse {
                 payer.inventory.unlock()
                 handleError(it)
                 return@withLockSuspend Result.failure(it)

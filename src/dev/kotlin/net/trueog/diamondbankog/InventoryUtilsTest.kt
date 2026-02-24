@@ -11,7 +11,7 @@ object InventoryUtilsTest : Test {
     override val name: String
         get() = "InventoryUtilsTest"
 
-    override fun runTests(): Array<TestResult> {
+    override suspend fun runTests(): Array<TestResult> {
         val testResults = mutableListOf<TestResult>()
         val tests =
             arrayOf(
@@ -36,7 +36,7 @@ object InventoryUtilsTest : Test {
         return testResults.toTypedArray()
     }
 
-    fun testShardRemoval(): Array<CriteriaResult> {
+    suspend fun testShardRemoval(): Array<CriteriaResult> {
         val inventorySnapshot = InventorySnapshot.withContents(arrayOf(Shard.createItemStack(9)))
         val removed =
             InventorySnapshotUtils.removeShards(inventorySnapshot, 3).getOrElse {
@@ -51,7 +51,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(removedCountCriteria, shardCountCriteria)
     }
 
-    fun testDiamondRemoval(): Array<CriteriaResult> {
+    suspend fun testDiamondRemoval(): Array<CriteriaResult> {
         val inventorySnapshot = InventorySnapshot.withContents(arrayOf(ItemStack(Material.DIAMOND, 2)))
         val removed =
             InventorySnapshotUtils.removeShards(inventorySnapshot, 9).getOrElse {
@@ -66,7 +66,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(removedCountCriteria, diamondCountCriteria)
     }
 
-    fun testDiamondBlockRemoval(): Array<CriteriaResult> {
+    suspend fun testDiamondBlockRemoval(): Array<CriteriaResult> {
         val inventorySnapshot = InventorySnapshot.withContents(arrayOf(ItemStack(Material.DIAMOND_BLOCK, 2)))
         val removed =
             InventorySnapshotUtils.removeShards(inventorySnapshot, 81).getOrElse {
@@ -85,7 +85,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(removedCountCriteria, diamondBlockCountCriteria)
     }
 
-    fun testShardAndDiamondRemoval(): Array<CriteriaResult> {
+    suspend fun testShardAndDiamondRemoval(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1)))
         val removed =
@@ -104,7 +104,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(removedCountCriteria, noContentsCriteria)
     }
 
-    fun testShardDiamondAndDiamondBlockRemoval(): Array<CriteriaResult> {
+    suspend fun testShardDiamondAndDiamondBlockRemoval(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(
                 arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1), ItemStack(Material.DIAMOND_BLOCK, 1))
@@ -125,7 +125,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(removedCountCriteria, noContentsCriteria)
     }
 
-    fun testShardAndDiamondRemovalWithShardChange(): Array<CriteriaResult> {
+    suspend fun testShardAndDiamondRemovalWithShardChange(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1)))
         val removed =
@@ -151,7 +151,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(removedCountCriteria, oneShardCriteria, noDiamondsCriteria, noDiamondBlocksCriteria)
     }
 
-    fun testShardDiamondAndDiamondBlockRemovalWithShardAndDiamondChange(): Array<CriteriaResult> {
+    suspend fun testShardDiamondAndDiamondBlockRemovalWithShardAndDiamondChange(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(
                 arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1), ItemStack(Material.DIAMOND_BLOCK, 1))
@@ -179,7 +179,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(removedCountCriteria, oneShardCriteria, noDiamondsCriteria, noDiamondBlocksCriteria)
     }
 
-    fun testRemoveAll(): Array<CriteriaResult> {
+    suspend fun testRemoveAll(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(
                 arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 1), ItemStack(Material.DIAMOND_BLOCK, 1))
@@ -196,7 +196,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(removedCountCriteria, noContentsCriteria)
     }
 
-    fun testCountShards(): Array<CriteriaResult> {
+    suspend fun testCountShards(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(
                 arrayOf(Shard.createItemStack(2), Shard.createItemStack(5), Shard.createItemStack(1))
@@ -206,7 +206,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(countCriteria)
     }
 
-    fun testCountDiamonds(): Array<CriteriaResult> {
+    suspend fun testCountDiamonds(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(
                 arrayOf(ItemStack(Material.DIAMOND, 2), ItemStack(Material.DIAMOND, 5), ItemStack(Material.DIAMOND, 1))
@@ -216,7 +216,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(countCriteria)
     }
 
-    fun testCountDiamondBlocks(): Array<CriteriaResult> {
+    suspend fun testCountDiamondBlocks(): Array<CriteriaResult> {
         val inventorySnapshot =
             InventorySnapshot.withContents(
                 arrayOf(
@@ -230,7 +230,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(countCriteria)
     }
 
-    fun testNotEnoughSpaceForChange(): Array<CriteriaResult> {
+    suspend fun testNotEnoughSpaceForChange(): Array<CriteriaResult> {
         val contents = mutableListOf<ItemStack?>()
         repeat(35) { contents.add(ItemStack(Material.DIRT)) }
         contents.add(ItemStack(Material.DIAMOND_BLOCK))
@@ -240,7 +240,7 @@ object InventoryUtilsTest : Test {
         return arrayOf(failureCriteria)
     }
 
-    fun testEmptyRemoveShards(): Array<CriteriaResult> {
+    suspend fun testEmptyRemoveShards(): Array<CriteriaResult> {
         val contents = emptyArray<ItemStack?>()
         val inventorySnapshot = InventorySnapshot.withContents(contents)
         val removed =
