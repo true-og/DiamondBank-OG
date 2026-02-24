@@ -31,16 +31,18 @@ class DiamondBankAPIJava {
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(EconomyDisabledException::class, DatabaseException::class)
+    @Throws(EconomyDisabledException::class)
     @Suppress("unused")
     fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
-                balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse { throw it }
+                balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
+                    handleError(it)
+                    throw EconomyDisabledException()
+                }
 
                 balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                     handleError(it)
@@ -58,17 +60,19 @@ class DiamondBankAPIJava {
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.DatabaseException
      * @throws DiamondBankException.InsufficientBalanceException
      */
-    @Throws(EconomyDisabledException::class, DatabaseException::class, InsufficientBalanceException::class)
+    @Throws(EconomyDisabledException::class, InsufficientBalanceException::class)
     @Suppress("unused")
     fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
-                balanceManager.subtractFromBankShards(uuid, shards).getOrElse { throw it }
+                balanceManager.subtractFromBankShards(uuid, shards).getOrElse {
+                    handleError(it)
+                    throw EconomyDisabledException()
+                }
 
                 balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
                     handleError(it)
@@ -84,9 +88,8 @@ class DiamondBankAPIJava {
      * CompletableFuture
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(EconomyDisabledException::class, DatabaseException::class)
+    @Throws(EconomyDisabledException::class)
     @Suppress("unused")
     fun getBankShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.BANK)
 
@@ -97,9 +100,8 @@ class DiamondBankAPIJava {
      * CompletableFuture
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(EconomyDisabledException::class, DatabaseException::class)
+    @Throws(EconomyDisabledException::class)
     @Suppress("unused")
     fun getInventoryShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.INVENTORY)
 
@@ -110,9 +112,8 @@ class DiamondBankAPIJava {
      * CompletableFuture
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(EconomyDisabledException::class, DatabaseException::class)
+    @Throws(EconomyDisabledException::class)
     @Suppress("unused")
     fun getEnderChestShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
@@ -123,9 +124,8 @@ class DiamondBankAPIJava {
      * CompletableFuture
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(EconomyDisabledException::class, DatabaseException::class)
+    @Throws(EconomyDisabledException::class)
     @Suppress("unused")
     fun getTotalShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.TOTAL)
 
@@ -136,28 +136,29 @@ class DiamondBankAPIJava {
      * CompletableFuture
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(EconomyDisabledException::class, DatabaseException::class)
+    @Throws(EconomyDisabledException::class)
     @Suppress("unused")
     fun getAllShards(uuid: UUID): PlayerShards {
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
-                val result = balanceManager.getAllShards(uuid)
-                result.getOrThrow()
+                balanceManager.getAllShards(uuid).getOrElse {
+                    handleError(it)
+                    throw EconomyDisabledException()
+                }
             }
         }
     }
 
-    @Throws(EconomyDisabledException::class, DatabaseException::class)
+    @Throws(EconomyDisabledException::class)
     private fun getShardTypeShards(uuid: UUID, type: ShardType): Long {
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
-            val result =
-                transactionLock.withLockSuspend(uuid) {
+            transactionLock
+                .withLockSuspend(uuid) {
                     when (type) {
                         ShardType.BANK -> balanceManager.getBankShards(uuid)
                         ShardType.INVENTORY -> balanceManager.getInventoryShards(uuid)
@@ -165,7 +166,10 @@ class DiamondBankAPIJava {
                         ShardType.TOTAL -> balanceManager.getTotalShards(uuid)
                     }
                 }
-            result.getOrThrow()
+                .getOrElse {
+                    handleError(it)
+                    throw EconomyDisabledException()
+                }
         }
     }
 
@@ -176,14 +180,18 @@ class DiamondBankAPIJava {
      * CompletableFuture
      *
      * @throws DiamondBankException.EconomyDisabledException
-     * @throws DiamondBankException.DatabaseException
      */
-    @Throws(EconomyDisabledException::class, DatabaseException::class)
+    @Throws(EconomyDisabledException::class)
     @Suppress("unused")
     fun getBaltop(offset: Int): Map<UUID?, Long> {
         if (economyDisabled) throw EconomyDisabledException()
 
-        return runBlocking { balanceManager.getBaltop(offset).getOrElse { throw it } }
+        return runBlocking {
+            balanceManager.getBaltop(offset).getOrElse {
+                handleError(it)
+                throw EconomyDisabledException()
+            }
+        }
     }
 
     /**
@@ -199,7 +207,6 @@ class DiamondBankAPIJava {
      * @throws DiamondBankException.PlayerNotOnlineException
      * @throws DiamondBankException.InsufficientFundsException
      * @throws DiamondBankException.InsufficientInventorySpaceException
-     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         EconomyDisabledException::class,
@@ -207,7 +214,6 @@ class DiamondBankAPIJava {
         PlayerNotOnlineException::class,
         InsufficientFundsException::class,
         InsufficientInventorySpaceException::class,
-        DatabaseException::class,
     )
     @Suppress("unused")
     fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
@@ -223,7 +229,14 @@ class DiamondBankAPIJava {
                     InventorySnapshot.from(player.inventory)
                 }
 
-                CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrThrow()
+                CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrElse {
+                    player.inventory.unlock()
+                    if (it is DatabaseException) {
+                        handleError(it)
+                        throw EconomyDisabledException()
+                    }
+                    throw it
+                }
 
                 runOnMainThread {
                     inventorySnapshot.restoreTo(player.inventory)
@@ -250,7 +263,6 @@ class DiamondBankAPIJava {
      * @throws DiamondBankException.PayerNotOnlineException
      * @throws DiamondBankException.InsufficientFundsException
      * @throws DiamondBankException.InsufficientInventorySpaceException
-     * @throws DiamondBankException.DatabaseException
      */
     @Throws(
         EconomyDisabledException::class,
@@ -258,7 +270,6 @@ class DiamondBankAPIJava {
         PayerNotOnlineException::class,
         InsufficientFundsException::class,
         InsufficientInventorySpaceException::class,
-        DatabaseException::class,
     )
     @Suppress("unused")
     fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?) {
@@ -277,9 +288,20 @@ class DiamondBankAPIJava {
                     InventorySnapshot.from(payer.inventory)
                 }
 
-                CommonOperations.consume(payer.uniqueId, shards, inventorySnapshot).getOrThrow()
+                CommonOperations.consume(payer.uniqueId, shards, inventorySnapshot).getOrElse {
+                    payer.inventory.unlock()
+                    if (it is DatabaseException) {
+                        handleError(it)
+                        throw EconomyDisabledException()
+                    }
+                    throw it
+                }
 
-                balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrThrow()
+                balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
+                    payer.inventory.unlock()
+                    handleError(it)
+                    throw EconomyDisabledException()
+                }
 
                 runOnMainThread {
                     inventorySnapshot.restoreTo(payer.inventory)

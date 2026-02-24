@@ -1,6 +1,7 @@
 package net.trueog.diamondbankog.api
 
 import java.util.*
+import kotlin.getOrElse
 import kotlinx.coroutines.DelicateCoroutinesApi
 import net.trueog.diamondbankog.CommonOperations
 import net.trueog.diamondbankog.DiamondBankException.*
@@ -37,7 +38,8 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             balanceManager.addToPlayerShards(uuid, shards, ShardType.BANK).getOrElse {
-                return@withLockSuspend Result.failure(it)
+                handleError(it)
+                return@withLockSuspend Result.failure(EconomyDisabledException())
             }
 
             balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
@@ -65,7 +67,8 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             balanceManager.subtractFromBankShards(uuid, shards).getOrElse {
-                return@withLockSuspend Result.failure(it)
+                handleError(it)
+                return@withLockSuspend Result.failure(EconomyDisabledException())
             }
 
             balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
@@ -95,23 +98,31 @@ class DiamondBankAPIKotlin {
     suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
-        return transactionLock.withLockSuspend(uuid) { balanceManager.getAllShards(uuid) }
+        return transactionLock.withLockSuspend(uuid) {
+            Result.success(
+                balanceManager.getAllShards(uuid).getOrElse {
+                    handleError(it)
+                    return@withLockSuspend Result.failure(EconomyDisabledException())
+                }
+            )
+        }
     }
 
     private suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
-            val result =
+            Result.success(
                 when (type) {
                     ShardType.BANK -> balanceManager.getBankShards(uuid)
                     ShardType.INVENTORY -> balanceManager.getInventoryShards(uuid)
                     ShardType.ENDER_CHEST -> balanceManager.getEnderChestShards(uuid)
                     ShardType.TOTAL -> balanceManager.getTotalShards(uuid)
                 }.getOrElse {
-                    return@withLockSuspend Result.failure(it)
+                    handleError(it)
+                    return@withLockSuspend Result.failure(EconomyDisabledException())
                 }
-            Result.success(result)
+            )
         }
     }
 
@@ -119,11 +130,12 @@ class DiamondBankAPIKotlin {
     suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
-        val baltop =
+        return Result.success(
             balanceManager.getBaltop(offset).getOrElse {
-                return Result.failure(it)
+                handleError(it)
+                return Result.failure(EconomyDisabledException())
             }
-        return Result.success(baltop)
+        )
     }
 
     /**
@@ -146,6 +158,11 @@ class DiamondBankAPIKotlin {
             }
 
             CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrElse {
+                player.inventory.unlock()
+                if (it is DatabaseException) {
+                    handleError(it)
+                    return@withLockSuspend Result.failure(EconomyDisabledException())
+                }
                 return@withLockSuspend Result.failure(it)
             }
 
@@ -195,10 +212,16 @@ class DiamondBankAPIKotlin {
             }
 
             CommonOperations.consume(payer.uniqueId, shards, inventorySnapshot).getOrElse {
+                payer.inventory.unlock()
+                if (it is DatabaseException) {
+                    handleError(it)
+                    return@withLockSuspend Result.failure(EconomyDisabledException())
+                }
                 return@withLockSuspend Result.failure(it)
             }
 
             balanceManager.addToPlayerShards(receiverUuid, shards, ShardType.BANK).getOrElse {
+                payer.inventory.unlock()
                 handleError(it)
                 return@withLockSuspend Result.failure(it)
             }
