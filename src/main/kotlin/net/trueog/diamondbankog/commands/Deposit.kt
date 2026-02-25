@@ -94,10 +94,9 @@ internal class Deposit : CommandExecutor {
                                 .toLong()
                         }
                     if (shards != -1L && removedInShards != shards) {
-                        val shardsInDiamonds = CommonOperations.shardsToDiamonds(shards)
                         sender.sendMessage(
                             mm.deserialize(
-                                "${config.prefix}<reset>: <red>You do not have <yellow>$shardsInDiamonds <aqua>Diamond${if (shardsInDiamonds != "1.0") "s" else ""} <red>to deposit."
+                                "${config.prefix}<reset>: <red>You do not have ${CommonOperations.shardsToDiamondsFull(shards)} <red>to deposit."
                             )
                         )
                         sender.inventory.unlock()
@@ -119,10 +118,9 @@ internal class Deposit : CommandExecutor {
                         sender.inventory.unlock()
                     }
 
-                    val diamondsDeposited = CommonOperations.shardsToDiamonds(removedInShards)
                     sender.sendMessage(
                         mm.deserialize(
-                            "${config.prefix}<reset>: <green>Successfully deposited <yellow>$diamondsDeposited <aqua>Diamond${if (diamondsDeposited != "1.0") "s" else ""} <green>into your bank account."
+                            "${config.prefix}<reset>: <green>Successfully deposited ${CommonOperations.shardsToDiamondsFull(removedInShards)} <green>into your bank account."
                         )
                     )
 

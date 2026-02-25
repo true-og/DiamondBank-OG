@@ -93,10 +93,9 @@ internal class Pay : CommandExecutor {
                     CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot).getOrElse {
                         when (it) {
                             is DiamondBankException.InsufficientFundsException -> {
-                                val shortInDiamonds = CommonOperations.shardsToDiamonds(it.short)
                                 sender.sendMessage(
                                     mm.deserialize(
-                                        "${config.prefix}<reset>: <red>You are <yellow>$shortInDiamonds <aqua>Diamond${if (shortInDiamonds != "1.0") "s" else ""} <red>short for that payment."
+                                        "${config.prefix}<reset>: <red>You are ${CommonOperations.shardsToDiamondsFull(it.short)} <red>short for that payment."
                                     )
                                 )
                                 sender.inventory.unlock()
@@ -126,8 +125,6 @@ internal class Pay : CommandExecutor {
                         return@tryWithLockSuspend
                     }
 
-                    val diamondsPaid = CommonOperations.shardsToDiamonds(shards)
-
                     runOnMainThread {
                         inventorySnapshot.restoreTo(sender.inventory)
                         sender.inventory.unlock()
@@ -135,7 +132,7 @@ internal class Pay : CommandExecutor {
 
                     sender.sendMessage(
                         mm.deserialize(
-                            "${config.prefix}<reset>: <green>Successfully paid <yellow>$diamondsPaid <aqua>Diamond${if (diamondsPaid != "1.0") "s" else ""} <green>to ${
+                            "${config.prefix}<reset>: <green>Successfully paid ${CommonOperations.shardsToDiamondsFull(shards)} <green>to ${
                                 getPrefix(
                                     receiver.uniqueId
                                 )
@@ -151,7 +148,7 @@ internal class Pay : CommandExecutor {
                                     getPrefix(
                                         sender.uniqueId
                                     )
-                                } ${sender.name}<reset> <green>has paid you <yellow>$diamondsPaid <aqua>Diamond${if (diamondsPaid != "1.0") "s" else ""}<green>."
+                                } ${sender.name}<reset> <green>has paid you ${CommonOperations.shardsToDiamondsFull(shards)}<green>."
                             )
                         )
                     }

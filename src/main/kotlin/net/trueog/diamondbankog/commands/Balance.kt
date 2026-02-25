@@ -78,10 +78,6 @@ internal class Balance : CommandExecutor {
                 }
 
             val totalBalance = balance.bank + balance.inventory + balance.enderChest
-            val totalDiamonds = CommonOperations.shardsToDiamonds(totalBalance)
-            val bankDiamonds = CommonOperations.shardsToDiamonds(balance.bank)
-            val inventoryDiamonds = CommonOperations.shardsToDiamonds(balance.inventory)
-            val enderChestDiamonds = CommonOperations.shardsToDiamonds(balance.enderChest)
             sender.sendMessage(
                 mm.deserialize(
                     "${config.prefix}<reset>: <green>${
@@ -91,10 +87,10 @@ internal class Balance : CommandExecutor {
                             )
                         }${balancePlayer.name}"
                     }<reset><green>:\n" +
-                        "Bank: <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}\n" +
-                        "<green>Inventory: <yellow>$inventoryDiamonds <aqua>Diamond${if (inventoryDiamonds != "1.0") "s" else ""}\n" +
-                        "<green>Ender Chest: <yellow>$enderChestDiamonds <aqua>Diamond${if (enderChestDiamonds != "1.0") "s" else ""}\n" +
-                        "<bold><green>Total: <yellow>$totalDiamonds <aqua>Diamond${if (totalDiamonds != "1.0") "s" else ""}"
+                        "Bank: ${CommonOperations.shardsToDiamondsFull(balance.bank)}\n" +
+                        "<green>Inventory: ${CommonOperations.shardsToDiamondsFull(balance.inventory)}\n" +
+                        "<green>Ender Chest: ${CommonOperations.shardsToDiamondsFull(balance.enderChest)}\n" +
+                        "<bold><green>Total: ${CommonOperations.shardsToDiamondsFull(totalBalance)}"
                 )
             )
             return@launch

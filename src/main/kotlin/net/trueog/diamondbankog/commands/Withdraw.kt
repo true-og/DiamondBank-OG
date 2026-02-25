@@ -96,14 +96,11 @@ internal class Withdraw : CommandExecutor {
                             shards
                         }
 
-                    val diamonds = CommonOperations.shardsToDiamonds(shardsToWithdraw)
-                    val bankDiamonds = CommonOperations.shardsToDiamonds(bankShards)
-
                     if (shards != -1L && shards > bankShards) {
                         sender.inventory.unlock()
                         sender.sendMessage(
                             mm.deserialize(
-                                "${config.prefix}<reset>: <red>Cannot withdraw <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <red>because your bank only contains <yellow>$bankDiamonds <aqua>Diamond${if (bankDiamonds != "1.0") "s" else ""}<red>."
+                                "${config.prefix}<reset>: <red>Cannot withdraw ${CommonOperations.shardsToDiamondsFull(shardsToWithdraw)} <red>because your bank only contains <yellow>${CommonOperations.shardsToDiamondsFull(bankShards)}<red>."
                             )
                         )
                         return@tryWithLockSuspend
@@ -119,7 +116,7 @@ internal class Withdraw : CommandExecutor {
                         sender.inventory.unlock()
                         sender.sendMessage(
                             mm.deserialize(
-                                "${config.prefix}<reset>: <red>You don't have enough inventory space to withdraw <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""}<red>."
+                                "${config.prefix}<reset>: <red>You don't have enough inventory space to withdraw ${CommonOperations.shardsToDiamondsFull(shardsToWithdraw)}<red>."
                             )
                         )
                         return@tryWithLockSuspend
@@ -143,7 +140,7 @@ internal class Withdraw : CommandExecutor {
 
                     sender.sendMessage(
                         mm.deserialize(
-                            "${config.prefix}<reset>: <green>Successfully withdrew <yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""} <green>from your bank account."
+                            "${config.prefix}<reset>: <green>Successfully withdrew ${CommonOperations.shardsToDiamondsFull(shardsToWithdraw)} <green>from your bank account."
                         )
                     )
 
