@@ -1,12 +1,13 @@
 package net.trueog.diamondbankog
 
 import kotlin.math.ceil
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
 object InventorySnapshotUtils {
     /** @return the amount of shards that could be removed */
-    fun removeShards(inventory: InventorySnapshot, shards: Long): Result<Int> {
+    suspend fun removeShards(inventory: InventorySnapshot, shards: Long): Result<Int> {
         require(shards > 0)
 
         val shards = shards.toInt()
@@ -20,8 +21,12 @@ object InventorySnapshotUtils {
         val notRemovedDiamonds =
             inventory.removeItem(ItemStack(Material.DIAMOND, diamondsToBeRemoved)).values.sumOf { it.amount }
         if (notRemovedDiamonds == 0) {
-            if (inventory.addItem(Shard.createItemStack(shardsChange)).isNotEmpty())
-                return Result.failure(IllegalStateException("Change does not fit in inventory"))
+            val addMap = inventory.addItem(Shard.createItemStack(shardsChange))
+            if (addMap.isNotEmpty()) {
+                balanceManager.addToBankShards(inventory.holder, addMap.values.sumOf { it.amount }.toLong()).getOrElse {
+                    return Result.failure(it)
+                }
+            }
             return Result.success(shards)
         }
 
@@ -31,10 +36,22 @@ object InventorySnapshotUtils {
         val notRemovedDiamondBlocks =
             inventory.removeItem(ItemStack(Material.DIAMOND_BLOCK, diamondBlocksToBeRemoved)).values.sumOf { it.amount }
         if (notRemovedDiamondBlocks == 0) {
-            if (inventory.addItem(Shard.createItemStack(shardsChange)).isNotEmpty())
-                return Result.failure(IllegalStateException("Change does not fit in inventory"))
-            if (inventory.addItem(ItemStack(Material.DIAMOND, diamondsChange)).isNotEmpty())
-                return Result.failure(IllegalStateException("Change does not fit in inventory"))
+            val shardsAddMap = inventory.addItem(Shard.createItemStack(shardsChange))
+            if (shardsAddMap.isNotEmpty()) {
+                balanceManager
+                    .addToBankShards(inventory.holder, shardsAddMap.values.sumOf { it.amount }.toLong())
+                    .getOrElse {
+                        return Result.failure(it)
+                    }
+            }
+            val diamondsAddMap = inventory.addItem(ItemStack(Material.DIAMOND, diamondsChange))
+            if (diamondsAddMap.isNotEmpty()) {
+                balanceManager
+                    .addToBankShards(inventory.holder, shardsAddMap.values.sumOf { it.amount }.toLong() * 9)
+                    .getOrElse {
+                        return Result.failure(it)
+                    }
+            }
             return Result.success(shards)
         }
         return Result.success(shards - (notRemovedDiamondBlocks * 81 - diamondsChange * 9 - shardsChange))

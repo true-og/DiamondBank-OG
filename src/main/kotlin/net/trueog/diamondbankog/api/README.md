@@ -38,7 +38,6 @@ Exceptions are only applicable when using the Java API, when using the Kotlin AP
  * @param transactionReason the reason for this transaction for in the transaction log
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
- * @throws DiamondBankException.DatabaseException
  */
 ```
 Kotlin:
@@ -61,7 +60,6 @@ public void addToPlayerBankShards(UUID uuid, long shards, String transactionReas
  * @param transactionReason the reason for this transaction for in the transaction log
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
- * @throws DiamondBankException.DatabaseException
  * @throws DiamondBankException.InsufficientBalanceException
  */
 ```
@@ -83,7 +81,6 @@ public void subtractFromPlayerBankShards(UUID uuid, long shards, String transact
  * CompletableFuture
  *
  * @throws DiamondBankException.EconomyDisabledException
- * @throws DiamondBankException.DatabaseException
  */
 ```
 Kotlin:
@@ -104,7 +101,6 @@ public long getBankShards(UUID uuid)
  * CompletableFuture
  *
  * @throws DiamondBankException.EconomyDisabledException
- * @throws DiamondBankException.DatabaseException
  */
 ```
 Kotlin:
@@ -125,7 +121,6 @@ public long getInventoryShards(UUID uuid)
  * CompletableFuture
  *
  * @throws DiamondBankException.EconomyDisabledException
- * @throws DiamondBankException.DatabaseException
  */
 ```
 Kotlin:
@@ -146,7 +141,6 @@ public long getEnderChestShards(UUID uuid)
  * CompletableFuture
  *
  * @throws DiamondBankException.EconomyDisabledException
- * @throws DiamondBankException.DatabaseException
  */
 
 ```
@@ -168,7 +162,6 @@ public long getTotalShards(UUID uuid)
  * CompletableFuture
  *
  * @throws DiamondBankException.EconomyDisabledException
- * @throws DiamondBankException.DatabaseException
  */
 ```
 Kotlin:
@@ -195,7 +188,6 @@ public Map<@Nullable UUID, Long> getBaltop(int offset)
  * @throws DiamondBankException.PlayerNotOnlineException
  * @throws DiamondBankException.InsufficientFundsException
  * @throws DiamondBankException.InsufficientInventorySpaceException
- * @throws DiamondBankException.DatabaseException
  */
 ```
 Kotlin:
@@ -222,7 +214,6 @@ public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, 
  * @throws DiamondBankException.PayerNotOnlineException
  * @throws DiamondBankException.InsufficientFundsException
  * @throws DiamondBankException.InsufficientInventorySpaceException
- * @throws DiamondBankException.DatabaseException
  */
 ```
 Kotlin:

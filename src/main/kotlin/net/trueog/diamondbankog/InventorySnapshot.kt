@@ -15,7 +15,8 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
 
-class InventorySnapshot private constructor(private val original: Inventory, private val heldItemSlot: Int) :
+class InventorySnapshot
+private constructor(private val original: Inventory, private val heldItemSlot: Int, val holder: UUID) :
     Inventory by original {
     companion object {
         fun from(inventory: PlayerInventory): InventorySnapshot {
@@ -27,13 +28,13 @@ class InventorySnapshot private constructor(private val original: Inventory, pri
             }
             val clonedInventory = Bukkit.createInventory(null, 36)
             clonedInventory.contents = inventory.contents.map { it?.clone() }.toTypedArray()
-            return InventorySnapshot(clonedInventory, inventory.heldItemSlot)
+            return InventorySnapshot(clonedInventory, inventory.heldItemSlot, inventory.holder!!.uniqueId)
         }
 
         fun withContents(contents: Array<ItemStack?>): InventorySnapshot {
             val clonedInventory = Bukkit.createInventory(null, 36)
             clonedInventory.contents = contents.map { it?.clone() }.toTypedArray()
-            return InventorySnapshot(clonedInventory, 0)
+            return InventorySnapshot(clonedInventory, 0, UUID.fromString("00000000-0000-0000-0000-000000000000"))
         }
     }
 

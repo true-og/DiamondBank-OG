@@ -45,7 +45,7 @@ internal class BalanceManager {
         return Result.success(Unit)
     }
 
-    suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
+    private suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
@@ -64,6 +64,9 @@ internal class BalanceManager {
         decrement(uuid, type)
         return Result.success(Unit)
     }
+
+    suspend fun addToBankShards(uuid: UUID, shards: Long): Result<Unit> =
+        addToPlayerShards(uuid, shards, ShardType.BANK)
 
     suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit> =
         addToPlayerShards(uuid, -shards, ShardType.BANK)

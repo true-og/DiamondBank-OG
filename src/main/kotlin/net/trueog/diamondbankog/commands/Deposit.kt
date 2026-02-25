@@ -14,7 +14,6 @@ import net.trueog.diamondbankog.InventoryExtensions.unlock
 import net.trueog.diamondbankog.InventorySnapshot
 import net.trueog.diamondbankog.InventorySnapshotUtils
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
-import net.trueog.diamondbankog.PostgreSQL.ShardType
 import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -105,7 +104,7 @@ internal class Deposit : CommandExecutor {
                         return@tryWithLockSuspend
                     }
 
-                    balanceManager.addToPlayerShards(sender.uniqueId, removedInShards, ShardType.BANK).getOrElse {
+                    balanceManager.addToBankShards(sender.uniqueId, removedInShards).getOrElse {
                         handleError(it)
                         sender.sendMessage(
                             mm.deserialize(
