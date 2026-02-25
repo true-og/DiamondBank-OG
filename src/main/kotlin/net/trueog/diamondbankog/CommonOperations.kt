@@ -3,7 +3,6 @@ package net.trueog.diamondbankog
 import java.util.*
 import kotlin.math.floor
 import net.trueog.diamondbankog.DiamondBankException.InsufficientFundsException
-import net.trueog.diamondbankog.DiamondBankException.InsufficientInventorySpaceException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankRuntimeException.MoreThanOneDecimalDigitRuntimeException
 import org.bukkit.Bukkit
@@ -21,7 +20,7 @@ object CommonOperations {
                 val removedInShards =
                     InventorySnapshotUtils.removeShards(inventorySnapshot, toRemoveShards)
                         .getOrElse {
-                            return Result.failure(InsufficientInventorySpaceException())
+                            return Result.failure(it)
                         }
                         .toLong()
                 if (removedInShards != toRemoveShards) {

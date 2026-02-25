@@ -187,7 +187,6 @@ public Map<@Nullable UUID, Long> getBaltop(int offset)
  * @throws DiamondBankException.InvalidPlayerException
  * @throws DiamondBankException.PlayerNotOnlineException
  * @throws DiamondBankException.InsufficientFundsException
- * @throws DiamondBankException.InsufficientInventorySpaceException
  */
 ```
 Kotlin:
@@ -213,7 +212,6 @@ public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, 
  * @throws DiamondBankException.InvalidPlayerException
  * @throws DiamondBankException.PayerNotOnlineException
  * @throws DiamondBankException.InsufficientFundsException
- * @throws DiamondBankException.InsufficientInventorySpaceException
  */
 ```
 Kotlin:
