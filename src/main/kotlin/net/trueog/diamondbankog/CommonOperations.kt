@@ -47,6 +47,11 @@ object CommonOperations {
 
     fun shardsToDiamonds(shards: Long) = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
 
+    fun shardsToDiamondsFull(shards: Long): String {
+        val diamonds = shardsToDiamonds(shards)
+        return "<yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""}"
+    }
+
     fun getPlayerUsingUuidOrName(value: String): OfflinePlayer {
         return try {
             val uuid = UUID.fromString(value)
