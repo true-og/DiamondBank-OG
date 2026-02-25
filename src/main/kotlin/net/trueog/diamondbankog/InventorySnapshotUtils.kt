@@ -47,7 +47,7 @@ object InventorySnapshotUtils {
             val diamondsAddMap = inventory.addItem(ItemStack(Material.DIAMOND, diamondsChange))
             if (diamondsAddMap.isNotEmpty()) {
                 balanceManager
-                    .addToBankShards(inventory.holder, shardsAddMap.values.sumOf { it.amount }.toLong() * 9)
+                    .addToBankShards(inventory.holder, diamondsAddMap.values.sumOf { it.amount }.toLong() * 9)
                     .getOrElse {
                         return Result.failure(it)
                     }
