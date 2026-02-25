@@ -103,16 +103,6 @@ internal class Pay : CommandExecutor {
                                 return@tryWithLockSuspend
                             }
 
-                            is DiamondBankException.InsufficientInventorySpaceException -> {
-                                sender.sendMessage(
-                                    mm.deserialize(
-                                        "${config.prefix}<reset>: <red>You do not have enough inventory space for the change."
-                                    )
-                                )
-                                sender.inventory.unlock()
-                                return@tryWithLockSuspend
-                            }
-
                             else -> {
                                 sender.sendMessage(
                                     mm.deserialize(

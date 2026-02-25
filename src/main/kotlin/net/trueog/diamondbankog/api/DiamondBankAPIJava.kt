@@ -206,14 +206,12 @@ class DiamondBankAPIJava {
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PlayerNotOnlineException
      * @throws DiamondBankException.InsufficientFundsException
-     * @throws DiamondBankException.InsufficientInventorySpaceException
      */
     @Throws(
         EconomyDisabledException::class,
         InvalidPlayerException::class,
         PlayerNotOnlineException::class,
         InsufficientFundsException::class,
-        InsufficientInventorySpaceException::class,
     )
     @Suppress("unused")
     fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
@@ -262,14 +260,12 @@ class DiamondBankAPIJava {
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.PayerNotOnlineException
      * @throws DiamondBankException.InsufficientFundsException
-     * @throws DiamondBankException.InsufficientInventorySpaceException
      */
     @Throws(
         EconomyDisabledException::class,
         InvalidPlayerException::class,
         PayerNotOnlineException::class,
         InsufficientFundsException::class,
-        InsufficientInventorySpaceException::class,
     )
     @Suppress("unused")
     fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?) {

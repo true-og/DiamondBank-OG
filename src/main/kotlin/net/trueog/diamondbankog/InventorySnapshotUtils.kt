@@ -2,6 +2,9 @@ package net.trueog.diamondbankog
 
 import kotlin.math.ceil
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
@@ -23,9 +26,16 @@ object InventorySnapshotUtils {
         if (notRemovedDiamonds == 0) {
             val addMap = inventory.addItem(Shard.createItemStack(shardsChange))
             if (addMap.isNotEmpty()) {
-                balanceManager.addToBankShards(inventory.holder, addMap.values.sumOf { it.amount }.toLong()).getOrElse {
+                val excessShards = addMap.values.sumOf { it.amount }.toLong()
+                balanceManager.addToBankShards(inventory.holder, excessShards).getOrElse {
                     return Result.failure(it)
                 }
+                val player = Bukkit.getPlayer(inventory.holder)
+                player?.sendMessage(
+                    mm.deserialize(
+                        "${config.prefix}<reset>: <yellow>The excess change of ${CommonOperations.shardsToDiamondsFull(excessShards)} <yellow> has been deposited into your bank account"
+                    )
+                )
             }
             return Result.success(shards)
         }
@@ -37,20 +47,27 @@ object InventorySnapshotUtils {
             inventory.removeItem(ItemStack(Material.DIAMOND_BLOCK, diamondBlocksToBeRemoved)).values.sumOf { it.amount }
         if (notRemovedDiamondBlocks == 0) {
             val shardsAddMap = inventory.addItem(Shard.createItemStack(shardsChange))
+            val excessShards = shardsAddMap.values.sumOf { it.amount }.toLong()
             if (shardsAddMap.isNotEmpty()) {
-                balanceManager
-                    .addToBankShards(inventory.holder, shardsAddMap.values.sumOf { it.amount }.toLong())
-                    .getOrElse {
-                        return Result.failure(it)
-                    }
+                balanceManager.addToBankShards(inventory.holder, excessShards).getOrElse {
+                    return Result.failure(it)
+                }
             }
             val diamondsAddMap = inventory.addItem(ItemStack(Material.DIAMOND, diamondsChange))
+            val excessDiamondsInShards = diamondsAddMap.values.sumOf { it.amount }.toLong() * 9
             if (diamondsAddMap.isNotEmpty()) {
-                balanceManager
-                    .addToBankShards(inventory.holder, shardsAddMap.values.sumOf { it.amount }.toLong() * 9)
-                    .getOrElse {
-                        return Result.failure(it)
-                    }
+                balanceManager.addToBankShards(inventory.holder, excessDiamondsInShards).getOrElse {
+                    return Result.failure(it)
+                }
+            }
+
+            if (shardsAddMap.isNotEmpty() || diamondsAddMap.isNotEmpty()) {
+                val player = Bukkit.getPlayer(inventory.holder)
+                player?.sendMessage(
+                    mm.deserialize(
+                        "${config.prefix}<reset>: <yellow>The excess change of ${CommonOperations.shardsToDiamondsFull(excessShards+excessDiamondsInShards)} <yellow> has been deposited into your bank account"
+                    )
+                )
             }
             return Result.success(shards)
         }

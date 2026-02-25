@@ -3,7 +3,6 @@ package net.trueog.diamondbankog
 import java.util.*
 import kotlin.math.floor
 import net.trueog.diamondbankog.DiamondBankException.InsufficientFundsException
-import net.trueog.diamondbankog.DiamondBankException.InsufficientInventorySpaceException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankRuntimeException.MoreThanOneDecimalDigitRuntimeException
 import org.bukkit.Bukkit
@@ -21,7 +20,7 @@ object CommonOperations {
                 val removedInShards =
                     InventorySnapshotUtils.removeShards(inventorySnapshot, toRemoveShards)
                         .getOrElse {
-                            return Result.failure(InsufficientInventorySpaceException())
+                            return Result.failure(it)
                         }
                         .toLong()
                 if (removedInShards != toRemoveShards) {
@@ -47,6 +46,11 @@ object CommonOperations {
     }
 
     fun shardsToDiamonds(shards: Long) = String.format("%.1f", floor((shards / 9.0) * 10) / 10.0)
+
+    fun shardsToDiamondsFull(shards: Long): String {
+        val diamonds = shardsToDiamonds(shards)
+        return "<yellow>$diamonds <aqua>Diamond${if (diamonds != "1.0") "s" else ""}"
+    }
 
     fun getPlayerUsingUuidOrName(value: String): OfflinePlayer {
         return try {
