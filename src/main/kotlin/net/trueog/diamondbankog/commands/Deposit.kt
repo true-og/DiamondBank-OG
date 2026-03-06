@@ -85,10 +85,11 @@ internal class Deposit : CommandExecutor {
                                 .getOrElse {
                                     sender.sendMessage(
                                         mm.deserialize(
-                                            "${config.prefix}<reset>: <red>You do not have enough inventory space for the change."
+                                            "${config.prefix}<reset>: <red>Something went wrong."
                                         )
                                     )
                                     sender.inventory.unlock()
+                                    handleError(it)
                                     return@tryWithLockSuspend
                                 }
                                 .toLong()
