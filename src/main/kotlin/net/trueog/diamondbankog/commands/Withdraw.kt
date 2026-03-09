@@ -78,6 +78,11 @@ internal class Withdraw : CommandExecutor {
         scope.launch {
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
+                    val inventorySnapshot = runOnMainThread {
+                        sender.inventory.lock()
+                        InventorySnapshot.from(sender.inventory, balanceManager)
+                    }
+
                     val bankShards =
                         balanceManager.getBankShards(sender.uniqueId).getOrElse {
                             sender.inventory.unlock()
