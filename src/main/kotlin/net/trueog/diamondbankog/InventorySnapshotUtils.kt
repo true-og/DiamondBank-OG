@@ -25,7 +25,7 @@ object InventorySnapshotUtils {
             inventory.removeItem(ItemStack(Material.DIAMOND, diamondsToBeRemoved)).values.sumOf { it.amount }
         if (notRemovedDiamonds == 0) {
             val addMap = inventory.addItem(Shard.createItemStack(shardsChange))
-            if (addMap.isNotEmpty()) {
+            if (addMap.values.sumOf { it.amount } != 0) {
                 val excessShards = addMap.values.sumOf { it.amount }.toLong()
                 balanceManager.addToBankShards(inventory.holder, excessShards).getOrElse {
                     return Result.failure(it)
@@ -48,20 +48,20 @@ object InventorySnapshotUtils {
         if (notRemovedDiamondBlocks == 0) {
             val shardsAddMap = inventory.addItem(Shard.createItemStack(shardsChange))
             val excessShards = shardsAddMap.values.sumOf { it.amount }.toLong()
-            if (shardsAddMap.isNotEmpty()) {
+            if (shardsAddMap.values.sumOf { it.amount } != 0) {
                 balanceManager.addToBankShards(inventory.holder, excessShards).getOrElse {
                     return Result.failure(it)
                 }
             }
             val diamondsAddMap = inventory.addItem(ItemStack(Material.DIAMOND, diamondsChange))
             val excessDiamondsInShards = diamondsAddMap.values.sumOf { it.amount }.toLong() * 9
-            if (diamondsAddMap.isNotEmpty()) {
+            if (diamondsAddMap.values.sumOf { it.amount } != 0) {
                 balanceManager.addToBankShards(inventory.holder, excessDiamondsInShards).getOrElse {
                     return Result.failure(it)
                 }
             }
 
-            if (shardsAddMap.isNotEmpty() || diamondsAddMap.isNotEmpty()) {
+            if (shardsAddMap.values.sumOf { it.amount } != 0 || diamondsAddMap.values.sumOf { it.amount } != 0) {
                 val player = Bukkit.getPlayer(inventory.holder)
                 player?.sendMessage(
                     mm.deserialize(
