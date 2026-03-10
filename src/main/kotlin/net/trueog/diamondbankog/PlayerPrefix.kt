@@ -2,7 +2,7 @@ package net.trueog.diamondbankog
 
 import java.util.*
 import kotlinx.coroutines.future.await
-import net.trueog.diamondbankog.DiamondBankOG.Companion.luckPerms
+import net.luckperms.api.LuckPerms
 
 internal object PlayerPrefix {
     private val legacyToMmMap =
@@ -38,7 +38,7 @@ internal object PlayerPrefix {
         return legacyRegex.replace(text) { legacyToMmMap[it.groupValues[1].lowercase()] ?: it.value }
     }
 
-    suspend fun getPrefix(uuid: UUID): String {
+    suspend fun getPrefix(uuid: UUID, luckPerms: LuckPerms): String {
         val user = luckPerms.userManager.getUser(uuid) ?: luckPerms.userManager.loadUser(uuid).await()
         val prefixNode = user.nodes.singleOrNull { node -> node.key.startsWith("prefix.1.") }
         if (prefixNode == null) return ""

@@ -1,16 +1,20 @@
 package net.trueog.diamondbankog
 
 import kotlin.math.ceil
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
-import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
 object InventorySnapshotUtils {
     /** @return the amount of shards that could be removed */
-    suspend fun removeShards(inventory: InventorySnapshot, shards: Long): Result<Int> {
+    suspend fun removeShards(
+        inventory: InventorySnapshot,
+        shards: Long,
+        config: Config,
+        balanceManager: BalanceManager,
+        mm: MiniMessage,
+    ): Result<Int> {
         require(shards > 0)
 
         val shards = shards.toInt()
@@ -25,7 +29,7 @@ object InventorySnapshotUtils {
             inventory.removeItem(ItemStack(Material.DIAMOND, diamondsToBeRemoved)).values.sumOf { it.amount }
         if (notRemovedDiamonds == 0) {
             val addMap = inventory.addItem(Shard.createItemStack(shardsChange))
-            if (addMap.isNotEmpty()) {
+            if (addMap.values.sumOf { it.amount } != 0) {
                 val excessShards = addMap.values.sumOf { it.amount }.toLong()
                 balanceManager.addToBankShards(inventory.holder, excessShards).getOrElse {
                     return Result.failure(it)
@@ -33,7 +37,11 @@ object InventorySnapshotUtils {
                 val player = Bukkit.getPlayer(inventory.holder)
                 player?.sendMessage(
                     mm.deserialize(
-                        "${config.prefix}<reset>: <yellow>The excess change of ${CommonOperations.shardsToDiamondsFull(excessShards)} <yellow> has been deposited into your bank account"
+                        "${config.prefix}<reset>: <yellow>The excess change of ${
+                            CommonOperations.shardsToDiamondsFull(
+                                excessShards
+                            )
+                        } <yellow> has been deposited into your bank account"
                     )
                 )
             }
@@ -48,24 +56,28 @@ object InventorySnapshotUtils {
         if (notRemovedDiamondBlocks == 0) {
             val shardsAddMap = inventory.addItem(Shard.createItemStack(shardsChange))
             val excessShards = shardsAddMap.values.sumOf { it.amount }.toLong()
-            if (shardsAddMap.isNotEmpty()) {
+            if (shardsAddMap.values.sumOf { it.amount } != 0) {
                 balanceManager.addToBankShards(inventory.holder, excessShards).getOrElse {
                     return Result.failure(it)
                 }
             }
             val diamondsAddMap = inventory.addItem(ItemStack(Material.DIAMOND, diamondsChange))
             val excessDiamondsInShards = diamondsAddMap.values.sumOf { it.amount }.toLong() * 9
-            if (diamondsAddMap.isNotEmpty()) {
+            if (diamondsAddMap.values.sumOf { it.amount } != 0) {
                 balanceManager.addToBankShards(inventory.holder, excessDiamondsInShards).getOrElse {
                     return Result.failure(it)
                 }
             }
 
-            if (shardsAddMap.isNotEmpty() || diamondsAddMap.isNotEmpty()) {
+            if (shardsAddMap.values.sumOf { it.amount } != 0 || diamondsAddMap.values.sumOf { it.amount } != 0) {
                 val player = Bukkit.getPlayer(inventory.holder)
                 player?.sendMessage(
                     mm.deserialize(
-                        "${config.prefix}<reset>: <yellow>The excess change of ${CommonOperations.shardsToDiamondsFull(excessShards+excessDiamondsInShards)} <yellow> has been deposited into your bank account"
+                        "${config.prefix}<reset>: <yellow>The excess change of ${
+                            CommonOperations.shardsToDiamondsFull(
+                                excessShards + excessDiamondsInShards
+                            )
+                        } <yellow> has been deposited into your bank account"
                     )
                 )
             }

@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.api
 
 import java.util.*
-import kotlin.getOrElse
 import kotlinx.coroutines.DelicateCoroutinesApi
 import net.trueog.diamondbankog.CommonOperations
 import net.trueog.diamondbankog.DiamondBankException.*
@@ -154,7 +153,7 @@ class DiamondBankAPIKotlin {
 
             val inventorySnapshot = runOnMainThread {
                 player.inventory.lock()
-                InventorySnapshot.from(player.inventory)
+                InventorySnapshot.from(player.inventory, balanceManager)
             }
 
             CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrElse {
@@ -208,7 +207,7 @@ class DiamondBankAPIKotlin {
 
             val inventorySnapshot = runOnMainThread {
                 payer.inventory.lock()
-                InventorySnapshot.from(payer.inventory)
+                InventorySnapshot.from(payer.inventory, balanceManager)
             }
 
             CommonOperations.consume(payer.uniqueId, shards, inventorySnapshot).getOrElse {

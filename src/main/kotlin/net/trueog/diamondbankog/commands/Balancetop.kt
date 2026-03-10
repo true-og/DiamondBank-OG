@@ -4,6 +4,7 @@ import kotlin.math.ceil
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.CommonOperations
+import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -97,7 +98,8 @@ internal class Balancetop : CommandExecutor {
                     baltopMessage +=
                         "\n<green>${baltopMessage.lines().size + offset}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
                             getPrefix(
-                                uuid
+                                uuid,
+                                DiamondBankOG.luckPerms,
                             )
                         }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
                 }
@@ -157,7 +159,8 @@ internal class Balancetop : CommandExecutor {
                 baltopMessage +=
                     "\n<green>${baltopMessage.lines().size + (9 * (index - 1))}<reset>. ${if (playerName == player.name) "<italic>" else ""}${
                         getPrefix(
-                            uuid
+                            uuid,
+                            DiamondBankOG.luckPerms,
                         )
                     }$playerName<reset>: <yellow>$diamonds <aqua>Diamonds"
             }

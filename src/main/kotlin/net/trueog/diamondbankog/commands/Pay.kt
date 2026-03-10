@@ -1,29 +1,31 @@
 package net.trueog.diamondbankog.commands
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.CommonOperations
-import net.trueog.diamondbankog.DiamondBankException
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
-import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
-import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
+import net.kyori.adventure.text.minimessage.MiniMessage
+import net.luckperms.api.LuckPerms
+import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.lock
 import net.trueog.diamondbankog.InventoryExtensions.unlock
-import net.trueog.diamondbankog.InventorySnapshot
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.PlayerPrefix.getPrefix
-import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
-internal class Pay : CommandExecutor {
+internal class Pay(
+    val config: Config = DiamondBankOG.config,
+    val balanceManager: BalanceManager = DiamondBankOG.balanceManager,
+    val mm: MiniMessage = DiamondBankOG.mm,
+    val scope: CoroutineScope = DiamondBankOG.scope,
+    val luckPerms: LuckPerms = DiamondBankOG.luckPerms,
+    val transactionLock: TransactionLock = DiamondBankOG.transactionLock,
+) : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (CommonCommandInterlude.run(sender, "pay")) {
+        if (CommonCommandInterlude.run(sender, "pay", config, mm)) {
             return true
         }
 
@@ -87,32 +89,37 @@ internal class Pay : CommandExecutor {
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
                     val inventorySnapshot = runOnMainThread {
                         sender.inventory.lock()
-                        InventorySnapshot.from(sender.inventory)
+                        InventorySnapshot.from(sender.inventory, balanceManager)
                     }
 
-                    CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot).getOrElse {
-                        when (it) {
-                            is DiamondBankException.InsufficientFundsException -> {
-                                sender.sendMessage(
-                                    mm.deserialize(
-                                        "${config.prefix}<reset>: <red>You are ${CommonOperations.shardsToDiamondsFull(it.short)} <red>short for that payment."
+                    CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot, config, balanceManager, mm)
+                        .getOrElse {
+                            when (it) {
+                                is DiamondBankException.InsufficientFundsException -> {
+                                    sender.sendMessage(
+                                        mm.deserialize(
+                                            "${config.prefix}<reset>: <red>You are ${
+                                                CommonOperations.shardsToDiamondsFull(
+                                                    it.short
+                                                )
+                                            } <red>short for that payment."
+                                        )
                                     )
-                                )
-                                sender.inventory.unlock()
-                                return@tryWithLockSuspend
-                            }
+                                    sender.inventory.unlock()
+                                    return@tryWithLockSuspend
+                                }
 
-                            else -> {
-                                sender.sendMessage(
-                                    mm.deserialize(
-                                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                else -> {
+                                    sender.sendMessage(
+                                        mm.deserialize(
+                                            "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                        )
                                     )
-                                )
-                                sender.inventory.unlock()
-                                return@tryWithLockSuspend
+                                    sender.inventory.unlock()
+                                    return@tryWithLockSuspend
+                                }
                             }
                         }
-                    }
 
                     balanceManager.addToBankShards(receiver.uniqueId, shards).getOrElse {
                         handleError(it)
@@ -132,9 +139,14 @@ internal class Pay : CommandExecutor {
 
                     sender.sendMessage(
                         mm.deserialize(
-                            "${config.prefix}<reset>: <green>Successfully paid ${CommonOperations.shardsToDiamondsFull(shards)} <green>to ${
+                            "${config.prefix}<reset>: <green>Successfully paid ${
+                                CommonOperations.shardsToDiamondsFull(
+                                    shards
+                                )
+                            } <green>to ${
                                 getPrefix(
-                                    receiver.uniqueId
+                                    receiver.uniqueId,
+                                    luckPerms,
                                 )
                             } ${receiver.name}<reset><green>."
                         )
@@ -146,9 +158,14 @@ internal class Pay : CommandExecutor {
                             mm.deserialize(
                                 "${config.prefix}<reset>: <green>${
                                     getPrefix(
-                                        sender.uniqueId
+                                        sender.uniqueId,
+                                        luckPerms,
                                     )
-                                } ${sender.name}<reset> <green>has paid you ${CommonOperations.shardsToDiamondsFull(shards)}<green>."
+                                } ${sender.name}<reset> <green>has paid you ${
+                                    CommonOperations.shardsToDiamondsFull(
+                                        shards
+                                    )
+                                }<green>."
                             )
                         )
                     }

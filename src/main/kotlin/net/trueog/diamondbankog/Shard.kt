@@ -12,7 +12,7 @@ import org.bukkit.inventory.ShapelessRecipe
 import org.bukkit.persistence.PersistentDataType
 
 internal object Shard {
-    val namespacedKey = NamespacedKey(DiamondBankOG.plugin, "diamondshard")
+    val namespacedKey = NamespacedKey("diamondbank-og", "diamondshard")
 
     /** amount defaults to 1 */
     fun createItemStack(amount: Int = 1): ItemStack {
@@ -27,12 +27,12 @@ internal object Shard {
     }
 
     fun createCraftingRecipes() {
-        val diamondToShardKey = NamespacedKey(DiamondBankOG.plugin, "diamond_to_shard")
+        val diamondToShardKey = NamespacedKey("diamondbank-og", "diamond_to_shard")
         val diamondToShardRecipe = ShapelessRecipe(diamondToShardKey, createItemStack(9))
         diamondToShardRecipe.addIngredient(Material.DIAMOND)
         Bukkit.addRecipe(diamondToShardRecipe)
 
-        val shardToDiamondKey = NamespacedKey(DiamondBankOG.plugin, "shard_to_diamond")
+        val shardToDiamondKey = NamespacedKey("diamondbank-og", "shard_to_diamond")
         val shardToDiamondRecipe = ShapedRecipe(shardToDiamondKey, ItemStack(Material.DIAMOND))
         shardToDiamondRecipe.shape("SSS", "SSS", "SSS")
         shardToDiamondRecipe.setIngredient('S', createItemStack())

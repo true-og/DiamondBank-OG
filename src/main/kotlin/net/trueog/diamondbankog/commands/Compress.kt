@@ -1,20 +1,16 @@
 package net.trueog.diamondbankog.commands
 
 import kotlin.math.abs
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
-import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
+import net.kyori.adventure.text.minimessage.MiniMessage
+import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.InventoryExtensions.countShards
 import net.trueog.diamondbankog.InventoryExtensions.lock
 import net.trueog.diamondbankog.InventoryExtensions.unlock
-import net.trueog.diamondbankog.InventorySnapshot
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
-import net.trueog.diamondbankog.Shard
-import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
 import org.bukkit.command.Command
@@ -23,9 +19,15 @@ import org.bukkit.command.CommandSender
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 
-internal class Compress : CommandExecutor {
+internal class Compress(
+    val config: Config = DiamondBankOG.config,
+    val balanceManager: BalanceManager = DiamondBankOG.balanceManager,
+    val mm: MiniMessage = DiamondBankOG.mm,
+    val scope: CoroutineScope = DiamondBankOG.scope,
+    val transactionLock: TransactionLock = DiamondBankOG.transactionLock,
+) : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (CommonCommandInterlude.run(sender, "compress")) {
+        if (CommonCommandInterlude.run(sender, "compress", config, mm)) {
             return true
         }
 
@@ -38,7 +40,7 @@ internal class Compress : CommandExecutor {
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
                     val inventorySnapshot = runOnMainThread {
                         sender.inventory.lock()
-                        InventorySnapshot.from(sender.inventory)
+                        InventorySnapshot.from(sender.inventory, balanceManager)
                     }
 
                     val (inventory, blockStateMeta, blockState) =
@@ -147,6 +149,8 @@ internal class Compress : CommandExecutor {
                         }
                     }
 
+                    val summaryStringBuilder = StringBuilder("Compression Summary:")
+
                     if (changeInShards < 0) {
                         val removeMap = inventory.removeItem(Shard.createItemStack(abs(changeInShards)))
                         if (removeMap.isNotEmpty()) {
@@ -158,6 +162,9 @@ internal class Compress : CommandExecutor {
                             sender.inventory.unlock()
                             return@tryWithLockSuspend
                         }
+                        summaryStringBuilder.append(
+                            "\n<red>$changeInShards Diamond Shard${if (changeInShards != -1) "s" else ""}"
+                        )
                     }
 
                     if (changeInDiamonds > 0) {
@@ -171,6 +178,9 @@ internal class Compress : CommandExecutor {
                             sender.inventory.unlock()
                             return@tryWithLockSuspend
                         }
+                        summaryStringBuilder.append(
+                            "\n<green>+$changeInDiamonds Diamond${if (changeInDiamonds != 1) "s" else ""}"
+                        )
                     } else if (changeInDiamonds < 0) {
                         val removeMap = inventory.removeItem(ItemStack(Material.DIAMOND, abs(changeInDiamonds)))
                         if (removeMap.isNotEmpty()) {
@@ -182,6 +192,9 @@ internal class Compress : CommandExecutor {
                             sender.inventory.unlock()
                             return@tryWithLockSuspend
                         }
+                        summaryStringBuilder.append(
+                            "\n<red>$changeInDiamonds Diamond${if (changeInDiamonds != -1) "s" else ""}"
+                        )
                     }
 
                     if (changeInDiamondBlocks > 0) {
@@ -195,18 +208,9 @@ internal class Compress : CommandExecutor {
                             sender.inventory.unlock()
                             return@tryWithLockSuspend
                         }
-                    } else if (changeInDiamondBlocks < 0) {
-                        val removeMap =
-                            inventory.removeItem(ItemStack(Material.DIAMOND_BLOCK, abs(changeInDiamondBlocks)))
-                        if (removeMap.isNotEmpty()) {
-                            sender.sendMessage(
-                                mm.deserialize(
-                                    "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
-                                )
-                            )
-                            sender.inventory.unlock()
-                            return@tryWithLockSuspend
-                        }
+                        summaryStringBuilder.append(
+                            "\n<green>+$changeInDiamondBlocks Diamond Block${if (changeInDiamondBlocks != 1) "s" else ""}"
+                        )
                     }
 
                     if (blockStateMeta != null && blockState != null) {
@@ -233,44 +237,7 @@ internal class Compress : CommandExecutor {
                         )
                     )
 
-                    val shardsLine =
-                        if (changeInShards < 0)
-                            "|<red>$changeInShards Diamond Shard${if (abs(changeInShards) != 1) "s" else ""}\n"
-                        else ""
-                    val diamondsLine =
-                        (if (changeInDiamonds > 0) "|<green>+$changeInDiamonds"
-                        else if (changeInDiamonds < 0) "|<red>$changeInDiamonds" else "") +
-                            if (changeInDiamonds != 0)
-                                " Diamond${
-                                        if (abs(
-                                                changeInDiamonds
-                                            ) != 1
-                                        ) "s" else ""
-                                    }\n"
-                            else ""
-                    val diamondBlocksLine =
-                        (if (changeInDiamondBlocks > 0) "|<green>+$changeInDiamondBlocks"
-                        else if (changeInDiamondBlocks < 0) "|<red>$changeInDiamondBlocks" else "") +
-                            if (changeInDiamondBlocks != 0)
-                                " Diamond Block${
-                                        if (abs(
-                                                changeInDiamondBlocks
-                                            ) != 1
-                                        ) "s" else ""
-                                    }"
-                            else ""
-
-                    sender.sendMessage(
-                        mm.deserialize(
-                            buildString {
-                                    append("${config.prefix}<reset>: Compression Summary:\n")
-                                    if (shardsLine.isNotEmpty()) append(shardsLine)
-                                    if (diamondsLine.isNotEmpty()) append(diamondsLine)
-                                    if (diamondBlocksLine.isNotEmpty()) append(diamondBlocksLine)
-                                }
-                                .trimMargin("|")
-                        )
-                    )
+                    sender.sendMessage(mm.deserialize("${config.prefix}<reset>: $summaryStringBuilder"))
                 }
             ) {
                 is TransactionLock.LockResult.Failed -> {
