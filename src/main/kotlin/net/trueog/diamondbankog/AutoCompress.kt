@@ -34,7 +34,7 @@ internal object AutoCompress {
             transactionLock.withLockSuspend(player.uniqueId) {
                 val inventorySnapshot = runOnMainThread {
                     player.inventory.lock()
-                    InventorySnapshot.from(player.inventory)
+                    InventorySnapshot.from(player.inventory, DiamondBankOG.balanceManager)
                 }
 
                 val shardsInInventory = inventorySnapshot.countShards().toInt()

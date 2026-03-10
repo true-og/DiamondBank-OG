@@ -2,146 +2,35 @@ package net.trueog.diamondbankog
 
 import java.sql.SQLException
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
-import net.trueog.diamondbankog.DiamondBankException.EconomyDisabledException
-import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
-import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
-import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 
-internal class BalanceManager {
-    val cache = Cache()
-    val postgreSQL = PostgreSQL()
-    val beingModified = ConcurrentHashMap<Pair<UUID, ShardType>, AtomicInteger>()
+interface BalanceManager {
+    @Throws(SQLException::class, ClassNotFoundException::class) fun init()
 
-    @Throws(SQLException::class, ClassNotFoundException::class)
-    fun init() {
-        postgreSQL.initDB()
-    }
+    suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit>
 
-    private fun increment(uuid: UUID, type: ShardType) {
-        beingModified.computeIfAbsent(uuid to type) { AtomicInteger(0) }.incrementAndGet()
-    }
+    suspend fun addToBankShards(uuid: UUID, shards: Long): Result<Unit>
 
-    private fun decrement(uuid: UUID, type: ShardType) {
-        beingModified.computeIfPresent(uuid to type) { _, counter ->
-            val newValue = counter.decrementAndGet()
-            if (newValue == 0) null else counter
-        }
-    }
+    suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit>
 
-    suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
-        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
-        if (economyDisabled) return Result.failure(EconomyDisabledException())
+    suspend fun getBankShards(uuid: UUID): Result<Long>
 
-        increment(uuid, type)
-        postgreSQL.setPlayerShards(uuid, shards, type).getOrElse {
-            return Result.failure(it)
-        }
-        cache.setBalance(uuid, shards, type)
-        decrement(uuid, type)
-        return Result.success(Unit)
-    }
+    suspend fun getInventoryShards(uuid: UUID): Result<Long>
 
-    private suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
-        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
-        if (economyDisabled) return Result.failure(EconomyDisabledException())
+    suspend fun getEnderChestShards(uuid: UUID): Result<Long>
 
-        increment(uuid, type)
-        val newBalanceDb =
-            postgreSQL.addToPlayerShards(uuid, shards, type).getOrElse {
-                return Result.failure(it)
-            }
-        val newBalanceCache =
-            cache.addBalance(uuid, shards, type).getOrElse {
-                return Result.failure(it)
-            }
-        if (newBalanceDb != newBalanceCache) {
-            handleError(IllegalStateException("Database and cache balances do not match"))
-        }
-        decrement(uuid, type)
-        return Result.success(Unit)
-    }
+    suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long>
 
-    suspend fun addToBankShards(uuid: UUID, shards: Long): Result<Unit> =
-        addToPlayerShards(uuid, shards, ShardType.BANK)
+    suspend fun getTotalShards(uuid: UUID): Result<Long>
 
-    suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit> =
-        addToPlayerShards(uuid, -shards, ShardType.BANK)
+    suspend fun getAllShards(uuid: UUID): Result<PlayerShards>
 
-    suspend fun getBankShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.BANK)
+    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>>
 
-    suspend fun getInventoryShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.INVENTORY)
+    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Long>, Long>>
 
-    suspend fun getEnderChestShards(uuid: UUID) = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
-
-    suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
-        if ((beingModified[uuid to type]?.get() ?: 0) > 0) {
-            return postgreSQL.getShardTypeShards(uuid, type)
-        }
-        val cacheBalance = cache.getBalance(uuid, type)
-        if (cacheBalance == -1L) {
-            increment(uuid, type)
-            val dbBalance =
-                postgreSQL.getShardTypeShards(uuid, type).getOrElse {
-                    return Result.failure(it)
-                }
-            cache.setBalance(uuid, dbBalance, type)
-            decrement(uuid, type)
-            return Result.success(dbBalance)
-        }
-        return Result.success(cacheBalance)
-    }
-
-    suspend fun getTotalShards(uuid: UUID): Result<Long> {
-        val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
-        if (anyBeingModified) {
-            return postgreSQL.getTotalShards(uuid)
-        }
-        val cacheBalance = cache.getBalance(uuid, ShardType.TOTAL)
-        if (cacheBalance == -1L) {
-            increment(uuid, ShardType.TOTAL)
-            val dbBalance =
-                postgreSQL.getTotalShards(uuid).getOrElse {
-                    return Result.failure(it)
-                }
-            cache.setBalance(uuid, dbBalance, ShardType.TOTAL)
-            decrement(uuid, ShardType.TOTAL)
-            return Result.success(dbBalance)
-        }
-        return Result.success(cacheBalance)
-    }
-
-    suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
-        val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
-        if (anyBeingModified) {
-            return postgreSQL.getAllShards(uuid)
-        }
-        val cacheBankBalance = cache.getBalance(uuid, ShardType.BANK)
-        val cacheInventoryBalance = cache.getBalance(uuid, ShardType.INVENTORY)
-        val cacheEnderChestBalance = cache.getBalance(uuid, ShardType.ENDER_CHEST)
-        if (cacheBankBalance == -1L || cacheInventoryBalance == -1L || cacheEnderChestBalance == -1L) {
-            increment(uuid, ShardType.TOTAL)
-            val dbPlayerShards =
-                postgreSQL.getAllShards(uuid).getOrElse {
-                    return Result.failure(it)
-                }
-            cache.setBalance(uuid, dbPlayerShards.bank, ShardType.BANK)
-            cache.setBalance(uuid, dbPlayerShards.inventory, ShardType.INVENTORY)
-            cache.setBalance(uuid, dbPlayerShards.enderChest, ShardType.ENDER_CHEST)
-            decrement(uuid, ShardType.TOTAL)
-            return Result.success(dbPlayerShards)
-        }
-        return Result.success(PlayerShards(cacheBankBalance, cacheInventoryBalance, cacheEnderChestBalance))
-    }
-
-    suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> = postgreSQL.getBaltop(offset)
-
-    suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Long>, Long>> = postgreSQL.getBaltopWithUuid(uuid)
-
-    suspend fun getNumberOfRows(): Result<Long> = postgreSQL.getNumberOfRows()
+    suspend fun getNumberOfRows(): Result<Long>
 
     suspend fun insertTransactionLog(
         playerUuid: UUID,
@@ -149,27 +38,13 @@ internal class BalanceManager {
         playerToUuid: UUID?,
         transactionReason: String,
         notes: String?,
-    ): Result<Unit> =
-        postgreSQL.insertTransactionLog(playerUuid, transferredShards, playerToUuid, transactionReason, notes)
+    ): Result<Unit>
 
-    suspend fun hasEntry(uuid: UUID) = postgreSQL.hasEntry(uuid)
+    suspend fun hasEntry(uuid: UUID): Result<Boolean>
 
-    suspend fun cacheForPlayer(uuid: UUID): Result<Unit> {
-        val playerShards =
-            postgreSQL.getAllShards(uuid).getOrElse {
-                return Result.failure(it)
-            }
-        cache.setBalance(uuid, playerShards.bank, ShardType.BANK)
-        cache.setBalance(uuid, playerShards.inventory, ShardType.INVENTORY)
-        cache.setBalance(uuid, playerShards.enderChest, ShardType.ENDER_CHEST)
-        return Result.success(Unit)
-    }
+    suspend fun cacheForPlayer(uuid: UUID): Result<Unit>
 
-    fun removeCacheForPlayer(uuid: UUID) {
-        cache.removeAll(uuid)
-    }
+    fun removeCacheForPlayer(uuid: UUID)
 
-    fun shutdown() {
-        postgreSQL.pool.disconnect().get()
-    }
+    fun shutdown()
 }

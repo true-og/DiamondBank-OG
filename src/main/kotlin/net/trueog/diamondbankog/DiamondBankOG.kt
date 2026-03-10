@@ -19,9 +19,9 @@ internal open class DiamondBankOG : JavaPlugin() {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
         lateinit var plugin: DiamondBankOG
-        lateinit var config: Config
+        lateinit var config: YamlConfig
         lateinit var eventManager: EventManager
-        lateinit var balanceManager: BalanceManager
+        lateinit var balanceManager: CachingBalanceManager
         lateinit var redis: Redis
         lateinit var luckPerms: LuckPerms
 
@@ -49,7 +49,7 @@ internal open class DiamondBankOG : JavaPlugin() {
         plugin = this
 
         Companion.config =
-            Config.create()
+            YamlConfig.create()
                 ?: run {
                     Bukkit.getPluginManager().disablePlugin(this)
                     return
@@ -57,7 +57,7 @@ internal open class DiamondBankOG : JavaPlugin() {
 
         eventManager = EventManager()
 
-        balanceManager = BalanceManager()
+        balanceManager = CachingBalanceManager()
         try {
             balanceManager.init()
         } catch (e: Exception) {
@@ -101,12 +101,6 @@ internal open class DiamondBankOG : JavaPlugin() {
 
         this.getCommand("enableeconomy")?.setExecutor(EnableEconomy())
         this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
-
-        try {
-            val devCommandsClass = Class.forName("net.trueog.diamondbankog.TestCommands")
-            val registerMethod = devCommandsClass.getMethod("register", JavaPlugin::class.java)
-            registerMethod.invoke(null, this)
-        } catch (_: ClassNotFoundException) {}
 
         Shard.createCraftingRecipes()
 

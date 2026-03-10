@@ -3,7 +3,6 @@ package net.trueog.diamondbankog
 import java.util.*
 import java.util.function.Consumer
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.countTotal
@@ -16,10 +15,15 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
 
 class InventorySnapshot
-private constructor(private val original: Inventory, private val heldItemSlot: Int, val holder: UUID) :
-    Inventory by original {
+private constructor(
+    private val original: Inventory,
+    private val heldItemSlot: Int,
+    val holder: UUID,
+    val balanceManager: BalanceManager,
+) : Inventory by original {
+
     companion object {
-        fun from(inventory: PlayerInventory): InventorySnapshot {
+        fun from(inventory: PlayerInventory, balanceManager: BalanceManager): InventorySnapshot {
             if (!Bukkit.isPrimaryThread()) {
                 throw IllegalStateException("This method should only be called on the main thread")
             }
@@ -28,13 +32,12 @@ private constructor(private val original: Inventory, private val heldItemSlot: I
             }
             val clonedInventory = Bukkit.createInventory(null, 36)
             clonedInventory.contents = inventory.contents.map { it?.clone() }.toTypedArray()
-            return InventorySnapshot(clonedInventory, inventory.heldItemSlot, inventory.holder!!.uniqueId)
-        }
-
-        fun withContents(contents: Array<ItemStack?>): InventorySnapshot {
-            val clonedInventory = Bukkit.createInventory(null, 36)
-            clonedInventory.contents = contents.map { it?.clone() }.toTypedArray()
-            return InventorySnapshot(clonedInventory, 0, UUID.fromString("00000000-0000-0000-0000-000000000000"))
+            return InventorySnapshot(
+                clonedInventory,
+                inventory.heldItemSlot,
+                inventory.holder!!.uniqueId,
+                balanceManager,
+            )
         }
     }
 

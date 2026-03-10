@@ -1,31 +1,31 @@
 package net.trueog.diamondbankog.commands
 
 import kotlin.math.floor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.CommonOperations
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
-import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
-import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
+import net.kyori.adventure.text.minimessage.MiniMessage
+import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.lock
 import net.trueog.diamondbankog.InventoryExtensions.unlock
-import net.trueog.diamondbankog.InventorySnapshot
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
-import net.trueog.diamondbankog.Shard
-import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.inventory.ItemStack
 
-internal class Withdraw : CommandExecutor {
+internal class Withdraw(
+    val config: Config = DiamondBankOG.config,
+    val balanceManager: BalanceManager = DiamondBankOG.balanceManager,
+    val mm: MiniMessage = DiamondBankOG.mm,
+    val scope: CoroutineScope = DiamondBankOG.scope,
+    val transactionLock: TransactionLock = DiamondBankOG.transactionLock,
+) : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (CommonCommandInterlude.run(sender, "withdraw")) {
+        if (CommonCommandInterlude.run(sender, "withdraw", config, mm)) {
             return true
         }
 
@@ -37,10 +37,10 @@ internal class Withdraw : CommandExecutor {
             )
             return true
         }
-        if (args.size != 1 && args.size != 2) {
+        if (args.size != 1) {
             sender.sendMessage(
                 mm.deserialize(
-                    "${config.prefix}<reset>: <red>Please provide the amount of <aqua>Diamonds <red>you want to withdraw. Either a number or \"all\"."
+                    "${config.prefix}<reset>: <red>Please (only) provide the amount of <aqua>Diamonds <red>you want to withdraw. Either a number or \"all\"."
                 )
             )
             return true
@@ -72,9 +72,6 @@ internal class Withdraw : CommandExecutor {
                 }
         }
 
-        sender.inventory.lock()
-        val inventorySnapshot = InventorySnapshot.from(sender.inventory)
-
         scope.launch {
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
@@ -105,7 +102,15 @@ internal class Withdraw : CommandExecutor {
                         sender.inventory.unlock()
                         sender.sendMessage(
                             mm.deserialize(
-                                "${config.prefix}<reset>: <red>Cannot withdraw ${CommonOperations.shardsToDiamondsFull(shardsToWithdraw)} <red>because your bank only contains <yellow>${CommonOperations.shardsToDiamondsFull(bankShards)}<red>."
+                                "${config.prefix}<reset>: <red>Cannot withdraw ${
+                                    CommonOperations.shardsToDiamondsFull(
+                                        shardsToWithdraw
+                                    )
+                                } <red>because your bank only contains <yellow>${
+                                    CommonOperations.shardsToDiamondsFull(
+                                        bankShards
+                                    )
+                                }<red>."
                             )
                         )
                         return@tryWithLockSuspend
@@ -121,7 +126,11 @@ internal class Withdraw : CommandExecutor {
                         sender.inventory.unlock()
                         sender.sendMessage(
                             mm.deserialize(
-                                "${config.prefix}<reset>: <red>You don't have enough inventory space to withdraw ${CommonOperations.shardsToDiamondsFull(shardsToWithdraw)}<red>."
+                                "${config.prefix}<reset>: <red>You don't have enough inventory space to withdraw ${
+                                    CommonOperations.shardsToDiamondsFull(
+                                        shardsToWithdraw
+                                    )
+                                }<red>."
                             )
                         )
                         return@tryWithLockSuspend
@@ -145,7 +154,11 @@ internal class Withdraw : CommandExecutor {
 
                     sender.sendMessage(
                         mm.deserialize(
-                            "${config.prefix}<reset>: <green>Successfully withdrew ${CommonOperations.shardsToDiamondsFull(shardsToWithdraw)} <green>from your bank account."
+                            "${config.prefix}<reset>: <green>Successfully withdrew ${
+                                CommonOperations.shardsToDiamondsFull(
+                                    shardsToWithdraw
+                                )
+                            } <green>from your bank account."
                         )
                     )
 

@@ -1,28 +1,28 @@
 package net.trueog.diamondbankog.commands
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.CommonOperations
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
-import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
-import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
+import net.kyori.adventure.text.minimessage.MiniMessage
+import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.InventoryExtensions.lock
 import net.trueog.diamondbankog.InventoryExtensions.unlock
-import net.trueog.diamondbankog.InventorySnapshot
-import net.trueog.diamondbankog.InventorySnapshotUtils
 import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
-import net.trueog.diamondbankog.TransactionLock
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
-internal class Deposit : CommandExecutor {
+internal class Deposit(
+    val config: Config = DiamondBankOG.config,
+    val balanceManager: BalanceManager = DiamondBankOG.balanceManager,
+    val mm: MiniMessage = DiamondBankOG.mm,
+    val scope: CoroutineScope = DiamondBankOG.scope,
+    val transactionLock: TransactionLock = DiamondBankOG.transactionLock,
+) : CommandExecutor {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
-        if (CommonCommandInterlude.run(sender, "deposit")) {
+        if (CommonCommandInterlude.run(sender, "deposit", config, mm)) {
             return true
         }
 
@@ -74,19 +74,17 @@ internal class Deposit : CommandExecutor {
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
                     val inventorySnapshot = runOnMainThread {
                         sender.inventory.lock()
-                        InventorySnapshot.from(sender.inventory)
+                        InventorySnapshot.from(sender.inventory, balanceManager)
                     }
 
                     val removedInShards: Long =
                         if (shards == -1L) {
                             InventorySnapshotUtils.removeAll(inventorySnapshot).toLong()
                         } else {
-                            InventorySnapshotUtils.removeShards(inventorySnapshot, shards)
+                            InventorySnapshotUtils.removeShards(inventorySnapshot, shards, config, balanceManager, mm)
                                 .getOrElse {
                                     sender.sendMessage(
-                                        mm.deserialize(
-                                            "${config.prefix}<reset>: <red>Something went wrong."
-                                        )
+                                        mm.deserialize("${config.prefix}<reset>: <red>Something went wrong.")
                                     )
                                     sender.inventory.unlock()
                                     handleError(it)
@@ -97,7 +95,11 @@ internal class Deposit : CommandExecutor {
                     if (shards != -1L && removedInShards != shards) {
                         sender.sendMessage(
                             mm.deserialize(
-                                "${config.prefix}<reset>: <red>You do not have ${CommonOperations.shardsToDiamondsFull(shards)} <red>to deposit."
+                                "${config.prefix}<reset>: <red>You do not have ${
+                                    CommonOperations.shardsToDiamondsFull(
+                                        shards
+                                    )
+                                } <red>to deposit."
                             )
                         )
                         sender.inventory.unlock()
@@ -121,7 +123,11 @@ internal class Deposit : CommandExecutor {
 
                     sender.sendMessage(
                         mm.deserialize(
-                            "${config.prefix}<reset>: <green>Successfully deposited ${CommonOperations.shardsToDiamondsFull(removedInShards)} <green>into your bank account."
+                            "${config.prefix}<reset>: <green>Successfully deposited ${
+                                CommonOperations.shardsToDiamondsFull(
+                                    removedInShards
+                                )
+                            } <green>into your bank account."
                         )
                     )
 

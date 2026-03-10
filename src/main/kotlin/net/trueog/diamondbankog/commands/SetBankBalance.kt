@@ -3,6 +3,7 @@ package net.trueog.diamondbankog.commands
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.CommonOperations
+import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -80,7 +81,8 @@ internal class SetBankBalance : CommandExecutor {
                 mm.deserialize(
                     "${config.prefix}<reset>: <green>Successfully set the balance of ${
                         getPrefix(
-                            player.uniqueId
+                            player.uniqueId,
+                            DiamondBankOG.luckPerms,
                         )
                     }${player.name}<reset> <green>to <yellow>$balance <aqua>${if (balance == 1L) "Shard" else "Shards"}<green>."
                 )

@@ -3,6 +3,7 @@ package net.trueog.diamondbankog.commands
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.CommonOperations
+import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -83,7 +84,8 @@ internal class Balance : CommandExecutor {
                     "${config.prefix}<reset>: <green>${
                         if (if (sender is Player) sender.uniqueId == balancePlayer.uniqueId else false) "Your Balance" else "Balance of ${
                             getPrefix(
-                                balancePlayer.uniqueId
+                                balancePlayer.uniqueId,
+                                DiamondBankOG.luckPerms,
                             )
                         }${balancePlayer.name}"
                     }<reset><green>:\n" +

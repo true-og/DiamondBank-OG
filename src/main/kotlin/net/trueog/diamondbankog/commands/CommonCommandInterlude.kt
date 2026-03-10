@@ -2,16 +2,16 @@ package net.trueog.diamondbankog.commands
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
-import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.kyori.adventure.text.minimessage.MiniMessage
+import net.trueog.diamondbankog.Config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
-import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 object CommonCommandInterlude {
     /** @return should return */
     @OptIn(ExperimentalContracts::class)
-    fun run(sender: CommandSender, command: String): Boolean {
+    fun run(sender: CommandSender, command: String, config: Config, mm: MiniMessage): Boolean {
         contract { returns(false) implies (sender is Player) }
         if (economyDisabled) {
             sender.sendMessage(

@@ -2,14 +2,21 @@ package net.trueog.diamondbankog
 
 import java.util.*
 import kotlin.math.floor
+import net.kyori.adventure.text.minimessage.MiniMessage
 import net.trueog.diamondbankog.DiamondBankException.InsufficientFundsException
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankRuntimeException.MoreThanOneDecimalDigitRuntimeException
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 
 object CommonOperations {
-    suspend fun consume(uuid: UUID, shards: Long, inventorySnapshot: InventorySnapshot): Result<Unit> {
+    suspend fun consume(
+        uuid: UUID,
+        shards: Long,
+        inventorySnapshot: InventorySnapshot,
+        config: Config = DiamondBankOG.config,
+        balanceManager: BalanceManager = DiamondBankOG.balanceManager,
+        mm: MiniMessage = DiamondBankOG.mm,
+    ): Result<Unit> {
         val bankShards =
             balanceManager.getBankShards(uuid).getOrElse {
                 return Result.failure(it)
@@ -18,7 +25,7 @@ object CommonOperations {
             if (bankShards < shards) {
                 val toRemoveShards = shards - bankShards
                 val removedInShards =
-                    InventorySnapshotUtils.removeShards(inventorySnapshot, toRemoveShards)
+                    InventorySnapshotUtils.removeShards(inventorySnapshot, toRemoveShards, config, balanceManager, mm)
                         .getOrElse {
                             return Result.failure(it)
                         }

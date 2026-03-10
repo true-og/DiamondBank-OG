@@ -1,16 +1,20 @@
 package net.trueog.diamondbankog
 
 import kotlin.math.ceil
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
-import net.trueog.diamondbankog.DiamondBankOG.Companion.config
-import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
 object InventorySnapshotUtils {
     /** @return the amount of shards that could be removed */
-    suspend fun removeShards(inventory: InventorySnapshot, shards: Long): Result<Int> {
+    suspend fun removeShards(
+        inventory: InventorySnapshot,
+        shards: Long,
+        config: Config,
+        balanceManager: BalanceManager,
+        mm: MiniMessage,
+    ): Result<Int> {
         require(shards > 0)
 
         val shards = shards.toInt()
@@ -33,7 +37,11 @@ object InventorySnapshotUtils {
                 val player = Bukkit.getPlayer(inventory.holder)
                 player?.sendMessage(
                     mm.deserialize(
-                        "${config.prefix}<reset>: <yellow>The excess change of ${CommonOperations.shardsToDiamondsFull(excessShards)} <yellow> has been deposited into your bank account"
+                        "${config.prefix}<reset>: <yellow>The excess change of ${
+                            CommonOperations.shardsToDiamondsFull(
+                                excessShards
+                            )
+                        } <yellow> has been deposited into your bank account"
                     )
                 )
             }
@@ -65,7 +73,11 @@ object InventorySnapshotUtils {
                 val player = Bukkit.getPlayer(inventory.holder)
                 player?.sendMessage(
                     mm.deserialize(
-                        "${config.prefix}<reset>: <yellow>The excess change of ${CommonOperations.shardsToDiamondsFull(excessShards+excessDiamondsInShards)} <yellow> has been deposited into your bank account"
+                        "${config.prefix}<reset>: <yellow>The excess change of ${
+                            CommonOperations.shardsToDiamondsFull(
+                                excessShards + excessDiamondsInShards
+                            )
+                        } <yellow> has been deposited into your bank account"
                     )
                 )
             }

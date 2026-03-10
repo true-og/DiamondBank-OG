@@ -10,15 +10,6 @@ plugins {
     kotlin("jvm") version "2.1.21" // Import Kotlin JVM plugin.
 }
 
-/* ----------------------------- Source sets --------------------------- */
-sourceSets {
-    create("dev") {
-        java.srcDir("src/dev/kotlin")
-        compileClasspath += sourceSets.main.get().output
-        runtimeClasspath += sourceSets.main.get().output
-    }
-}
-
 /* ---------------------------- Java / Kotlin -------------------------- */
 java {
     toolchain {
@@ -27,15 +18,7 @@ java {
     }
 }
 
-kotlin {
-    jvmToolchain(17)
-    target { compilations { getByName("dev") { associateWith(target.compilations.getByName("main")) } } }
-}
-
-configurations {
-    named("devCompileOnly") { extendsFrom(configurations.compileOnly.get()) }
-    named("devRuntimeOnly") { extendsFrom(configurations.runtimeOnly.get()) }
-}
+kotlin { jvmToolchain(17) }
 
 /* ----------------------------- Metadata ------------------------------ */
 val commitHash =
@@ -77,7 +60,20 @@ dependencies {
     implementation("it.unimi.dsi:fastutil-core:8.5.16")
     implementation("org.jetbrains.kotlin:kotlin-stdlib") // Import the Kotlin standard library.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:6.0.3")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.0.3")
+    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT")
+    testImplementation("net.luckperms:api:5.5")
+    testImplementation("org.slf4j:slf4j-nop:2.0.17")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 }
+
+tasks.test { useJUnitPlatform() }
 
 /* ---------------------- Reproducible jars ---------------------------- */
 tasks.withType<AbstractArchiveTask>().configureEach { // Ensure reproducible .jars
@@ -113,19 +109,4 @@ spotless {
 
 tasks.named("spotlessCheck") {
     dependsOn("spotlessApply") // Run spotless before checking if spotless ran.
-}
-
-/* ----------------------------- Shadow Dev -------------------------------- */
-tasks.register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJarDev") {
-    from(sourceSets.main.get().output)
-    from(sourceSets["dev"].output)
-    configurations = listOf(project.configurations.runtimeClasspath.get())
-
-    isEnableRelocation = true
-    relocationPrefix = "${project.group}.shadow"
-}
-
-tasks.register("buildDev") {
-    version = "$version-dev"
-    dependsOn(tasks.spotlessApply, tasks.named("shadowJarDev"))
 }
