@@ -94,13 +94,16 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
 
-            val result = connection.inTransaction { conn ->
-                conn.sendPreparedStatement(
-                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
-                            "RETURNING bank_shards, inventory_shards, ender_chest_shards",
-                    listOf(uuid, shards),
-                )
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        conn.sendPreparedStatement(
+                            "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
+                                "RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                            listOf(uuid, shards),
+                        )
+                    }
+                    .await()
 
             if (result.rows.isEmpty()) {
                 throw Exception()
@@ -129,13 +132,16 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
 
-            val result = connection.inTransaction { conn ->
-                conn.sendPreparedStatement(
-                    "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = ${config.postgresTable}.${type.string} + excluded.${type.string} " +
-                            "WHERE ${config.postgresTable}.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
-                    listOf(uuid, shards),
-                )
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        conn.sendPreparedStatement(
+                            "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = ${config.postgresTable}.${type.string} + excluded.${type.string} " +
+                                "WHERE ${config.postgresTable}.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                            listOf(uuid, shards),
+                        )
+                    }
+                    .await()
 
             if (result.rows.isEmpty()) {
                 val shards =
@@ -174,12 +180,15 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
 
-            val result = connection.inTransaction { conn ->
-                conn.sendPreparedStatement(
-                    "SELECT total_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
-                    listOf(uuid),
-                )
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        conn.sendPreparedStatement(
+                            "SELECT total_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
+                            listOf(uuid),
+                        )
+                    }
+                    .await()
 
             totalShards =
                 if (result.rows.isNotEmpty()) {
@@ -203,12 +212,15 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
 
-            val result = connection.inTransaction { conn ->
-                conn.sendPreparedStatement(
-                    "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
-                    listOf(uuid),
-                )
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        conn.sendPreparedStatement(
+                            "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
+                            listOf(uuid),
+                        )
+                    }
+                    .await()
 
             if (result.rows.isNotEmpty()) {
                 val row = result.rows[0]
@@ -233,12 +245,15 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
 
-            val result = connection.inTransaction { conn ->
-                conn.sendPreparedStatement(
-                    "SELECT ${type.string} FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
-                    listOf(uuid),
-                )
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        conn.sendPreparedStatement(
+                            "SELECT ${type.string} FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
+                            listOf(uuid),
+                        )
+                    }
+                    .await()
 
             shards =
                 if (result.rows.isNotEmpty()) {
@@ -258,14 +273,17 @@ class PostgreSQL {
     suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> {
         try {
             val connection = pool.asSuspending.connect()
-            val result = connection.inTransaction { conn ->
-                conn.sendPreparedStatement(
-                    "SELECT uuid, total_shards " +
-                        "FROM ${config.postgresTable} " +
-                        "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 9",
-                    listOf(offset),
-                )
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        conn.sendPreparedStatement(
+                            "SELECT uuid, total_shards " +
+                                "FROM ${config.postgresTable} " +
+                                "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 9",
+                            listOf(offset),
+                        )
+                    }
+                    .await()
             val baltop = mutableMapOf<UUID?, Long>()
             result.rows.forEach {
                 val uuid = it.getAs<UUID>("uuid")
@@ -286,25 +304,28 @@ class PostgreSQL {
     suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Long>, Long>> {
         try {
             val connection = pool.asSuspending.connect()
-            val result = connection.inTransaction { conn ->
-                // @formatter:off
-                conn.sendPreparedStatement(
-                    "WITH ranked AS (" +
-                        "SELECT " +
-                        "uuid, total_shards, ROW_NUMBER() OVER (ORDER BY total_shards DESC, uuid DESC) AS rn " +
-                        "FROM ${config.postgresTable}" +
-                        "), " +
-                        "target AS (" +
-                        "SELECT rn, ((rn - 1) / 9) * 9 AS page_offset FROM ranked WHERE uuid = ?), " +
-                        "paged AS (" +
-                        "SELECT ranked.*, target.page_offset FROM ranked JOIN target ON true " +
-                        "WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 9" +
-                        ") " +
-                        "SELECT uuid, total_shards, page_offset FROM paged ORDER BY rn",
-                    listOf(uuid),
-                )
-                // @formatter:on
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        // @formatter:off
+                        conn.sendPreparedStatement(
+                            "WITH ranked AS (" +
+                                "SELECT " +
+                                "uuid, total_shards, ROW_NUMBER() OVER (ORDER BY total_shards DESC, uuid DESC) AS rn " +
+                                "FROM ${config.postgresTable}" +
+                                "), " +
+                                "target AS (" +
+                                "SELECT rn, ((rn - 1) / 9) * 9 AS page_offset FROM ranked WHERE uuid = ?), " +
+                                "paged AS (" +
+                                "SELECT ranked.*, target.page_offset FROM ranked JOIN target ON true " +
+                                "WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 9" +
+                                ") " +
+                                "SELECT uuid, total_shards, page_offset FROM paged ORDER BY rn",
+                            listOf(uuid),
+                        )
+                        // @formatter:on
+                    }
+                    .await()
             val baltop = mutableMapOf<UUID?, Long>()
             var offset = 0L
             result.rows.forEach {
@@ -324,9 +345,12 @@ class PostgreSQL {
         var number: Long?
         try {
             val connection = pool.asSuspending.connect()
-            val result = connection.inTransaction { conn ->
-                conn.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${config.postgresTable}")
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        conn.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${config.postgresTable}")
+                    }
+                    .await()
 
             if (result.rows.isNotEmpty()) {
                 val row = result.rows[0]
@@ -351,13 +375,15 @@ class PostgreSQL {
         try {
             val connection = pool.asSuspending.connect()
 
-            connection.inTransaction { conn ->
-                conn.sendPreparedStatement(
-                    "INSERT INTO ${config.postgresLogTable}(player_uuid, transferred_shards, player_to_uuid, transaction_reason, notes) " +
-                        "VALUES(?, ?, ?, ?, ?)",
-                    listOf(playerUuid, transferredShards, playerToUuid, transactionReason, notes),
-                )
-            }.await()
+            connection
+                .inTransaction { conn ->
+                    conn.sendPreparedStatement(
+                        "INSERT INTO ${config.postgresLogTable}(player_uuid, transferred_shards, player_to_uuid, transaction_reason, notes) " +
+                            "VALUES(?, ?, ?, ?, ?)",
+                        listOf(playerUuid, transferredShards, playerToUuid, transactionReason, notes),
+                    )
+                }
+                .await()
         } catch (e: Exception) {
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
@@ -367,9 +393,12 @@ class PostgreSQL {
     suspend fun hasEntry(uuid: UUID): Result<Boolean> {
         try {
             val connection = pool.asSuspending.connect()
-            val result = connection.inTransaction { conn ->
-                conn.sendPreparedStatement("SELECT 1 FROM ${config.postgresTable} WHERE uuid = ?", listOf(uuid))
-            }.await()
+            val result =
+                connection
+                    .inTransaction { conn ->
+                        conn.sendPreparedStatement("SELECT 1 FROM ${config.postgresTable} WHERE uuid = ?", listOf(uuid))
+                    }
+                    .await()
 
             if (result.rows.size == 1) {
                 return Result.success(true)
