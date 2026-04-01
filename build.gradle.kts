@@ -60,6 +60,7 @@ dependencies {
     implementation("it.unimi.dsi:fastutil-core:8.5.16")
     implementation("org.jetbrains.kotlin:kotlin-stdlib") // Import the Kotlin standard library.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.slf4j:slf4j-nop:2.0.17") // Silence SLF4J "no provider" warnings from lettuce/jasync.
 
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
@@ -69,7 +70,6 @@ dependencies {
     testImplementation("io.mockk:mockk:1.14.9")
     testImplementation("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT")
     testImplementation("net.luckperms:api:5.5")
-    testImplementation("org.slf4j:slf4j-nop:2.0.17")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 }
 
