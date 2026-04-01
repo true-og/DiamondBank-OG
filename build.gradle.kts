@@ -60,7 +60,6 @@ dependencies {
     implementation("it.unimi.dsi:fastutil-core:8.5.16")
     implementation("org.jetbrains.kotlin:kotlin-stdlib") // Import the Kotlin standard library.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.slf4j:slf4j-nop:2.0.17") // Silence SLF4J "no provider" warnings from lettuce/jasync.
 
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
@@ -86,6 +85,9 @@ tasks.shadowJar {
     archiveClassifier.set("") // Use empty string instead of null.
     isEnableRelocation = true
     relocationPrefix = "${project.group}.shadow"
+    dependencies {
+        exclude(dependency("org.slf4j:.*")) // Exclude SLF4J; the server provides it with a working provider.
+    }
 }
 
 tasks.jar { archiveClassifier.set("part") } // Applies to root jarfile only.
