@@ -2,6 +2,7 @@ package net.trueog.diamondbankog
 
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlinx.coroutines.CoroutineScope
@@ -29,15 +30,17 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
 class WithdrawTest {
-    @MockK lateinit var config: Config
+    @MockK private lateinit var config: Config
 
-    @MockK lateinit var balanceManager: BalanceManager
+    @MockK private lateinit var balanceManager: BalanceManager
 
-    @MockK lateinit var mm: MiniMessage
+    @MockK private lateinit var mm: MiniMessage
 
-    @MockK lateinit var player: Player
+    @MockK private lateinit var player: Player
 
-    @MockK lateinit var command: Command
+    @MockK private lateinit var command: Command
+
+    @SpyK private var transactionLock = TransactionLock()
 
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -94,7 +97,7 @@ class WithdrawTest {
         coEvery { balanceManager.getBankShards(playerUuid) } returns Result.success(100)
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val withdraw = Withdraw(config, balanceManager, mm, scope)
+        val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf(commandArg))
         waitForCoroutines(scope)
 
@@ -112,6 +115,7 @@ class WithdrawTest {
             { assertEquals(invShardsCount, inventory.countShards(), "Shard count") },
             { assertEquals(invDiamondsCount, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -121,7 +125,7 @@ class WithdrawTest {
         every { player.world.name } returns "minigame_world"
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val withdraw = Withdraw(config, balanceManager, mm, scope)
+        val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf("all"))
         waitForCoroutines(scope)
 
@@ -136,6 +140,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -144,7 +149,6 @@ class WithdrawTest {
     fun withdrawWhileLocked() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val transactionLock = mockk<TransactionLock>()
         coEvery { transactionLock.tryWithLockSuspend<Unit>(any(), any()) } returns TransactionLock.LockResult.Failed
 
         val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
@@ -162,6 +166,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -170,7 +175,7 @@ class WithdrawTest {
     fun withdrawNoArgs() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val withdraw = Withdraw(config, balanceManager, mm, scope)
+        val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf())
         waitForCoroutines(scope)
 
@@ -187,6 +192,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -195,7 +201,7 @@ class WithdrawTest {
     fun withdrawTooManyArgs() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val withdraw = Withdraw(config, balanceManager, mm, scope)
+        val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf("1", "2"))
         waitForCoroutines(scope)
 
@@ -212,6 +218,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -227,7 +234,7 @@ class WithdrawTest {
         runTest {
             val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-            val withdraw = Withdraw(config, balanceManager, mm, scope)
+            val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
             withdraw.onCommand(player, command, "withdraw", arrayOf(argument))
             waitForCoroutines(scope)
 
@@ -236,6 +243,7 @@ class WithdrawTest {
                 { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
                 { assertEquals(0, inventory.countTotal(), "Total count") },
                 { assertFalse(inventory.isLocked(), "Inventory locked") },
+                { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
             )
         }
 
@@ -245,7 +253,7 @@ class WithdrawTest {
         every { player.hasPermission("diamondbank-og.withdraw") } returns false
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val withdraw = Withdraw(config, balanceManager, mm, scope)
+        val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf("1"))
         waitForCoroutines(scope)
 
@@ -260,6 +268,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -269,7 +278,7 @@ class WithdrawTest {
         coEvery { balanceManager.getBankShards(playerUuid) } returns Result.success(18)
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val withdraw = Withdraw(config, balanceManager, mm, scope)
+        val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf("5"))
         waitForCoroutines(scope)
 
@@ -286,6 +295,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -295,7 +305,7 @@ class WithdrawTest {
         coEvery { balanceManager.getBankShards(playerUuid) } returns Result.success(18)
         val inventory = mockPlayerInventory(player, playerUuid, Array(36) { ItemStack(Material.DIRT, 1) })
 
-        val withdraw = Withdraw(config, balanceManager, mm, scope)
+        val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf("2"))
         waitForCoroutines(scope)
 
@@ -312,6 +322,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 }
