@@ -149,7 +149,7 @@ object BukkitMock {
                 if (newItemMeta is BlockStateMeta) {
                     val blockState = mockk<ShulkerBox>()
                     var inventory = ((itemMeta as BlockStateMeta).blockState as ShulkerBox).inventory
-                    println(inventory.contents[0])
+
                     every { newItemMeta.blockState } returns blockState
                     every { newItemMeta.blockState = any() } answers { inventory = firstArg<ShulkerBox>().inventory }
                     every { blockState.inventory } returns inventory
