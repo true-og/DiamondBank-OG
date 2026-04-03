@@ -5,8 +5,8 @@ import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
 import io.mockk.just
-import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import kotlin.test.assertEquals
@@ -43,15 +43,17 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
 class CompressTest {
-    @MockK lateinit var config: Config
+    @MockK private lateinit var config: Config
 
-    @MockK lateinit var balanceManager: BalanceManager
+    @MockK private lateinit var balanceManager: BalanceManager
 
-    @MockK lateinit var mm: MiniMessage
+    @MockK private lateinit var mm: MiniMessage
 
-    @MockK lateinit var player: Player
+    @MockK private lateinit var player: Player
 
-    @MockK lateinit var command: Command
+    @MockK private lateinit var command: Command
+
+    @SpyK private var transactionLock = TransactionLock()
 
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -153,7 +155,7 @@ class CompressTest {
     ) = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, inventoryContents)
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf())
         waitForCoroutines(scope)
 
@@ -164,6 +166,7 @@ class CompressTest {
                 add { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") }
                 add { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") }
                 add { assertFalse(inventory.isLocked(), "Inventory locked") }
+                add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
             }
         )
     }
@@ -188,7 +191,7 @@ class CompressTest {
 
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(shulkerBox))
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf("yes"))
         waitForCoroutines(scope)
 
@@ -205,6 +208,7 @@ class CompressTest {
                     )
                 }
                 add { assertFalse(inventory.isLocked(), "Inventory locked") }
+                add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
             }
         )
     }
@@ -222,7 +226,7 @@ class CompressTest {
     ) = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, inventoryContents)
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf())
         waitForCoroutines(scope)
 
@@ -233,6 +237,7 @@ class CompressTest {
                 add { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") }
                 add { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") }
                 add { assertFalse(inventory.isLocked(), "Inventory locked") }
+                add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
             }
         )
     }
@@ -243,7 +248,7 @@ class CompressTest {
         every { player.world.name } returns "minigame_world"
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 9)))
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf("all"))
         waitForCoroutines(scope)
 
@@ -257,6 +262,7 @@ class CompressTest {
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -265,7 +271,6 @@ class CompressTest {
     fun compressWhileLocked() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 9)))
 
-        val transactionLock = mockk<TransactionLock>()
         coEvery { transactionLock.tryWithLockSuspend<Unit>(any(), any()) } returns TransactionLock.LockResult.Failed
 
         val compress = Compress(config, balanceManager, mm, scope, transactionLock)
@@ -282,6 +287,7 @@ class CompressTest {
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -290,7 +296,7 @@ class CompressTest {
     fun compressTooManyArgs() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 9)))
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf("1", "2"))
         waitForCoroutines(scope)
 
@@ -306,6 +312,7 @@ class CompressTest {
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -314,7 +321,7 @@ class CompressTest {
     fun compressInvalidArg() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 9)))
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf("invalid"))
         waitForCoroutines(scope)
 
@@ -322,6 +329,7 @@ class CompressTest {
             { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: <red>Invalid argument.")) } },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -331,7 +339,7 @@ class CompressTest {
         every { player.hasPermission("diamondbank-og.compress") } returns false
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 9)))
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf("1"))
         waitForCoroutines(scope)
 
@@ -345,6 +353,7 @@ class CompressTest {
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -353,7 +362,7 @@ class CompressTest {
     fun compressYesNotHoldingShulkerBox() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 9)))
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf("yes"))
         waitForCoroutines(scope)
 
@@ -365,6 +374,7 @@ class CompressTest {
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -373,7 +383,7 @@ class CompressTest {
     fun compressNoYesHoldingShulkerBox() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.SHULKER_BOX)))
 
-        val compress = Compress(config, balanceManager, mm, scope)
+        val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf())
         waitForCoroutines(scope)
 
@@ -388,6 +398,7 @@ class CompressTest {
                 }
             },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 }

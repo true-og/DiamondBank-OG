@@ -2,6 +2,7 @@ package net.trueog.diamondbankog
 
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlinx.coroutines.CoroutineScope
@@ -31,15 +32,17 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.MethodSource
 
 class DepositTest {
-    @MockK lateinit var config: Config
+    @MockK private lateinit var config: Config
 
-    @MockK lateinit var balanceManager: BalanceManager
+    @MockK private lateinit var balanceManager: BalanceManager
 
-    @MockK lateinit var mm: MiniMessage
+    @MockK private lateinit var mm: MiniMessage
 
-    @MockK lateinit var player: Player
+    @MockK private lateinit var player: Player
 
-    @MockK lateinit var command: Command
+    @MockK private lateinit var command: Command
+
+    @SpyK private var transactionLock = TransactionLock()
 
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -198,7 +201,7 @@ class DepositTest {
     ) = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, inventoryContents)
 
-        val deposit = Deposit(config, balanceManager, mm, scope)
+        val deposit = Deposit(config, balanceManager, mm, scope, transactionLock)
         deposit.onCommand(player, command, "deposit", arrayOf(commandArg))
         waitForCoroutines(scope)
 
@@ -218,6 +221,7 @@ class DepositTest {
                 add { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") }
                 add { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") }
                 add { assertFalse(inventory.isLocked(), "Inventory locked") }
+                add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
             }
         )
     }
@@ -227,7 +231,7 @@ class DepositTest {
     fun depositWholeDiamondsWhileShort() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 1)))
 
-        val deposit = Deposit(config, balanceManager, mm, scope)
+        val deposit = Deposit(config, balanceManager, mm, scope, transactionLock)
         deposit.onCommand(player, command, "deposit", arrayOf("2"))
         waitForCoroutines(scope)
 
@@ -244,6 +248,7 @@ class DepositTest {
             { coVerify(exactly = 0) { balanceManager.addToBankShards(any(), any()) } },
             { assertEquals(1, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -253,7 +258,7 @@ class DepositTest {
         every { player.world.name } returns "minigame_world"
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 5)))
 
-        val deposit = Deposit(config, balanceManager, mm, scope)
+        val deposit = Deposit(config, balanceManager, mm, scope, transactionLock)
         deposit.onCommand(player, command, "deposit", arrayOf("all"))
         waitForCoroutines(scope)
 
@@ -268,6 +273,7 @@ class DepositTest {
             { coVerify(exactly = 0) { balanceManager.addToBankShards(any(), any()) } },
             { assertEquals(5, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -276,7 +282,6 @@ class DepositTest {
     fun depositWhileLocked() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 5)))
 
-        val transactionLock = mockk<TransactionLock>()
         coEvery { transactionLock.tryWithLockSuspend<Unit>(any(), any()) } returns TransactionLock.LockResult.Failed
 
         val deposit = Deposit(config, balanceManager, mm, scope, transactionLock)
@@ -294,6 +299,7 @@ class DepositTest {
             { coVerify(exactly = 0) { balanceManager.addToBankShards(any(), any()) } },
             { assertEquals(5, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -302,7 +308,7 @@ class DepositTest {
     fun depositNoArgs() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 5)))
 
-        val deposit = Deposit(config, balanceManager, mm, scope)
+        val deposit = Deposit(config, balanceManager, mm, scope, transactionLock)
         deposit.onCommand(player, command, "deposit", arrayOf())
         waitForCoroutines(scope)
 
@@ -319,6 +325,7 @@ class DepositTest {
             { coVerify(exactly = 0) { balanceManager.addToBankShards(any(), any()) } },
             { assertEquals(5, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -327,7 +334,7 @@ class DepositTest {
     fun depositTooManyArgs() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 5)))
 
-        val deposit = Deposit(config, balanceManager, mm, scope)
+        val deposit = Deposit(config, balanceManager, mm, scope, transactionLock)
         deposit.onCommand(player, command, "deposit", arrayOf("1", "2"))
         waitForCoroutines(scope)
 
@@ -344,6 +351,7 @@ class DepositTest {
             { coVerify(exactly = 0) { balanceManager.addToBankShards(any(), any()) } },
             { assertEquals(5, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -359,7 +367,7 @@ class DepositTest {
         runTest {
             val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 5)))
 
-            val deposit = Deposit(config, balanceManager, mm, scope)
+            val deposit = Deposit(config, balanceManager, mm, scope, transactionLock)
             deposit.onCommand(player, command, "deposit", arrayOf(argument))
             waitForCoroutines(scope)
 
@@ -368,6 +376,7 @@ class DepositTest {
                 { coVerify(exactly = 0) { balanceManager.addToBankShards(any(), any()) } },
                 { assertEquals(5, inventory.countDiamonds(), "Diamond count") },
                 { assertFalse(inventory.isLocked(), "Inventory locked") },
+                { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
             )
         }
 
@@ -377,7 +386,7 @@ class DepositTest {
         every { player.hasPermission("diamondbank-og.deposit") } returns false
         val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.DIAMOND, 5)))
 
-        val deposit = Deposit(config, balanceManager, mm, scope)
+        val deposit = Deposit(config, balanceManager, mm, scope, transactionLock)
         deposit.onCommand(player, command, "deposit", arrayOf("1"))
         waitForCoroutines(scope)
 
@@ -392,6 +401,7 @@ class DepositTest {
             { coVerify(exactly = 0) { balanceManager.addToBankShards(any(), any()) } },
             { assertEquals(5, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 }

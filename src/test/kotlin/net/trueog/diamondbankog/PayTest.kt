@@ -2,6 +2,7 @@ package net.trueog.diamondbankog
 
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -37,19 +38,21 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.MethodSource
 
 class PayTest {
-    @MockK lateinit var config: Config
+    @MockK private lateinit var config: Config
 
-    @MockK lateinit var balanceManager: BalanceManager
+    @MockK private lateinit var balanceManager: BalanceManager
 
-    @MockK lateinit var mm: MiniMessage
+    @MockK private lateinit var mm: MiniMessage
 
-    @MockK lateinit var player: Player
+    @MockK private lateinit var player: Player
 
-    @MockK lateinit var otherPlayer: Player
+    @MockK private lateinit var otherPlayer: Player
 
-    @MockK lateinit var command: Command
+    @MockK private lateinit var command: Command
 
-    @MockK lateinit var luckPerms: LuckPerms
+    @MockK private lateinit var luckPerms: LuckPerms
+
+    @SpyK private var transactionLock = TransactionLock()
 
     val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -261,7 +264,7 @@ class PayTest {
         every { user.nodes } returns mutableListOf<Node>()
         every { luckPerms.userManager.getUser(any<UUID>()) } returns user
 
-        val pay = Pay(config, balanceManager, mm, scope, luckPerms)
+        val pay = Pay(config, balanceManager, mm, scope, luckPerms, transactionLock)
         pay.onCommand(player, command, "pay", arrayOf("otherplayer", commandArg))
         waitForCoroutines(scope)
 
@@ -297,6 +300,7 @@ class PayTest {
                 add { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") }
                 add { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") }
                 add { assertFalse(inventory.isLocked(), "Inventory locked") }
+                add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
             }
         )
     }
@@ -307,7 +311,7 @@ class PayTest {
         every { player.world.name } returns "minigame_world"
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val pay = Pay(config, balanceManager, mm, scope, luckPerms)
+        val pay = Pay(config, balanceManager, mm, scope, luckPerms, transactionLock)
         pay.onCommand(player, command, "pay", arrayOf("otherplayer", "1"))
         waitForCoroutines(scope)
 
@@ -322,6 +326,7 @@ class PayTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -330,7 +335,6 @@ class PayTest {
     fun payWhileLocked() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val transactionLock = mockk<TransactionLock>()
         coEvery { transactionLock.tryWithLockSuspend<Unit>(any(), any()) } returns TransactionLock.LockResult.Failed
 
         val pay = Pay(config, balanceManager, mm, scope, luckPerms, transactionLock)
@@ -348,6 +352,7 @@ class PayTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -356,7 +361,7 @@ class PayTest {
     fun payNoArgs() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val pay = Pay(config, balanceManager, mm, scope, luckPerms)
+        val pay = Pay(config, balanceManager, mm, scope, luckPerms, transactionLock)
         pay.onCommand(player, command, "pay", arrayOf())
         waitForCoroutines(scope)
 
@@ -373,6 +378,7 @@ class PayTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -381,7 +387,7 @@ class PayTest {
     fun payTooFewArgs() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val pay = Pay(config, balanceManager, mm, scope, luckPerms)
+        val pay = Pay(config, balanceManager, mm, scope, luckPerms, transactionLock)
         pay.onCommand(player, command, "pay", arrayOf("1"))
         waitForCoroutines(scope)
 
@@ -398,6 +404,7 @@ class PayTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -406,7 +413,7 @@ class PayTest {
     fun payTooManyArgs() = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val pay = Pay(config, balanceManager, mm, scope, luckPerms)
+        val pay = Pay(config, balanceManager, mm, scope, luckPerms, transactionLock)
         pay.onCommand(player, command, "pay", arrayOf("1", "2", "3"))
         waitForCoroutines(scope)
 
@@ -423,6 +430,7 @@ class PayTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -437,7 +445,7 @@ class PayTest {
     fun payInvalidArg(@Suppress("UNUSED_PARAMETER") name: String, argument: String, errorMessage: String) = runTest {
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val pay = Pay(config, balanceManager, mm, scope, luckPerms)
+        val pay = Pay(config, balanceManager, mm, scope, luckPerms, transactionLock)
         pay.onCommand(player, command, "pay", arrayOf("otherplayer", argument))
         waitForCoroutines(scope)
 
@@ -446,6 +454,7 @@ class PayTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -455,7 +464,7 @@ class PayTest {
         every { player.hasPermission("diamondbank-og.pay") } returns false
         val inventory = mockPlayerInventory(player, playerUuid, emptyArray())
 
-        val pay = Pay(config, balanceManager, mm, scope, luckPerms)
+        val pay = Pay(config, balanceManager, mm, scope, luckPerms, transactionLock)
         pay.onCommand(player, command, "pay", arrayOf("1"))
         waitForCoroutines(scope)
 
@@ -470,6 +479,7 @@ class PayTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 }
