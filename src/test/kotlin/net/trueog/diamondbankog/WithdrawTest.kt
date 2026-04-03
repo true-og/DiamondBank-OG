@@ -115,7 +115,7 @@ class WithdrawTest {
             { assertEquals(invShardsCount, inventory.countShards(), "Shard count") },
             { assertEquals(invDiamondsCount, inventory.countDiamonds(), "Diamond count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
-            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -140,7 +140,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
-            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -166,7 +166,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
-            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -192,7 +192,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
-            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -218,7 +218,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
-            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -243,7 +243,7 @@ class WithdrawTest {
                 { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
                 { assertEquals(0, inventory.countTotal(), "Total count") },
                 { assertFalse(inventory.isLocked(), "Inventory locked") },
-                { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+                { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
             )
         }
 
@@ -268,7 +268,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
-            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -295,7 +295,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
-            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -322,7 +322,7 @@ class WithdrawTest {
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },
-            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 }

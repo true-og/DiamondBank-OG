@@ -160,14 +160,12 @@ class CompressTest {
         waitForCoroutines(scope)
 
         assertAll(
-            buildList {
-                add { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $compressionSummary")) } }
-                add { assertEquals(invShardCount, inventory.countShards(), "Shard count") }
-                add { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") }
-                add { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") }
-                add { assertFalse(inventory.isLocked(), "Inventory locked") }
-                add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
-            }
+            { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $compressionSummary")) } },
+            { assertEquals(invShardCount, inventory.countShards(), "Shard count") },
+            { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") },
+            { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") },
+            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -196,20 +194,18 @@ class CompressTest {
         waitForCoroutines(scope)
 
         assertAll(
-            buildList {
-                add { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $compressionSummary")) } }
-                add { assertEquals(invShardCount, shulkerBoxState.inventory.countShards(), "Shard count") }
-                add { assertEquals(invDiamondCount, shulkerBoxState.inventory.countDiamonds(), "Diamond count") }
-                add {
-                    assertEquals(
-                        invDiamondBlockCount,
-                        shulkerBoxState.inventory.countDiamondBlocks(),
-                        "Diamond block count",
-                    )
-                }
-                add { assertFalse(inventory.isLocked(), "Inventory locked") }
-                add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
-            }
+            { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $compressionSummary")) } },
+            { assertEquals(invShardCount, shulkerBoxState.inventory.countShards(), "Shard count") },
+            { assertEquals(invDiamondCount, shulkerBoxState.inventory.countDiamonds(), "Diamond count") },
+            {
+                assertEquals(
+                    invDiamondBlockCount,
+                    shulkerBoxState.inventory.countDiamondBlocks(),
+                    "Diamond block count",
+                )
+            },
+            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
@@ -231,14 +227,12 @@ class CompressTest {
         waitForCoroutines(scope)
 
         assertAll(
-            buildList {
-                add { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: <red>$error")) } }
-                add { assertEquals(invShardCount, inventory.countShards(), "Shard count") }
-                add { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") }
-                add { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") }
-                add { assertFalse(inventory.isLocked(), "Inventory locked") }
-                add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
-            }
+            { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: <red>$error")) } },
+            { assertEquals(invShardCount, inventory.countShards(), "Shard count") },
+            { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") },
+            { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") },
+            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
 
