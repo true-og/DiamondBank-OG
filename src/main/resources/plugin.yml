@@ -51,6 +51,9 @@ commands:
   autodeposit:
     description: Toggles auto-deposit, automatically deposits picked up Diamond currency items, mutually exclusive with auto-compress
     usage: /autodeposit
+  dbogtoggledebug:
+    description: Toggles debug mode
+    usage: /dbtoggledebug
 
 # So we can overwrite Essentials' commands
 softdepend: [ Essentials-OG ]
