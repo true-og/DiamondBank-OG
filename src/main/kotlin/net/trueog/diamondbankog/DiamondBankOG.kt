@@ -25,6 +25,8 @@ internal open class DiamondBankOG : JavaPlugin() {
         lateinit var redis: Redis
         lateinit var luckPerms: LuckPerms
 
+        var debug: Boolean = false
+
         fun isRedisInitialized() = ::redis.isInitialized
 
         fun isBalanceManagerInitialized() = ::balanceManager.isInitialized
@@ -101,6 +103,8 @@ internal open class DiamondBankOG : JavaPlugin() {
 
         this.getCommand("enableeconomy")?.setExecutor(EnableEconomy())
         this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
+
+        this.getCommand("dbogtoggledebug")?.setExecutor(ToggleDebug())
 
         Shard.createCraftingRecipes()
 
