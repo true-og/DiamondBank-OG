@@ -1,13 +1,10 @@
 package net.trueog.diamondbankog
 
-import java.sql.SQLException
 import java.util.*
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 
 interface BalanceManager {
-    @Throws(SQLException::class, ClassNotFoundException::class) fun init()
-
     suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit>
 
     suspend fun addToBankShards(uuid: UUID, shards: Long): Result<Unit>

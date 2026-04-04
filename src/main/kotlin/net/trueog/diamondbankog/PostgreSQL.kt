@@ -4,7 +4,6 @@ import com.github.jasync.sql.db.asSuspending
 import com.github.jasync.sql.db.pool.ConnectionPool
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnection
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
-import java.sql.SQLException
 import java.util.*
 import kotlinx.coroutines.future.await
 import net.trueog.diamondbankog.DiamondBankException.*
@@ -12,8 +11,10 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
+import org.flywaydb.core.Flyway
+import org.postgresql.ds.PGSimpleDataSource
 
-class PostgreSQL {
+class PostgreSQL private constructor() {
     lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
     class NoRowsException : Exception()
@@ -25,67 +26,34 @@ class PostgreSQL {
         TOTAL("bank_shards, inventory_shards, ender_chest_shards"),
     }
 
-    @Throws(SQLException::class, ClassNotFoundException::class)
-    fun initDB() {
-        try {
-            pool =
-                PostgreSQLConnectionBuilder.createConnectionPool(
-                    "${config.postgresUrl}?user=${config.postgresUser}&password=${config.postgresPassword}"
-                )
-            val createTable =
-                pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${config.postgresTable}(uuid UUID PRIMARY KEY, bank_shards BIGINT DEFAULT 0, inventory_shards BIGINT DEFAULT 0, ender_chest_shards BIGINT DEFAULT 0, total_shards BIGINT GENERATED ALWAYS AS ( COALESCE(bank_shards, 0) + COALESCE(inventory_shards, 0) + COALESCE(ender_chest_shards, 0) ) STORED)"
-                )
-            createTable.join()
-            val createTotalShardsIndex =
-                pool.sendPreparedStatement(
-                    "CREATE INDEX IF NOT EXISTS idx_total_shards ON ${config.postgresTable}(total_shards DESC)"
-                )
-            createTotalShardsIndex.join()
+    companion object {
+        fun create(): PostgreSQL? {
+            val postgreSQL = PostgreSQL()
 
-            val createLogTable =
-                pool.sendPreparedStatement(
-                    "CREATE TABLE IF NOT EXISTS ${config.postgresLogTable}(id SERIAL PRIMARY KEY, player_uuid UUID NOT NULL, transferred_shards BIGINT NOT NULL, player_to_uuid UUID, transaction_reason TEXT, notes TEXT, timestamp TIMESTAMPTZ DEFAULT NOW())"
+            try {
+                val jdbcUrl = "${config.postgresUrl}?user=${config.postgresUser}&password=${config.postgresPassword}"
+
+                val pg = PGSimpleDataSource()
+                pg.setUrl(jdbcUrl)
+                val flyway = Flyway.configure(DiamondBankOG::class.java.classLoader).dataSource(pg).load()
+                flyway.migrate()
+
+                postgreSQL.pool = PostgreSQLConnectionBuilder.createConnectionPool(jdbcUrl)
+                return postgreSQL
+            } catch (e: Exception) {
+                economyDisabled = true
+                plugin.logger.severe(
+                    "ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?"
                 )
-            createLogTable.join()
-            // @formatter:off
-            val createFunction =
-                pool.sendPreparedStatement(
-                    "CREATE OR REPLACE FUNCTION fifo_limit_trigger() RETURNS TRIGGER AS $$" +
-                        "DECLARE " +
-                        "max_rows CONSTANT BIGINT := ${config.postgresLogLimit};" +
-                        "BEGIN " +
-                        "DELETE FROM ${config.postgresLogTable} " +
-                        "WHERE id <= (" +
-                        "SELECT id FROM ${config.postgresLogTable} " +
-                        "ORDER BY id DESC " +
-                        "OFFSET max_rows LIMIT 1" +
-                        ");" +
-                        "RETURN NEW;" +
-                        "END;" +
-                        "$$ LANGUAGE plpgsql;"
-                )
-            // @formatter:on
-            createFunction.join()
-            val createTrigger =
-                pool.sendPreparedStatement(
-                    "CREATE OR REPLACE TRIGGER fifo_limit_trigger\n" +
-                        "AFTER INSERT ON ${config.postgresLogTable}\n" +
-                        "FOR EACH STATEMENT\n" +
-                        "EXECUTE FUNCTION fifo_limit_trigger();"
-                )
-            createTrigger.join()
-        } catch (e: Exception) {
-            economyDisabled = true
-            plugin.logger.severe(
-                "ECONOMY DISABLED! Something went wrong while trying to initialise PostgreSQL. Is PostgreSQL running? Are the PostgreSQL config variables correct?"
-            )
-            e.printStackTrace()
-            return
+                e.printStackTrace()
+                return null
+            }
         }
     }
 
-    data class PlayerShards(val bank: Long, val inventory: Long, val enderChest: Long)
+    data class PlayerShards(val bank: Long, val inventory: Long, val enderChest: Long) {
+        val total = bank + inventory + enderChest
+    }
 
     suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())

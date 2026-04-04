@@ -21,7 +21,7 @@ internal open class DiamondBankOG : JavaPlugin() {
         lateinit var plugin: DiamondBankOG
         lateinit var config: YamlConfig
         lateinit var eventManager: EventManager
-        lateinit var balanceManager: CachingBalanceManager
+        lateinit var balanceManager: BalanceManager
         lateinit var redis: Redis
         lateinit var luckPerms: LuckPerms
 
@@ -59,14 +59,12 @@ internal open class DiamondBankOG : JavaPlugin() {
 
         eventManager = EventManager()
 
-        balanceManager = CachingBalanceManager()
-        try {
-            balanceManager.init()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Bukkit.getPluginManager().disablePlugin(this)
-            return
-        }
+        balanceManager =
+            CachingBalanceManager.create()
+                ?: run {
+                    Bukkit.getPluginManager().disablePlugin(this)
+                    return
+                }
 
         redis = Redis()
         if (redis.testConnection()) {

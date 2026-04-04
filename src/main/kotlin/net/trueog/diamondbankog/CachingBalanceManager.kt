@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog
 
-import java.sql.SQLException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -11,14 +10,17 @@ import net.trueog.diamondbankog.ErrorHandler.handleError
 import net.trueog.diamondbankog.PostgreSQL.PlayerShards
 import net.trueog.diamondbankog.PostgreSQL.ShardType
 
-internal class CachingBalanceManager : BalanceManager {
+internal class CachingBalanceManager private constructor() : BalanceManager {
     val cache = Cache()
-    val postgreSQL = PostgreSQL()
+    lateinit var postgreSQL: PostgreSQL
     val beingModified = ConcurrentHashMap<Pair<UUID, ShardType>, AtomicInteger>()
 
-    @Throws(SQLException::class, ClassNotFoundException::class)
-    override fun init() {
-        postgreSQL.initDB()
+    companion object : BalanceManagerFactory {
+        override fun create(): BalanceManager? {
+            val cachingBalanceManager = CachingBalanceManager()
+            cachingBalanceManager.postgreSQL = PostgreSQL.create() ?: return null
+            return cachingBalanceManager
+        }
     }
 
     private fun increment(uuid: UUID, type: ShardType) {

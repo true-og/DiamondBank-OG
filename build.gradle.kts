@@ -55,9 +55,16 @@ repositories {
 dependencies {
     compileOnly("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT") // Declare Purpur API version to be packaged.
     compileOnly("net.luckperms:api:5.5") // Import the LuckPerms API.
+
     implementation("io.lettuce:lettuce-core:7.2.0.RELEASE") // Import the Lettuce API for keydb.
+
+    implementation("org.flywaydb:flyway-core:12.3.0")
+    implementation("org.flywaydb:flyway-database-postgresql:12.3.0")
+    implementation("org.postgresql:postgresql:42.7.9")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4") // Import the jasync Postgres API.
+
     implementation("it.unimi.dsi:fastutil-core:8.5.16")
+
     implementation("org.jetbrains.kotlin:kotlin-stdlib") // Import the Kotlin standard library.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.slf4j:slf4j-api:2.0.17") // Bundle a relocated SLF4J API for shaded dependencies.
