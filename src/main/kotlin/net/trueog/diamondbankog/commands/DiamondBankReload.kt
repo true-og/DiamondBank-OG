@@ -17,23 +17,25 @@ internal class DiamondBankReload : CommandExecutor {
             YamlConfig.create()
                 ?: run {
                     sender.sendMessage(
-                        mm.deserialize("<red>Failed to reload the config. Check the console for more information.")
+                        mm.deserialize(
+                            "${config.prefix}<reset>: <red>Failed to reload the config. Check the console for more information."
+                        )
                     )
                     Bukkit.getPluginManager().disablePlugin(plugin)
                     return true
                 }
 
-        balanceManager = CachingBalanceManager()
-        try {
-            balanceManager.init()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            sender.sendMessage(
-                mm.deserialize("<red>Failed to reload the config. Check the console for more information.")
-            )
-            Bukkit.getPluginManager().disablePlugin(plugin)
-            return true
-        }
+        balanceManager =
+            CachingBalanceManager.create()
+                ?: run {
+                    sender.sendMessage(
+                        mm.deserialize(
+                            "${config.prefix}<reset>: <red>Failed to reload the config. Check the console for more information."
+                        )
+                    )
+                    Bukkit.getPluginManager().disablePlugin(plugin)
+                    return true
+                }
 
         sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <green>Successfully reloaded the config."))
         return true
