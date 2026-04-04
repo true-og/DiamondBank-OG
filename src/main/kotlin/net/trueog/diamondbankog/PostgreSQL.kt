@@ -51,7 +51,9 @@ class PostgreSQL private constructor() {
         }
     }
 
-    data class PlayerShards(val bank: Long, val inventory: Long, val enderChest: Long)
+    data class PlayerShards(val bank: Long, val inventory: Long, val enderChest: Long) {
+        val total = bank + inventory + enderChest
+    }
 
     suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
