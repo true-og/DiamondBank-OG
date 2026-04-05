@@ -48,7 +48,7 @@ internal class Events : Listener {
         scope.launch {
             val hasEntry =
                 balanceManager.hasEntry(event.player.uniqueId).getOrElse {
-                    economyDisabled = true
+                    handleError(it)
                     return@launch
                 }
             if (!hasEntry) {
