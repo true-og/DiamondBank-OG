@@ -78,7 +78,7 @@ internal class Pay(
             CommonOperations.diamondsToShards(amount).getOrElse {
                 sender.sendMessage(
                     mm.deserialize(
-                        "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+                        "${config.prefix}<reset>: <aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
                     )
                 )
                 return true
@@ -148,7 +148,7 @@ internal class Pay(
                                     receiver.uniqueId,
                                     luckPerms,
                                 )
-                            } ${receiver.name}<reset><green>."
+                            }${receiver.name}<reset><green>."
                         )
                     )
 
@@ -161,7 +161,7 @@ internal class Pay(
                                         sender.uniqueId,
                                         luckPerms,
                                     )
-                                } ${sender.name}<reset> <green>has paid you ${
+                                }${sender.name}<reset> <green>has paid you ${
                                     CommonOperations.shardsToDiamondsFull(
                                         shards
                                     )

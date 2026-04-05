@@ -274,7 +274,7 @@ class PayTest {
                     verify {
                         player.sendMessage(
                             Component.text(
-                                "DiamondBank-OG<reset>: <green>Successfully paid <yellow>$successDiamondText <green>to  OtherPlayer<reset><green>."
+                                "DiamondBank-OG<reset>: <green>Successfully paid <yellow>$successDiamondText <green>to OtherPlayer<reset><green>."
                             )
                         )
                     }
@@ -437,9 +437,9 @@ class PayTest {
     @ParameterizedTest(name = "{0}")
     @DisplayName("Pay with invalid argument should fail")
     @CsvSource(
-        "Not a number, abc, Invalid argument",
-        "Negative, -1, You cannot pay a negative or zero amount",
-        "Zero, 0, You cannot pay a negative or zero amount",
+        "Not a number, abc, <red>Invalid argument",
+        "Negative, -1, <red>You cannot pay a negative or zero amount",
+        "Zero, 0, <red>You cannot pay a negative or zero amount",
         "More than one decimal digit, 1.11, <aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information",
     )
     fun payInvalidArg(@Suppress("UNUSED_PARAMETER") name: String, argument: String, errorMessage: String) = runTest {
@@ -450,7 +450,7 @@ class PayTest {
         waitForCoroutines(scope)
 
         assertAll(
-            { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: <red>$errorMessage.")) } },
+            { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $errorMessage.")) } },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
             { assertFalse(inventory.isLocked(), "Inventory locked") },

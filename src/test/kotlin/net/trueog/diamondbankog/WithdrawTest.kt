@@ -225,9 +225,9 @@ class WithdrawTest {
     @ParameterizedTest(name = "{0}")
     @DisplayName("Withdraw with invalid argument should fail")
     @CsvSource(
-        "Not a number, abc, Invalid argument",
-        "Negative, -1, You cannot withdraw a negative or zero amount",
-        "Zero, 0, You cannot withdraw a negative or zero amount",
+        "Not a number, abc, <red>Invalid argument",
+        "Negative, -1, <red>You cannot withdraw a negative or zero amount",
+        "Zero, 0, <red>You cannot withdraw a negative or zero amount",
         "More than one decimal digit, 1.11, <aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information",
     )
     fun withdrawInvalidArg(@Suppress("UNUSED_PARAMETER") name: String, argument: String, errorMessage: String) =
@@ -239,7 +239,7 @@ class WithdrawTest {
             waitForCoroutines(scope)
 
             assertAll(
-                { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: <red>$errorMessage.")) } },
+                { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $errorMessage.")) } },
                 { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
                 { assertEquals(0, inventory.countTotal(), "Total count") },
                 { assertFalse(inventory.isLocked(), "Inventory locked") },
@@ -287,7 +287,7 @@ class WithdrawTest {
                 verify {
                     player.sendMessage(
                         Component.text(
-                            "DiamondBank-OG<reset>: <red>Cannot withdraw <yellow>5.0 <aqua>Diamonds <red>because your bank only contains <yellow><yellow>2.0 <aqua>Diamonds<red>."
+                            "DiamondBank-OG<reset>: <red>Cannot withdraw <yellow>5.0 <aqua>Diamonds <red>because your bank only contains <yellow>2.0 <aqua>Diamonds<red>."
                         )
                     )
                 }
