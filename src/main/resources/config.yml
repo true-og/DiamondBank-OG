@@ -6,9 +6,6 @@ prefix: <gray>[<aqua>DiamondBank<white>-<red>OG<gray>]
 postgresUrl: jdbc:postgresql://localhost:5432/diamond
 postgresUser: ^{DIAMONDBANKOG_POSTGRES_USER}
 postgresPassword: ^{DIAMONDBANKOG_POSTGRES_PASSWORD}
-postgresTable: diamond
-postgresLogTable: diamond_log
-postgresLogLimit: 1000
 
 # ---Redis-compatible URI---
 # According to https://redis.github.io/lettuce/user-guide/connecting-redis/#uri-syntax

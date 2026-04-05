@@ -5,8 +5,5 @@ interface Config {
     var postgresUrl: String
     var postgresUser: String
     var postgresPassword: String
-    var postgresTable: String
-    var postgresLogTable: String
-    var postgresLogLimit: Int
     var redisUrl: String
 }

@@ -66,7 +66,7 @@ class PostgreSQL private constructor() {
                 connection
                     .inTransaction { conn ->
                         conn.sendPreparedStatement(
-                            "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
+                            "INSERT INTO diamond(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
                                 "RETURNING bank_shards, inventory_shards, ender_chest_shards",
                             listOf(uuid, shards),
                         )
@@ -104,8 +104,8 @@ class PostgreSQL private constructor() {
                 connection
                     .inTransaction { conn ->
                         conn.sendPreparedStatement(
-                            "INSERT INTO ${config.postgresTable}(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = ${config.postgresTable}.${type.string} + excluded.${type.string} " +
-                                "WHERE ${config.postgresTable}.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                            "INSERT INTO diamond(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = diamond.${type.string} + excluded.${type.string} " +
+                                "WHERE diamond.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
                             listOf(uuid, shards),
                         )
                     }
@@ -152,7 +152,7 @@ class PostgreSQL private constructor() {
                 connection
                     .inTransaction { conn ->
                         conn.sendPreparedStatement(
-                            "SELECT total_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
+                            "SELECT total_shards FROM diamond WHERE uuid = ? LIMIT 1",
                             listOf(uuid),
                         )
                     }
@@ -184,7 +184,7 @@ class PostgreSQL private constructor() {
                 connection
                     .inTransaction { conn ->
                         conn.sendPreparedStatement(
-                            "SELECT bank_shards, inventory_shards, ender_chest_shards FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
+                            "SELECT bank_shards, inventory_shards, ender_chest_shards FROM diamond WHERE uuid = ? LIMIT 1",
                             listOf(uuid),
                         )
                     }
@@ -217,7 +217,7 @@ class PostgreSQL private constructor() {
                 connection
                     .inTransaction { conn ->
                         conn.sendPreparedStatement(
-                            "SELECT ${type.string} FROM ${config.postgresTable} WHERE uuid = ? LIMIT 1",
+                            "SELECT ${type.string} FROM diamond WHERE uuid = ? LIMIT 1",
                             listOf(uuid),
                         )
                     }
@@ -246,7 +246,7 @@ class PostgreSQL private constructor() {
                     .inTransaction { conn ->
                         conn.sendPreparedStatement(
                             "SELECT uuid, total_shards " +
-                                "FROM ${config.postgresTable} " +
+                                "FROM diamond " +
                                 "ORDER BY total_shards DESC, uuid DESC OFFSET ? LIMIT 9",
                             listOf(offset),
                         )
@@ -280,7 +280,7 @@ class PostgreSQL private constructor() {
                             "WITH ranked AS (" +
                                 "SELECT " +
                                 "uuid, total_shards, ROW_NUMBER() OVER (ORDER BY total_shards DESC, uuid DESC) AS rn " +
-                                "FROM ${config.postgresTable}" +
+                                "FROM diamond" +
                                 "), " +
                                 "target AS (" +
                                 "SELECT rn, ((rn - 1) / 9) * 9 AS page_offset FROM ranked WHERE uuid = ?), " +
@@ -315,9 +315,7 @@ class PostgreSQL private constructor() {
             val connection = pool.asSuspending.connect()
             val result =
                 connection
-                    .inTransaction { conn ->
-                        conn.sendPreparedStatement("SELECT count(*) AS exact_count FROM ${config.postgresTable}")
-                    }
+                    .inTransaction { conn -> conn.sendPreparedStatement("SELECT count(*) AS exact_count FROM diamond") }
                     .await()
 
             if (result.rows.isNotEmpty()) {
@@ -346,7 +344,7 @@ class PostgreSQL private constructor() {
             connection
                 .inTransaction { conn ->
                     conn.sendPreparedStatement(
-                        "INSERT INTO ${config.postgresLogTable}(player_uuid, transferred_shards, player_to_uuid, transaction_reason, notes) " +
+                        "INSERT INTO diamond_log(player_uuid, transferred_shards, player_to_uuid, transaction_reason, notes) " +
                             "VALUES(?, ?, ?, ?, ?)",
                         listOf(playerUuid, transferredShards, playerToUuid, transactionReason, notes),
                     )
@@ -364,7 +362,7 @@ class PostgreSQL private constructor() {
             val result =
                 connection
                     .inTransaction { conn ->
-                        conn.sendPreparedStatement("SELECT 1 FROM ${config.postgresTable} WHERE uuid = ?", listOf(uuid))
+                        conn.sendPreparedStatement("SELECT 1 FROM diamond WHERE uuid = ?", listOf(uuid))
                     }
                     .await()
 
