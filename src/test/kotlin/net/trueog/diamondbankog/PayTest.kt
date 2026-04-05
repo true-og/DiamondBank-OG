@@ -283,7 +283,7 @@ class PayTest {
                     verify {
                         otherPlayer.sendMessage(
                             Component.text(
-                                "DiamondBank-OG<reset>: <green> Player<reset> <green>has paid you <yellow>$successDiamondText<green>."
+                                "DiamondBank-OG<reset>: <green>Player<reset> <green>has paid you <yellow>$successDiamondText<green>."
                             )
                         )
                     }
