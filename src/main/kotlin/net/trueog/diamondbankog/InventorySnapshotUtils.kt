@@ -41,7 +41,7 @@ object InventorySnapshotUtils {
                             CommonOperations.shardsToDiamondsFull(
                                 excessShards
                             )
-                        } <yellow> has been deposited into your bank account"
+                        } <yellow>has been deposited into your bank account"
                     )
                 )
             }
@@ -77,7 +77,7 @@ object InventorySnapshotUtils {
                             CommonOperations.shardsToDiamondsFull(
                                 excessShards + excessDiamondsInShards
                             )
-                        } <yellow> has been deposited into your bank account"
+                        } <yellow>has been deposited into your bank account"
                     )
                 )
             }

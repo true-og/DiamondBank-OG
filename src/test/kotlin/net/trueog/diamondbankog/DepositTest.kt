@@ -358,9 +358,9 @@ class DepositTest {
     @ParameterizedTest(name = "{0}")
     @DisplayName("Deposit with invalid argument should fail")
     @CsvSource(
-        "Not a number, abc, Invalid argument",
-        "Negative, -1, You cannot deposit a negative or zero amount",
-        "Zero, 0, You cannot deposit a negative or zero amount",
+        "Not a number, abc, <red>Invalid argument",
+        "Negative, -1, <red>You cannot deposit a negative or zero amount",
+        "Zero, 0, <red>You cannot deposit a negative or zero amount",
         "More than one decimal digit, 1.11, <aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information",
     )
     fun depositInvalidArg(@Suppress("UNUSED_PARAMETER") name: String, argument: String, errorMessage: String) =
@@ -372,7 +372,7 @@ class DepositTest {
             waitForCoroutines(scope)
 
             assertAll(
-                { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: <red>$errorMessage.")) } },
+                { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $errorMessage.")) } },
                 { coVerify(exactly = 0) { balanceManager.addToBankShards(any(), any()) } },
                 { assertEquals(5, inventory.countDiamonds(), "Diamond count") },
                 { assertFalse(inventory.isLocked(), "Inventory locked") },

@@ -65,7 +65,7 @@ internal class Withdraw(
                 CommonOperations.diamondsToShards(amount).getOrElse {
                     sender.sendMessage(
                         mm.deserialize(
-                            "${config.prefix}<reset>: <red><aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+                            "${config.prefix}<reset>: <aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
                         )
                     )
                     return true
@@ -106,7 +106,7 @@ internal class Withdraw(
                                     CommonOperations.shardsToDiamondsFull(
                                         shardsToWithdraw
                                     )
-                                } <red>because your bank only contains <yellow>${
+                                } <red>because your bank only contains ${
                                     CommonOperations.shardsToDiamondsFull(
                                         bankShards
                                     )
