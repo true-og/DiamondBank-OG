@@ -1,15 +1,15 @@
 # ---General---
 # MiniMessage-formatted prefix (https://docs.advntr.dev/minimessage/format.html)
-prefix: <dark_gray>[<aqua>DiamondBank<white>-<dark_red>OG<dark_gray>]
+prefix: <gray>[<aqua>DiamondBank<white>-<red>OG<gray>]
 
 # ---Postgres---
 postgresUrl: jdbc:postgresql://localhost:5432/diamond
-postgresUser: $POSTGRES_USER
-postgresPassword: $POSTGRES_PASSWORD
+postgresUser: ^{DIAMONDBANKOG_POSTGRES_USER}
+postgresPassword: ^{DIAMONDBANKOG_POSTGRES_PASSWORD}
 postgresTable: diamond
 postgresLogTable: diamond_log
 postgresLogLimit: 1000
 
 # ---Redis-compatible URI---
 # According to https://redis.github.io/lettuce/user-guide/connecting-redis/#uri-syntax
-redisUrl: redis://$KEYDB_PASSWORD@127.0.0.1:6379/0
+redisUrl: redis://^{KEYDB_PASSWORD}@127.0.0.1:6379/0
