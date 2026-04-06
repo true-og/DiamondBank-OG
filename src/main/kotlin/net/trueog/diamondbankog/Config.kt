@@ -2,8 +2,13 @@ package net.trueog.diamondbankog
 
 interface Config {
     val prefix: String
-    val postgresUrl: String
+    val postgresHost: String
+    val postgresPort: Int
+    val postgresDatabase: String
     val postgresUser: String
     val postgresPassword: String
-    val redisUrl: String
+    val redisHost: String
+    val redisPort: Int
+    val redisDatabase: Int
+    val redisPassword: String
 }

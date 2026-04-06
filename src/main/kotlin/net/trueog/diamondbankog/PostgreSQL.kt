@@ -4,7 +4,6 @@ import com.github.jasync.sql.db.asSuspending
 import com.github.jasync.sql.db.pool.ConnectionPool
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnection
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
-import java.net.URI
 import java.util.*
 import kotlinx.coroutines.future.await
 import net.trueog.diamondbankog.DiamondBankException.*
@@ -32,19 +31,22 @@ class PostgreSQL private constructor() {
             val postgreSQL = PostgreSQL()
 
             try {
-                val pg = PGSimpleDataSource()
-                pg.setUrl(config.postgresUrl)
-                pg.user = config.postgresUser
-                pg.password = config.postgresPassword
+                val pg =
+                    PGSimpleDataSource().apply {
+                        serverNames = arrayOf(config.postgresHost)
+                        portNumbers = intArrayOf(config.postgresPort)
+                        databaseName = config.postgresDatabase
+                        user = config.postgresUser
+                        password = config.postgresPassword
+                    }
                 val flyway = Flyway.configure(DiamondBankOG::class.java.classLoader).dataSource(pg).load()
                 flyway.migrate()
 
-                val uri = URI(config.postgresUrl.removePrefix("jdbc:"))
                 postgreSQL.pool =
                     PostgreSQLConnectionBuilder.createConnectionPool {
-                        host = uri.host
-                        port = uri.port
-                        database = uri.path.removePrefix("/")
+                        host = config.postgresHost
+                        port = config.postgresPort
+                        database = config.postgresDatabase
                         username = config.postgresUser
                         password = config.postgresPassword
                     }

@@ -56,7 +56,7 @@ dependencies {
     compileOnly("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT") // Declare Purpur API version to be packaged.
     compileOnly("net.luckperms:api:5.5") // Import the LuckPerms API.
 
-    implementation("io.lettuce:lettuce-core:7.2.0.RELEASE") // Import the Lettuce API for keydb.
+    implementation("io.lettuce:lettuce-core:7.5.1.RELEASE") // Import the Lettuce API for keydb.
 
     implementation("org.flywaydb:flyway-core:12.3.0")
     implementation("org.flywaydb:flyway-database-postgresql:12.3.0")
