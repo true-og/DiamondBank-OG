@@ -63,7 +63,7 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.9")
     implementation("com.github.jasync-sql:jasync-postgresql:2.2.4") // Import the jasync Postgres API.
 
-    implementation("it.unimi.dsi:fastutil-core:8.5.16")
+    implementation("it.unimi.dsi:fastutil-core:8.5.18")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib") // Import the Kotlin standard library.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
