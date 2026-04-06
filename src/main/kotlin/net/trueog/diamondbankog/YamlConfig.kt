@@ -11,11 +11,11 @@ private constructor(
     override val postgresPort: Int,
     override val postgresDatabase: String,
     override val postgresUser: String,
-    override val postgresPassword: String,
+    override val postgresPassword: String?,
     override val redisHost: String,
     override val redisPort: Int,
     override val redisDatabase: Int,
-    override val redisPassword: String
+    override val redisPassword: String?,
 ) : Config {
     companion object : ConfigFactory {
         override fun create(): YamlConfig? {
@@ -23,18 +23,31 @@ private constructor(
             val file = File(plugin.dataFolder, "config.yml")
             val yamlConfig = YamlConfiguration.loadConfiguration(file)
 
-            val prefix = yamlConfig.parseKeyAs<String>("prefix") ?: return null
+            val prefix = yamlConfig.parseKeyAs<String>("prefix")
 
-            val postgresHost = yamlConfig.parseKeyAs<String>("postgresHost") ?: return null
-            val postgresPort = yamlConfig.parseKeyAs<Int>("postgresPort") ?: return null
-            val postgresDatabase = yamlConfig.parseKeyAs<String>("postgresDatabase") ?: return null
-            val postgresUser = yamlConfig.parseKeyAs<String>("postgresUser") ?: return null
-            val postgresPassword = yamlConfig.parseKeyAs<String>("postgresPassword") ?: return null
+            val postgresHost = yamlConfig.parseKeyAs<String>("postgresHost")
+            val postgresPort = yamlConfig.parseKeyAs<Int>("postgresPort")
+            val postgresDatabase = yamlConfig.parseKeyAs<String>("postgresDatabase")
+            val postgresUser = yamlConfig.parseKeyAs<String>("postgresUser")
+            val postgresPassword = yamlConfig.parseKeyAs<String?>("postgresPassword")
 
-            val redisHost = yamlConfig.parseKeyAs<String>("redisHost") ?: return null
-            val redisPort = yamlConfig.parseKeyAs<Int>("redisPort") ?: return null
-            val redisDatabase = yamlConfig.parseKeyAs<Int>("redisDatabase") ?: return null
-            val redisPassword = yamlConfig.parseKeyAs<String>("redisPassword") ?: return null
+            val redisHost = yamlConfig.parseKeyAs<String>("redisHost")
+            val redisPort = yamlConfig.parseKeyAs<Int>("redisPort")
+            val redisDatabase = yamlConfig.parseKeyAs<Int>("redisDatabase")
+            val redisPassword = yamlConfig.parseKeyAs<String?>("redisPassword")
+
+            if (
+                prefix == null ||
+                    postgresHost == null ||
+                    postgresPort == null ||
+                    postgresDatabase == null ||
+                    postgresUser == null ||
+                    redisHost == null ||
+                    redisPort == null ||
+                    redisDatabase == null
+            ) {
+                return null
+            }
 
             return YamlConfig(
                 prefix,
@@ -46,15 +59,17 @@ private constructor(
                 redisHost,
                 redisPort,
                 redisDatabase,
-                redisPassword
+                redisPassword,
             )
         }
 
-        inline fun <reified T : Any> YamlConfiguration.parseKeyAs(key: String): T? {
-            return this.get(key) as? T ?: run {
-                plugin.logger.severe("Failed to parse config option \"$key\" as ${T::class.simpleName}")
-                return null
-            }
+        inline fun <reified T> YamlConfiguration.parseKeyAs(key: String): T? {
+            if (!this.contains(key) && null is T) return null
+            return this.get(key) as? T
+                ?: run {
+                    plugin.logger.severe("Failed to parse config option \"$key\" as ${T::class.simpleName}")
+                    return null
+                }
         }
     }
 }

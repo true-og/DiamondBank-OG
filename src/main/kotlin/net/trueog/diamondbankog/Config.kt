@@ -6,9 +6,9 @@ interface Config {
     val postgresPort: Int
     val postgresDatabase: String
     val postgresUser: String
-    val postgresPassword: String
+    val postgresPassword: String?
     val redisHost: String
     val redisPort: Int
     val redisDatabase: Int
-    val redisPassword: String
+    val redisPassword: String?
 }

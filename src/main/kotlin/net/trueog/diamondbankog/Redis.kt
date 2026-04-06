@@ -6,7 +6,13 @@ import io.lettuce.core.RedisURI
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 
 internal class Redis {
-    private val redisClient: RedisClient = RedisClient.create(RedisURI.Builder.redis(config.redisHost, config.redisPort).withPassword(config.redisPassword).withDatabase(1).build())
+    private val redisClient: RedisClient =
+        RedisClient.create(
+            RedisURI.Builder.redis(config.redisHost, config.redisPort)
+                .apply { config.redisPassword?.let { withPassword(it) } }
+                .withDatabase(1)
+                .build()
+        )
 
     /** @return True if failed */
     fun testConnection(): Boolean {
