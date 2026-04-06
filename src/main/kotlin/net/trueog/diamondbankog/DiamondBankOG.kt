@@ -19,7 +19,7 @@ internal open class DiamondBankOG : JavaPlugin() {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
         lateinit var plugin: DiamondBankOG
-        lateinit var config: YamlConfig
+        lateinit var config: Config
         lateinit var eventManager: EventManager
         lateinit var balanceManager: BalanceManager
         lateinit var redis: Redis
