@@ -4,7 +4,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
 import org.bukkit.Bukkit
 
 internal object MainThreadBlock {
@@ -16,7 +16,7 @@ internal object MainThreadBlock {
             suspendCancellableCoroutine { cont ->
                 Bukkit.getScheduler()
                     .runTask(
-                        DiamondBankOG.plugin,
+                        plugin,
                         Runnable {
                             try {
                                 cont.resume(block())

@@ -5,8 +5,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import net.trueog.diamondbankog.DiamondBankException.EconomyDisabledException
 import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
-import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.debug
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
 import net.trueog.diamondbankog.balance.shard.PlayerShards
 import net.trueog.diamondbankog.balance.shard.ShardType
 import net.trueog.diamondbankog.persistence.PostgreSQL
@@ -83,15 +84,15 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
 
     override suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
         if ((beingModified[uuid to type]?.get() ?: 0) > 0) {
-            if (DiamondBankOG.debug) {
-                DiamondBankOG.plugin.logger.info("Cache miss (being modified) for $uuid!")
+            if (debug) {
+                plugin.logger.info("Cache miss (being modified) for $uuid!")
             }
             return postgreSQL.getShardTypeShards(uuid, type)
         }
         val cacheBalance = cache.getBalance(uuid, type)
         if (cacheBalance == -1L) {
-            if (DiamondBankOG.debug) {
-                DiamondBankOG.plugin.logger.info("Cache miss for $uuid!")
+            if (debug) {
+                plugin.logger.info("Cache miss for $uuid!")
             }
             increment(uuid, type)
             val dbBalance =
@@ -101,8 +102,8 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
             cache.setBalance(uuid, dbBalance, type)
             decrement(uuid, type)
             return Result.success(dbBalance)
-        } else if (DiamondBankOG.debug) {
-            DiamondBankOG.plugin.logger.info("Cache hit for $uuid!")
+        } else if (debug) {
+            plugin.logger.info("Cache hit for $uuid!")
         }
         return Result.success(cacheBalance)
     }
@@ -110,15 +111,15 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
     override suspend fun getTotalShards(uuid: UUID): Result<Long> {
         val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
         if (anyBeingModified) {
-            if (DiamondBankOG.debug) {
-                DiamondBankOG.plugin.logger.info("Cache miss (being modified) for $uuid!")
+            if (debug) {
+                plugin.logger.info("Cache miss (being modified) for $uuid!")
             }
             return postgreSQL.getTotalShards(uuid)
         }
         val cacheBalance = cache.getBalance(uuid, ShardType.TOTAL)
         if (cacheBalance == -1L) {
-            if (DiamondBankOG.debug) {
-                DiamondBankOG.plugin.logger.info("Cache miss for $uuid!")
+            if (debug) {
+                plugin.logger.info("Cache miss for $uuid!")
             }
             increment(uuid, ShardType.TOTAL)
             val dbBalance =
@@ -128,8 +129,8 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
             cache.setBalance(uuid, dbBalance, ShardType.TOTAL)
             decrement(uuid, ShardType.TOTAL)
             return Result.success(dbBalance)
-        } else if (DiamondBankOG.debug) {
-            DiamondBankOG.plugin.logger.info("Cache hit for $uuid!")
+        } else if (debug) {
+            plugin.logger.info("Cache hit for $uuid!")
         }
         return Result.success(cacheBalance)
     }
@@ -137,8 +138,8 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
     override suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
         val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
         if (anyBeingModified) {
-            if (DiamondBankOG.debug) {
-                DiamondBankOG.plugin.logger.info("Cache miss (being modified) for $uuid!")
+            if (debug) {
+                plugin.logger.info("Cache miss (being modified) for $uuid!")
             }
             return postgreSQL.getAllShards(uuid)
         }
@@ -146,8 +147,8 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         val cacheInventoryBalance = cache.getBalance(uuid, ShardType.INVENTORY)
         val cacheEnderChestBalance = cache.getBalance(uuid, ShardType.ENDER_CHEST)
         if (cacheBankBalance == -1L || cacheInventoryBalance == -1L || cacheEnderChestBalance == -1L) {
-            if (DiamondBankOG.debug) {
-                DiamondBankOG.plugin.logger.info("Cache miss for $uuid!")
+            if (debug) {
+                plugin.logger.info("Cache miss for $uuid!")
             }
             increment(uuid, ShardType.TOTAL)
             val dbPlayerShards =
@@ -159,8 +160,8 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
             cache.setBalance(uuid, dbPlayerShards.enderChest, ShardType.ENDER_CHEST)
             decrement(uuid, ShardType.TOTAL)
             return Result.success(dbPlayerShards)
-        } else if (DiamondBankOG.debug) {
-            DiamondBankOG.plugin.logger.info("Cache hit for $uuid!")
+        } else if (debug) {
+            plugin.logger.info("Cache hit for $uuid!")
         }
         return Result.success(PlayerShards(cacheBankBalance, cacheInventoryBalance, cacheEnderChestBalance))
     }

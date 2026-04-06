@@ -22,10 +22,10 @@ import net.trueog.diamondbankog.Utils.waitForCoroutines
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.balance.shard.ShardType
-import net.trueog.diamondbankog.transaction.command.Pay
 import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isLocked
 import net.trueog.diamondbankog.transaction.TransactionLock
+import net.trueog.diamondbankog.transaction.command.Pay
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.util.InventoryExtensions.countShards

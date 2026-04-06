@@ -2,7 +2,11 @@ package net.trueog.diamondbankog.autocompress
 
 import kotlin.math.abs
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
+import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.transaction.InventoryLockExtensions.lock
 import net.trueog.diamondbankog.transaction.InventoryLockExtensions.unlock
@@ -17,7 +21,7 @@ import org.bukkit.inventory.ItemStack
 
 internal object AutoCompress {
     fun compress(player: Player) {
-        DiamondBankOG.scope.launch {
+        scope.launch {
             val worldName = player.world.name
             if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
                 return@launch
@@ -25,18 +29,16 @@ internal object AutoCompress {
 
             if (!player.hasPermission("diamondbank-og.compress")) {
                 player.sendMessage(
-                    DiamondBankOG.mm.deserialize(
-                        "${DiamondBankOG.config.prefix}<reset>: <red>You do not have permission to compress."
-                    )
+                    mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to compress.")
                 )
                 return@launch
             }
 
-            DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
+            transactionLock.withLockSuspend(player.uniqueId) {
                 val inventorySnapshot =
                     MainThreadBlock.runOnMainThread {
                         player.inventory.lock()
-                        InventorySnapshot.from(player.inventory, DiamondBankOG.balanceManager)
+                        InventorySnapshot.from(player.inventory, balanceManager)
                     }
 
                 val shardsInInventory = inventorySnapshot.countShards().toInt()
@@ -73,8 +75,8 @@ internal object AutoCompress {
 
                     if (changeInDiamonds > emptySlots + leftOverSpaceDiamonds) {
                         player.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${DiamondBankOG.config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
                             )
                         )
                         player.inventory.unlock()
@@ -92,8 +94,8 @@ internal object AutoCompress {
 
                     if (changeInDiamondBlocks > emptySlots + leftOverSpaceDiamondBlocks) {
                         player.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${DiamondBankOG.config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
                             )
                         )
                         player.inventory.unlock()
@@ -105,8 +107,8 @@ internal object AutoCompress {
                     val removeMap = inventorySnapshot.removeItem(Shard.createItemStack(abs(changeInShards)))
                     if (removeMap.isNotEmpty()) {
                         player.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${DiamondBankOG.config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                             )
                         )
                         player.inventory.unlock()
@@ -118,8 +120,8 @@ internal object AutoCompress {
                     val addMap = inventorySnapshot.addItem(ItemStack(Material.DIAMOND, changeInDiamonds))
                     if (addMap.isNotEmpty()) {
                         player.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${DiamondBankOG.config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                             )
                         )
                         player.inventory.unlock()
@@ -129,8 +131,8 @@ internal object AutoCompress {
                     val removeMap = inventorySnapshot.removeItem(ItemStack(Material.DIAMOND, abs(changeInDiamonds)))
                     if (removeMap.isNotEmpty()) {
                         player.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${DiamondBankOG.config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                             )
                         )
                         player.inventory.unlock()
@@ -142,8 +144,8 @@ internal object AutoCompress {
                     val addMap = inventorySnapshot.addItem(ItemStack(Material.DIAMOND_BLOCK, changeInDiamondBlocks))
                     if (addMap.isNotEmpty()) {
                         player.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${DiamondBankOG.config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                             )
                         )
                         player.inventory.unlock()
@@ -154,8 +156,8 @@ internal object AutoCompress {
                         inventorySnapshot.removeItem(ItemStack(Material.DIAMOND_BLOCK, abs(changeInDiamondBlocks)))
                     if (removeMap.isNotEmpty()) {
                         player.sendMessage(
-                            DiamondBankOG.mm.deserialize(
-                                "${DiamondBankOG.config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                             )
                         )
                         player.inventory.unlock()

@@ -1,7 +1,11 @@
 package net.trueog.diamondbankog.autodeposit
 
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.DiamondBankOG
+import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
+import net.trueog.diamondbankog.DiamondBankOG.Companion.config
+import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
+import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.util.ErrorHandler
 import org.bukkit.Material
@@ -16,11 +20,7 @@ internal object AutoDeposit {
         }
 
         if (!player.hasPermission("diamondbank-og.deposit")) {
-            player.sendMessage(
-                DiamondBankOG.mm.deserialize(
-                    "${DiamondBankOG.config.prefix}<reset>: <red>You do not have permission to deposit."
-                )
-            )
+            player.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to deposit."))
             return
         }
 
@@ -39,13 +39,13 @@ internal object AutoDeposit {
         itemStack.amount = 0
         item.itemStack = itemStack
 
-        DiamondBankOG.scope.launch {
-            DiamondBankOG.transactionLock.withLockSuspend(player.uniqueId) {
-                DiamondBankOG.balanceManager.addToBankShards(player.uniqueId, shards).getOrElse {
+        scope.launch {
+            transactionLock.withLockSuspend(player.uniqueId) {
+                balanceManager.addToBankShards(player.uniqueId, shards).getOrElse {
                     ErrorHandler.handleError(it)
                     player.sendMessage(
-                        DiamondBankOG.mm.deserialize(
-                            "${DiamondBankOG.config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                        mm.deserialize(
+                            "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                         )
                     )
                     return@withLockSuspend
