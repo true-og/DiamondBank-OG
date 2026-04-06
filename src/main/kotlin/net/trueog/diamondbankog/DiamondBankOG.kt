@@ -7,9 +7,26 @@ import net.kyori.adventure.text.minimessage.tag.standard.StandardTags
 import net.luckperms.api.LuckPerms
 import net.trueog.diamondbankog.api.DiamondBankAPIJava
 import net.trueog.diamondbankog.api.DiamondBankAPIKotlin
-import net.trueog.diamondbankog.commands.*
-import net.trueog.diamondbankog.commands.AutoCompress
-import net.trueog.diamondbankog.commands.AutoDeposit
+import net.trueog.diamondbankog.api.EventManager
+import net.trueog.diamondbankog.autocompress.command.AutoCompress
+import net.trueog.diamondbankog.autodeposit.command.AutoDeposit
+import net.trueog.diamondbankog.balance.BalanceManager
+import net.trueog.diamondbankog.balance.CachingBalanceManager
+import net.trueog.diamondbankog.balance.command.Balance
+import net.trueog.diamondbankog.balance.command.Balancetop
+import net.trueog.diamondbankog.balance.command.SetBankBalance
+import net.trueog.diamondbankog.balance.shard.Shard
+import net.trueog.diamondbankog.config.Config
+import net.trueog.diamondbankog.config.YamlConfig
+import net.trueog.diamondbankog.config.command.DiamondBankReload
+import net.trueog.diamondbankog.economy.command.DisableEconomy
+import net.trueog.diamondbankog.economy.command.EnableEconomy
+import net.trueog.diamondbankog.persistence.Redis
+import net.trueog.diamondbankog.transaction.TransactionLock
+import net.trueog.diamondbankog.transaction.command.Compress
+import net.trueog.diamondbankog.transaction.command.Deposit
+import net.trueog.diamondbankog.transaction.command.Pay
+import net.trueog.diamondbankog.transaction.command.Withdraw
 import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
@@ -19,7 +36,7 @@ internal open class DiamondBankOG : JavaPlugin() {
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
         lateinit var plugin: DiamondBankOG
-        lateinit var config: YamlConfig
+        lateinit var config: Config
         lateinit var eventManager: EventManager
         lateinit var balanceManager: BalanceManager
         lateinit var redis: Redis

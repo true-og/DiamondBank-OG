@@ -1,0 +1,188 @@
+package net.trueog.diamondbankog.transaction.command
+
+import kotlin.math.floor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.launch
+import net.kyori.adventure.text.minimessage.MiniMessage
+import net.trueog.diamondbankog.*
+import net.trueog.diamondbankog.balance.BalanceManager
+import net.trueog.diamondbankog.balance.shard.Shard
+import net.trueog.diamondbankog.config.Config
+import net.trueog.diamondbankog.transaction.CommonOperations
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.lock
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.unlock
+import net.trueog.diamondbankog.transaction.InventorySnapshot
+import net.trueog.diamondbankog.transaction.TransactionLock
+import net.trueog.diamondbankog.util.CommonCommandInterlude
+import net.trueog.diamondbankog.util.ErrorHandler.handleError
+import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
+import org.bukkit.Material
+import org.bukkit.command.Command
+import org.bukkit.command.CommandExecutor
+import org.bukkit.command.CommandSender
+import org.bukkit.inventory.ItemStack
+
+internal class Withdraw(
+    val config: Config = DiamondBankOG.config,
+    val balanceManager: BalanceManager = DiamondBankOG.balanceManager,
+    val mm: MiniMessage = DiamondBankOG.mm,
+    val scope: CoroutineScope = DiamondBankOG.scope,
+    val transactionLock: TransactionLock = DiamondBankOG.transactionLock,
+) : CommandExecutor {
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
+        if (CommonCommandInterlude.run(sender, "withdraw", config, mm)) {
+            return true
+        }
+
+        if (args.isNullOrEmpty()) {
+            sender.sendMessage(
+                mm.deserialize(
+                    "${config.prefix}<reset>: <red>You did not provide the amount of <aqua>Diamonds <red>that you want to withdraw."
+                )
+            )
+            return true
+        }
+        if (args.size != 1) {
+            sender.sendMessage(
+                mm.deserialize(
+                    "${config.prefix}<reset>: <red>Please (only) provide the amount of <aqua>Diamonds <red>you want to withdraw. Either a number or \"all\"."
+                )
+            )
+            return true
+        }
+
+        var shards = -1L
+        if (args[0] != "all") {
+            val amount: Float
+            try {
+                amount = args[0].toFloat()
+                if (amount <= 0) {
+                    sender.sendMessage(
+                        mm.deserialize("${config.prefix}<reset>: <red>You cannot withdraw a negative or zero amount.")
+                    )
+                    return true
+                }
+            } catch (_: Exception) {
+                sender.sendMessage(mm.deserialize("${config.prefix}<reset>: <red>Invalid argument."))
+                return true
+            }
+            shards =
+                CommonOperations.diamondsToShards(amount).getOrElse {
+                    sender.sendMessage(
+                        mm.deserialize(
+                            "${config.prefix}<reset>: <aqua>Diamonds<red> can only have one decimal digit. Issue /diamondbankhelp for more information."
+                        )
+                    )
+                    return true
+                }
+        }
+
+        scope.launch {
+            when (
+                transactionLock.tryWithLockSuspend(sender.uniqueId) {
+                    val inventorySnapshot = runOnMainThread {
+                        sender.inventory.lock()
+                        InventorySnapshot.from(sender.inventory, balanceManager)
+                    }
+
+                    val bankShards =
+                        balanceManager.getBankShards(sender.uniqueId).getOrElse {
+                            sender.inventory.unlock()
+                            sender.sendMessage(
+                                mm.deserialize(
+                                    "${config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
+                                )
+                            )
+                            return@tryWithLockSuspend
+                        }
+
+                    val shardsToWithdraw =
+                        if (shards == -1L) {
+                            bankShards
+                        } else {
+                            shards
+                        }
+
+                    if (shards != -1L && shards > bankShards) {
+                        sender.inventory.unlock()
+                        sender.sendMessage(
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>Cannot withdraw ${
+                                    CommonOperations.shardsToDiamondsFull(
+                                        shardsToWithdraw
+                                    )
+                                } <red>because your bank only contains ${
+                                    CommonOperations.shardsToDiamondsFull(
+                                        bankShards
+                                    )
+                                }<red>."
+                            )
+                        )
+                        return@tryWithLockSuspend
+                    }
+
+                    val diamondsToAdd = floor(shardsToWithdraw / 9.0).toInt()
+                    val shardsChange = shardsToWithdraw.toInt() % 9
+
+                    if (
+                        inventorySnapshot.addItem(ItemStack(Material.DIAMOND, diamondsToAdd)).isNotEmpty() ||
+                            inventorySnapshot.addItem(Shard.createItemStack(shardsChange)).isNotEmpty()
+                    ) {
+                        sender.inventory.unlock()
+                        sender.sendMessage(
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>You don't have enough inventory space to withdraw ${
+                                    CommonOperations.shardsToDiamondsFull(
+                                        shardsToWithdraw
+                                    )
+                                }<red>."
+                            )
+                        )
+                        return@tryWithLockSuspend
+                    }
+
+                    balanceManager.subtractFromBankShards(sender.uniqueId, shardsToWithdraw).getOrElse {
+                        handleError(it)
+                        sender.sendMessage(
+                            mm.deserialize(
+                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                            )
+                        )
+                        sender.inventory.unlock()
+                        return@tryWithLockSuspend
+                    }
+
+                    runOnMainThread {
+                        inventorySnapshot.restoreTo(sender.inventory)
+                        sender.inventory.unlock()
+                    }
+
+                    sender.sendMessage(
+                        mm.deserialize(
+                            "${config.prefix}<reset>: <green>Successfully withdrew ${
+                                CommonOperations.shardsToDiamondsFull(
+                                    shardsToWithdraw
+                                )
+                            } <green>from your bank account."
+                        )
+                    )
+
+                    balanceManager.insertTransactionLog(sender.uniqueId, shards, null, "Withdraw", null).getOrElse {
+                        handleError(it)
+                    }
+                }
+            ) {
+                is TransactionLock.LockResult.Failed -> {
+                    sender.sendMessage(
+                        mm.deserialize("${config.prefix}<reset>: <red>You are currently blocked from using /withdraw.")
+                    )
+                }
+
+                else -> {}
+            }
+        }
+        return true
+    }
+}

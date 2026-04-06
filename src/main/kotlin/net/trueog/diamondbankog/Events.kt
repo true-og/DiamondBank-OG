@@ -2,8 +2,6 @@ package net.trueog.diamondbankog
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import net.trueog.diamondbankog.AutoCompress.compress
-import net.trueog.diamondbankog.AutoDeposit.deposit
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -11,11 +9,14 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import net.trueog.diamondbankog.DiamondBankOG.Companion.redis
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
-import net.trueog.diamondbankog.ErrorHandler.handleError
-import net.trueog.diamondbankog.InventoryExtensions.countTotal
-import net.trueog.diamondbankog.InventoryExtensions.isLocked
-import net.trueog.diamondbankog.MainThreadBlock.runOnMainThread
-import net.trueog.diamondbankog.PostgreSQL.ShardType
+import net.trueog.diamondbankog.autocompress.AutoCompress.compress
+import net.trueog.diamondbankog.autodeposit.AutoDeposit.deposit
+import net.trueog.diamondbankog.balance.shard.Shard
+import net.trueog.diamondbankog.balance.shard.ShardType
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isLocked
+import net.trueog.diamondbankog.util.ErrorHandler.handleError
+import net.trueog.diamondbankog.util.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player

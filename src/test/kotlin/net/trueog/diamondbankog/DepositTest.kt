@@ -12,13 +12,18 @@ import kotlinx.coroutines.test.runTest
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.trueog.diamondbankog.Constants.playerUuid
-import net.trueog.diamondbankog.InventoryExtensions.countDiamondBlocks
-import net.trueog.diamondbankog.InventoryExtensions.countDiamonds
-import net.trueog.diamondbankog.InventoryExtensions.countShards
-import net.trueog.diamondbankog.InventoryExtensions.isLocked
 import net.trueog.diamondbankog.Utils.mockPlayerInventory
 import net.trueog.diamondbankog.Utils.waitForCoroutines
-import net.trueog.diamondbankog.commands.Deposit
+import net.trueog.diamondbankog.balance.BalanceManager
+import net.trueog.diamondbankog.balance.shard.Shard
+import net.trueog.diamondbankog.balance.shard.ShardType
+import net.trueog.diamondbankog.config.Config
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isLocked
+import net.trueog.diamondbankog.transaction.TransactionLock
+import net.trueog.diamondbankog.transaction.command.Deposit
+import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.InventoryExtensions.countShards
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Server
@@ -65,8 +70,7 @@ class DepositTest {
         every { server.getPlayer(playerUuid) } returns player
 
         coEvery { balanceManager.addToBankShards(any(), any()) } returns Result.success(Unit)
-        coEvery { balanceManager.setPlayerShards(any(), any(), PostgreSQL.ShardType.INVENTORY) } returns
-            Result.success(Unit)
+        coEvery { balanceManager.setPlayerShards(any(), any(), ShardType.INVENTORY) } returns Result.success(Unit)
         coEvery { balanceManager.insertTransactionLog(any(), any(), any(), any(), any()) } returns Result.success(Unit)
         every { player.sendMessage(any<Component>()) } just Runs
     }

@@ -17,14 +17,19 @@ import net.luckperms.api.model.user.User
 import net.luckperms.api.node.Node
 import net.trueog.diamondbankog.Constants.otherPlayerUuid
 import net.trueog.diamondbankog.Constants.playerUuid
-import net.trueog.diamondbankog.InventoryExtensions.countDiamondBlocks
-import net.trueog.diamondbankog.InventoryExtensions.countDiamonds
-import net.trueog.diamondbankog.InventoryExtensions.countShards
-import net.trueog.diamondbankog.InventoryExtensions.countTotal
-import net.trueog.diamondbankog.InventoryExtensions.isLocked
 import net.trueog.diamondbankog.Utils.mockPlayerInventory
 import net.trueog.diamondbankog.Utils.waitForCoroutines
-import net.trueog.diamondbankog.commands.Pay
+import net.trueog.diamondbankog.balance.BalanceManager
+import net.trueog.diamondbankog.balance.shard.Shard
+import net.trueog.diamondbankog.balance.shard.ShardType
+import net.trueog.diamondbankog.config.Config
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isLocked
+import net.trueog.diamondbankog.transaction.TransactionLock
+import net.trueog.diamondbankog.transaction.command.Pay
+import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.InventoryExtensions.countShards
+import net.trueog.diamondbankog.util.InventoryExtensions.countTotal
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Server
@@ -86,8 +91,7 @@ class PayTest {
 
         every { otherPlayer.hasPlayedBefore() } returns true
         coEvery { balanceManager.addToBankShards(any(), any()) } returns Result.success(Unit)
-        coEvery { balanceManager.setPlayerShards(any(), any(), PostgreSQL.ShardType.INVENTORY) } returns
-            Result.success(Unit)
+        coEvery { balanceManager.setPlayerShards(any(), any(), ShardType.INVENTORY) } returns Result.success(Unit)
         coEvery { balanceManager.subtractFromBankShards(any(), any()) } returns Result.success(Unit)
         coEvery { balanceManager.insertTransactionLog(any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
