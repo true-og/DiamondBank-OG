@@ -10,7 +10,7 @@ internal class Redis {
         RedisClient.create(
             RedisURI.Builder.redis(config.redisHost, config.redisPort)
                 .apply { config.redisPassword?.let { withPassword(it) } }
-                .withDatabase(1)
+                .withDatabase(config.redisDatabase)
                 .build()
         )
 
