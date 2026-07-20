@@ -37,30 +37,18 @@ internal class Cache {
     }
 
     fun addBalance(uuid: UUID, value: Long, type: ShardType): Result<Long> {
-        if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
-        return when (type) {
-            ShardType.BANK -> {
-                bankBalanceCacheLock.write {
-                    val old = bankBalanceCache.addTo(uuid, value)
-                    return Result.success(old + value)
-                }
+        val lock =
+            when (type) {
+                ShardType.BANK -> bankBalanceCacheLock
+                ShardType.INVENTORY -> inventoryBalanceCacheLock
+                ShardType.ENDER_CHEST -> enderChestBalanceCacheLock
+                else -> return Result.failure(InvalidArgumentException())
             }
-
-            ShardType.INVENTORY -> {
-                inventoryBalanceCacheLock.write {
-                    val old = inventoryBalanceCache.addTo(uuid, value)
-                    return Result.success(old + value)
-                }
-            }
-
-            ShardType.ENDER_CHEST -> {
-                enderChestBalanceCacheLock.write {
-                    val old = enderChestBalanceCache.addTo(uuid, value)
-                    return Result.success(old + value)
-                }
-            }
-
-            else -> Result.failure(IllegalArgumentException())
+        lock.write {
+            val old = getBalance(uuid, type).coerceAtLeast(0)
+            val newBalance = old + value
+            setBalance(uuid, newBalance, type)
+            return Result.success(newBalance)
         }
     }
 
@@ -82,9 +70,16 @@ internal class Cache {
                 bankBalanceCacheLock.read {
                     inventoryBalanceCacheLock.read {
                         enderChestBalanceCacheLock.read {
-                            bankBalanceCache.getLong(uuid) +
-                                inventoryBalanceCache.getLong(uuid) +
-                                enderChestBalanceCache.getLong(uuid)
+                            val bankBalance = bankBalanceCache.getLong(uuid)
+                            val inventoryBalance = inventoryBalanceCache.getLong(uuid)
+                            val enderChestBalance = enderChestBalanceCache.getLong(uuid)
+                            if (bankBalance == -1L && inventoryBalance == -1L && enderChestBalance == -1L) {
+                                return -1
+                            }
+
+                            bankBalance.coerceAtLeast(0) +
+                                inventoryBalance.coerceAtLeast(0) +
+                                enderChestBalance.coerceAtLeast(0)
                         }
                     }
                 }
@@ -113,14 +108,8 @@ internal class Cache {
     }
 
     fun removeAll(uuid: UUID) {
-        bankBalanceCacheLock.write {
-            inventoryBalanceCacheLock.write {
-                enderChestBalanceCacheLock.write {
-                    bankBalanceCache.removeLong(uuid)
-                    inventoryBalanceCache.removeLong(uuid)
-                    enderChestBalanceCache.removeLong(uuid)
-                }
-            }
-        }
+        removeBalance(uuid, ShardType.BANK)
+        removeBalance(uuid, ShardType.INVENTORY)
+        removeBalance(uuid, ShardType.ENDER_CHEST)
     }
 }
