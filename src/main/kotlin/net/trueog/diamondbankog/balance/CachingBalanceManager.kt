@@ -63,10 +63,10 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
             cache.addBalance(uuid, shards, type).getOrElse {
                 return Result.failure(it)
             }
+        decrement(uuid, type)
         if (newBalanceDb != newBalanceCache) {
             handleError(IllegalStateException("Database and cache balances do not match"))
         }
-        decrement(uuid, type)
         return Result.success(Unit)
     }
 
