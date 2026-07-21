@@ -45,45 +45,33 @@ internal class Cache {
                 else -> return Result.failure(InvalidArgumentException())
             }
         lock.write {
-            val old = getBalance(uuid, type).coerceAtLeast(0)
+            val old =
+                getBalance(uuid, type)
+                    .getOrElse {
+                        return Result.failure(it)
+                    }
+                    .coerceAtLeast(0)
             val newBalance = old + value
             setBalance(uuid, newBalance, type)
             return Result.success(newBalance)
         }
     }
 
-    fun getBalance(uuid: UUID, type: ShardType): Long {
+    fun getBalance(uuid: UUID, type: ShardType): Result<Long> {
         return when (type) {
             ShardType.BANK -> {
-                bankBalanceCacheLock.read { bankBalanceCache.getLong(uuid) }
+                bankBalanceCacheLock.read { Result.success(bankBalanceCache.getLong(uuid)) }
             }
 
             ShardType.INVENTORY -> {
-                inventoryBalanceCacheLock.read { inventoryBalanceCache.getLong(uuid) }
+                inventoryBalanceCacheLock.read { Result.success(inventoryBalanceCache.getLong(uuid)) }
             }
 
             ShardType.ENDER_CHEST -> {
-                enderChestBalanceCacheLock.read { enderChestBalanceCache.getLong(uuid) }
+                enderChestBalanceCacheLock.read { Result.success(enderChestBalanceCache.getLong(uuid)) }
             }
 
-            ShardType.TOTAL -> {
-                bankBalanceCacheLock.read {
-                    inventoryBalanceCacheLock.read {
-                        enderChestBalanceCacheLock.read {
-                            val bankBalance = bankBalanceCache.getLong(uuid)
-                            val inventoryBalance = inventoryBalanceCache.getLong(uuid)
-                            val enderChestBalance = enderChestBalanceCache.getLong(uuid)
-                            if (bankBalance == -1L && inventoryBalance == -1L && enderChestBalance == -1L) {
-                                return -1
-                            }
-
-                            bankBalance.coerceAtLeast(0) +
-                                inventoryBalance.coerceAtLeast(0) +
-                                enderChestBalance.coerceAtLeast(0)
-                        }
-                    }
-                }
-            }
+            else -> Result.failure(InvalidArgumentException())
         }
     }
 
