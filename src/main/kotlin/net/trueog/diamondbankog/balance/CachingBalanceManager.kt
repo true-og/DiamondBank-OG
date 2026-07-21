@@ -89,7 +89,10 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
             }
             return postgreSQL.getShardTypeShards(uuid, type)
         }
-        val cacheBalance = cache.getBalance(uuid, type)
+        val cacheBalance =
+            cache.getBalance(uuid, type).getOrElse {
+                return Result.failure(it)
+            }
         if (cacheBalance == -1L) {
             if (debug) {
                 plugin.logger.info("Cache miss for $uuid!")
@@ -108,32 +111,7 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         return Result.success(cacheBalance)
     }
 
-    override suspend fun getTotalShards(uuid: UUID): Result<Long> {
-        val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
-        if (anyBeingModified) {
-            if (debug) {
-                plugin.logger.info("Cache miss (being modified) for $uuid!")
-            }
-            return postgreSQL.getTotalShards(uuid)
-        }
-        val cacheBalance = cache.getBalance(uuid, ShardType.TOTAL)
-        if (cacheBalance == -1L) {
-            if (debug) {
-                plugin.logger.info("Cache miss for $uuid!")
-            }
-            increment(uuid, ShardType.TOTAL)
-            val dbBalance =
-                postgreSQL.getTotalShards(uuid).getOrElse {
-                    return Result.failure(it)
-                }
-            cache.setBalance(uuid, dbBalance, ShardType.TOTAL)
-            decrement(uuid, ShardType.TOTAL)
-            return Result.success(dbBalance)
-        } else if (debug) {
-            plugin.logger.info("Cache hit for $uuid!")
-        }
-        return Result.success(cacheBalance)
-    }
+    override suspend fun getTotalShards(uuid: UUID): Result<Long> = getAllShards(uuid).map { it.total }
 
     override suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
         val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
@@ -143,14 +121,25 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
             }
             return postgreSQL.getAllShards(uuid)
         }
-        val cacheBankBalance = cache.getBalance(uuid, ShardType.BANK)
-        val cacheInventoryBalance = cache.getBalance(uuid, ShardType.INVENTORY)
-        val cacheEnderChestBalance = cache.getBalance(uuid, ShardType.ENDER_CHEST)
+        val cacheBankBalance =
+            cache.getBalance(uuid, ShardType.BANK).getOrElse {
+                return Result.failure(it)
+            }
+        val cacheInventoryBalance =
+            cache.getBalance(uuid, ShardType.INVENTORY).getOrElse {
+                return Result.failure(it)
+            }
+        val cacheEnderChestBalance =
+            cache.getBalance(uuid, ShardType.ENDER_CHEST).getOrElse {
+                return Result.failure(it)
+            }
         if (cacheBankBalance == -1L || cacheInventoryBalance == -1L || cacheEnderChestBalance == -1L) {
             if (debug) {
                 plugin.logger.info("Cache miss for $uuid!")
             }
-            increment(uuid, ShardType.TOTAL)
+            increment(uuid, ShardType.BANK)
+            increment(uuid, ShardType.INVENTORY)
+            increment(uuid, ShardType.ENDER_CHEST)
             val dbPlayerShards =
                 postgreSQL.getAllShards(uuid).getOrElse {
                     return Result.failure(it)
@@ -158,7 +147,9 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
             cache.setBalance(uuid, dbPlayerShards.bank, ShardType.BANK)
             cache.setBalance(uuid, dbPlayerShards.inventory, ShardType.INVENTORY)
             cache.setBalance(uuid, dbPlayerShards.enderChest, ShardType.ENDER_CHEST)
-            decrement(uuid, ShardType.TOTAL)
+            decrement(uuid, ShardType.BANK)
+            decrement(uuid, ShardType.INVENTORY)
+            decrement(uuid, ShardType.ENDER_CHEST)
             return Result.success(dbPlayerShards)
         } else if (debug) {
             plugin.logger.info("Cache hit for $uuid!")

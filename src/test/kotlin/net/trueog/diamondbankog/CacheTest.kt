@@ -20,13 +20,13 @@ class CacheTest {
         val result = cache.setBalance(uuid, 3, shardType)
         assertAll(
             { assertFalse(result.isFailure, "setBalance result should not be a failure") },
-            { assertEquals(3, cache.getBalance(uuid, shardType)) },
+            { assertEquals(3, cache.getBalance(uuid, shardType).getOrNull()) },
         )
     }
 
     @Test
-    @DisplayName("Cache Set fail")
-    fun cacheSetFail() {
+    @DisplayName("Cache Set TOTAL should fail")
+    fun cacheSetTotalFail() {
         val cache = Cache()
         val uuid = UUID.randomUUID()
         val result = cache.setBalance(uuid, 3, ShardType.TOTAL)
@@ -45,7 +45,7 @@ class CacheTest {
         assertAll(
             { assertFalse(result.isFailure, "addBalance result should not be a failure") },
             { assertEquals(6, result.getOrNull()) },
-            { assertEquals(6, cache.getBalance(uuid, shardType)) },
+            { assertEquals(6, cache.getBalance(uuid, shardType).getOrNull()) },
         )
     }
 
@@ -60,7 +60,7 @@ class CacheTest {
         assertAll(
             { assertFalse(result.isFailure, "addBalance result should not be a failure") },
             { assertEquals(3, result.getOrNull()) },
-            { assertEquals(3, cache.getBalance(uuid, shardType)) },
+            { assertEquals(3, cache.getBalance(uuid, shardType).getOrNull()) },
         )
     }
 
@@ -77,13 +77,13 @@ class CacheTest {
             { assertFalse(result1.isFailure, "first addBalance result should not be a failure") },
             { assertFalse(result2.isFailure, "second addBalance result should not be a failure") },
             { assertEquals(6, result2.getOrNull()) },
-            { assertEquals(6, cache.getBalance(uuid, shardType)) },
+            { assertEquals(6, cache.getBalance(uuid, shardType).getOrNull()) },
         )
     }
 
     @Test
-    @DisplayName("Cache Add fail")
-    fun cacheAddFail() {
+    @DisplayName("Cache Add TOTAL should fail")
+    fun cacheAddTotalFail() {
         val cache = Cache()
         val uuid = UUID.randomUUID()
         val result = cache.addBalance(uuid, 3, ShardType.TOTAL)
@@ -92,35 +92,34 @@ class CacheTest {
 
     @ParameterizedTest(name = "{0}")
     @DisplayName("Cache Get (after set)")
-    @CsvSource(
-        "Bank Shards, BANK",
-        "Inventory Shards, INVENTORY",
-        "Ender Chest Shards, ENDER_CHEST",
-        "Total Shards, TOTAL",
-    )
+    @CsvSource("Bank Shards, BANK", "Inventory Shards, INVENTORY", "Ender Chest Shards, ENDER_CHEST")
     fun cacheGetAfterSet(@Suppress("UNUSED_PARAMETER") name: String, enumName: String) {
         val shardType = ShardType.valueOf(enumName)
         val cache = Cache()
         val uuid = UUID.randomUUID()
         cache.setBalance(uuid, 3, if (shardType != ShardType.TOTAL) shardType else ShardType.BANK)
         val result = cache.getBalance(uuid, shardType)
-        assertEquals(3, result)
+        assertEquals(3, result.getOrNull())
     }
 
     @ParameterizedTest(name = "{0}")
     @DisplayName("Cache Get")
-    @CsvSource(
-        "Bank Shards, BANK",
-        "Inventory Shards, INVENTORY",
-        "Ender Chest Shards, ENDER_CHEST",
-        "Total Shards, TOTAL",
-    )
+    @CsvSource("Bank Shards, BANK", "Inventory Shards, INVENTORY", "Ender Chest Shards, ENDER_CHEST")
     fun cacheGet(@Suppress("UNUSED_PARAMETER") name: String, enumName: String) {
         val shardType = ShardType.valueOf(enumName)
         val cache = Cache()
         val uuid = UUID.randomUUID()
         val result = cache.getBalance(uuid, shardType)
-        assertEquals(-1, result)
+        assertEquals(-1, result.getOrNull())
+    }
+
+    @Test
+    @DisplayName("Cache Get TOTAL should fail")
+    fun cacheGetTotalFail() {
+        val cache = Cache()
+        val uuid = UUID.randomUUID()
+        val result = cache.getBalance(uuid, ShardType.TOTAL)
+        assertTrue(result.isFailure)
     }
 
     @ParameterizedTest(name = "{0}")
@@ -134,13 +133,13 @@ class CacheTest {
         val result = cache.removeBalance(uuid, shardType)
         assertAll(
             { assertFalse(result.isFailure, "removeBalance result should not be a failure") },
-            { assertEquals(-1, cache.getBalance(uuid, shardType)) },
+            { assertEquals(-1, cache.getBalance(uuid, shardType).getOrNull()) },
         )
     }
 
     @Test
-    @DisplayName("Cache Remove fail")
-    fun cacheRemoveFail() {
+    @DisplayName("Cache Remove TOTAL should fail")
+    fun cacheRemoveTotalFail() {
         val cache = Cache()
         val uuid = UUID.randomUUID()
         val result = cache.removeBalance(uuid, ShardType.TOTAL)
