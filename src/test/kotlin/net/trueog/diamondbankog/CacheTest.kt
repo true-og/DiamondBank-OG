@@ -34,63 +34,6 @@ class CacheTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @DisplayName("Cache Add (after set)")
-    @CsvSource("Bank Shards, BANK", "Inventory Shards, INVENTORY", "Ender Chest Shards, ENDER_CHEST")
-    fun cacheAddAfterSet(@Suppress("UNUSED_PARAMETER") name: String, enumName: String) {
-        val shardType = ShardType.valueOf(enumName)
-        val cache = Cache()
-        val uuid = UUID.randomUUID()
-        cache.setBalance(uuid, 3, shardType)
-        val result = cache.addBalance(uuid, 3, shardType)
-        assertAll(
-            { assertFalse(result.isFailure, "addBalance result should not be a failure") },
-            { assertEquals(6, result.getOrNull()) },
-            { assertEquals(6, cache.getBalance(uuid, shardType).getOrNull()) },
-        )
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @DisplayName("Cache Add")
-    @CsvSource("Bank Shards, BANK", "Inventory Shards, INVENTORY", "Ender Chest Shards, ENDER_CHEST")
-    fun cacheAdd(@Suppress("UNUSED_PARAMETER") name: String, enumName: String) {
-        val shardType = ShardType.valueOf(enumName)
-        val cache = Cache()
-        val uuid = UUID.randomUUID()
-        val result = cache.addBalance(uuid, 3, shardType)
-        assertAll(
-            { assertFalse(result.isFailure, "addBalance result should not be a failure") },
-            { assertEquals(3, result.getOrNull()) },
-            { assertEquals(3, cache.getBalance(uuid, shardType).getOrNull()) },
-        )
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @DisplayName("Cache Add (twice)")
-    @CsvSource("Bank Shards, BANK", "Inventory Shards, INVENTORY", "Ender Chest Shards, ENDER_CHEST")
-    fun cacheAddTwice(@Suppress("UNUSED_PARAMETER") name: String, enumName: String) {
-        val shardType = ShardType.valueOf(enumName)
-        val cache = Cache()
-        val uuid = UUID.randomUUID()
-        val result1 = cache.addBalance(uuid, 3, shardType)
-        val result2 = cache.addBalance(uuid, 3, shardType)
-        assertAll(
-            { assertFalse(result1.isFailure, "first addBalance result should not be a failure") },
-            { assertFalse(result2.isFailure, "second addBalance result should not be a failure") },
-            { assertEquals(6, result2.getOrNull()) },
-            { assertEquals(6, cache.getBalance(uuid, shardType).getOrNull()) },
-        )
-    }
-
-    @Test
-    @DisplayName("Cache Add TOTAL should fail")
-    fun cacheAddTotalFail() {
-        val cache = Cache()
-        val uuid = UUID.randomUUID()
-        val result = cache.addBalance(uuid, 3, ShardType.TOTAL)
-        assertTrue(result.isFailure, "addBalance result should be a failure with ShardType.TOTAL")
-    }
-
-    @ParameterizedTest(name = "{0}")
     @DisplayName("Cache Get (after set)")
     @CsvSource("Bank Shards, BANK", "Inventory Shards, INVENTORY", "Ender Chest Shards, ENDER_CHEST")
     fun cacheGetAfterSet(@Suppress("UNUSED_PARAMETER") name: String, enumName: String) {
@@ -129,7 +72,7 @@ class CacheTest {
         val shardType = ShardType.valueOf(enumName)
         val cache = Cache()
         val uuid = UUID.randomUUID()
-        cache.addBalance(uuid, 3, shardType)
+        cache.setBalance(uuid, 3, shardType)
         val result = cache.removeBalance(uuid, shardType)
         assertAll(
             { assertFalse(result.isFailure, "removeBalance result should not be a failure") },

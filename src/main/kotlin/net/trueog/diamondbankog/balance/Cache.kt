@@ -36,27 +36,6 @@ internal class Cache {
         return Result.success(Unit)
     }
 
-    fun addBalance(uuid: UUID, value: Long, type: ShardType): Result<Long> {
-        val lock =
-            when (type) {
-                ShardType.BANK -> bankBalanceCacheLock
-                ShardType.INVENTORY -> inventoryBalanceCacheLock
-                ShardType.ENDER_CHEST -> enderChestBalanceCacheLock
-                else -> return Result.failure(InvalidArgumentException())
-            }
-        lock.write {
-            val old =
-                getBalance(uuid, type)
-                    .getOrElse {
-                        return Result.failure(it)
-                    }
-                    .coerceAtLeast(0)
-            val newBalance = old + value
-            setBalance(uuid, newBalance, type)
-            return Result.success(newBalance)
-        }
-    }
-
     fun getBalance(uuid: UUID, type: ShardType): Result<Long> {
         return when (type) {
             ShardType.BANK -> {

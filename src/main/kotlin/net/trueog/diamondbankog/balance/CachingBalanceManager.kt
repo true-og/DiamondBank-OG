@@ -11,7 +11,6 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
 import net.trueog.diamondbankog.balance.shard.PlayerShards
 import net.trueog.diamondbankog.balance.shard.ShardType
 import net.trueog.diamondbankog.persistence.PostgreSQL
-import net.trueog.diamondbankog.util.ErrorHandler.handleError
 
 internal class CachingBalanceManager private constructor() : BalanceManager {
     val cache = Cache()
@@ -55,18 +54,14 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         increment(uuid, type)
-        val newBalanceDb =
+        val newBalance =
             postgreSQL.addToPlayerShards(uuid, shards, type).getOrElse {
                 return Result.failure(it)
             }
-        val newBalanceCache =
-            cache.addBalance(uuid, shards, type).getOrElse {
-                return Result.failure(it)
-            }
-        decrement(uuid, type)
-        if (newBalanceDb != newBalanceCache) {
-            handleError(IllegalStateException("Database and cache balances do not match"))
+        cache.setBalance(uuid, newBalance, type).getOrElse {
+            return Result.failure(it)
         }
+        decrement(uuid, type)
         return Result.success(Unit)
     }
 

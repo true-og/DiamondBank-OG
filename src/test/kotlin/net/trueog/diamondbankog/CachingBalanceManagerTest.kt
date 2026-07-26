@@ -98,6 +98,20 @@ class CachingBalanceManagerTest {
     }
 
     @Test
+    @DisplayName("Add To Bank Shards (with existing balance)")
+    fun addToBankShardsWithExistingBalance() = runTest {
+        coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns Result.success(10)
+
+        val result = manager.addToBankShards(playerUuid, 5)
+
+        assertAll(
+            { assertFalse(result.isFailure, "addToBankShards result should not be a failure") },
+            { assertEquals(10, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { coVerify { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } },
+        )
+    }
+
+    @Test
     @DisplayName("Subtract From Bank Shards")
     fun subtractFromBankShards() = runTest {
         manager.cache.setBalance(playerUuid, 10, ShardType.BANK)
