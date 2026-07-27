@@ -94,8 +94,28 @@ internal class Events : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onPlayerQuit(event: PlayerQuitEvent) {
+        val worldName = event.player.world.name
+        val isVanillaWorld = worldName != "world" && worldName != "world_nether" && worldName != "world_the_end"
         scope.launch {
             transactionLock.withLockSuspend(event.player.uniqueId) {
+                if (isVanillaWorld) {
+                    val inventoryShards = event.player.inventory.countTotal()
+                    balanceManager
+                        .setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY)
+                        .getOrElse {
+                            handleError(it)
+                            return@withLockSuspend
+                        }
+
+                    val enderChestDiamonds = event.player.enderChest.countTotal()
+                    balanceManager
+                        .setPlayerShards(event.player.uniqueId, enderChestDiamonds, ShardType.ENDER_CHEST)
+                        .getOrElse {
+                            handleError(it)
+                            return@withLockSuspend
+                        }
+                }
+
                 balanceManager.removeCacheForPlayer(event.player.uniqueId)
             }
         }
