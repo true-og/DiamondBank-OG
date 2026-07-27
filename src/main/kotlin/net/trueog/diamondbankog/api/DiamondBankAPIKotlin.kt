@@ -26,19 +26,20 @@ class DiamondBankAPIKotlin {
     @Suppress("unused")
     suspend fun addToPlayerBankShards(
         uuid: UUID,
-        shards: Long,
+        shards: ULong,
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {
+        require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
-            balanceManager.addToBankShards(uuid, shards).getOrElse {
+            balanceManager.addToBankShards(uuid, shards.toLong()).getOrElse {
                 handleError(it)
                 return@withLockSuspend Result.failure(EconomyDisabledException())
             }
 
-            balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            balanceManager.insertTransactionLog(uuid, shards.toLong(), null, transactionReason, notes).getOrElse {
                 handleError(it)
             }
 
@@ -55,19 +56,20 @@ class DiamondBankAPIKotlin {
     @Suppress("unused")
     suspend fun subtractFromPlayerBankShards(
         uuid: UUID,
-        shards: Long,
+        shards: ULong,
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {
+        require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
-            balanceManager.subtractFromBankShards(uuid, shards).getOrElse {
+            balanceManager.subtractFromBankShards(uuid, shards.toLong()).getOrElse {
                 handleError(it)
                 return@withLockSuspend Result.failure(EconomyDisabledException())
             }
 
-            balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            balanceManager.insertTransactionLog(uuid, shards.toLong(), null, transactionReason, notes).getOrElse {
                 handleError(it)
             }
 
@@ -141,7 +143,8 @@ class DiamondBankAPIKotlin {
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      */
     @Suppress("unused")
-    suspend fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit> {
+    suspend fun consumeFromPlayer(uuid: UUID, shards: ULong, transactionReason: String, notes: String?): Result<Unit> {
+        require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
@@ -153,7 +156,7 @@ class DiamondBankAPIKotlin {
                 InventorySnapshot.from(player.inventory, balanceManager)
             }
 
-            CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrElse {
+            CommonOperations.consume(player.uniqueId, shards.toLong(), inventorySnapshot).getOrElse {
                 player.inventory.unlock()
                 if (it is DatabaseException) {
                     handleError(it)
@@ -167,7 +170,7 @@ class DiamondBankAPIKotlin {
                 player.inventory.unlock()
             }
 
-            balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
+            balanceManager.insertTransactionLog(uuid, shards.toLong(), null, transactionReason, notes).getOrElse {
                 handleError(it)
             }
 
@@ -189,10 +192,11 @@ class DiamondBankAPIKotlin {
     suspend fun playerPayPlayer(
         payerUuid: UUID,
         receiverUuid: UUID,
-        shards: Long,
+        shards: ULong,
         transactionReason: String,
         notes: String?,
     ): Result<Unit> {
+        require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(payerUuid) {
@@ -207,7 +211,7 @@ class DiamondBankAPIKotlin {
                 InventorySnapshot.from(payer.inventory, balanceManager)
             }
 
-            CommonOperations.consume(payer.uniqueId, shards, inventorySnapshot).getOrElse {
+            CommonOperations.consume(payer.uniqueId, shards.toLong(), inventorySnapshot).getOrElse {
                 payer.inventory.unlock()
                 if (it is DatabaseException) {
                     handleError(it)
@@ -216,7 +220,7 @@ class DiamondBankAPIKotlin {
                 return@withLockSuspend Result.failure(it)
             }
 
-            balanceManager.addToBankShards(receiverUuid, shards).getOrElse {
+            balanceManager.addToBankShards(receiverUuid, shards.toLong()).getOrElse {
                 payer.inventory.unlock()
                 handleError(it)
                 return@withLockSuspend Result.failure(it)
@@ -227,9 +231,9 @@ class DiamondBankAPIKotlin {
                 payer.inventory.unlock()
             }
 
-            balanceManager.insertTransactionLog(payerUuid, shards, receiverUuid, transactionReason, notes).getOrElse {
-                handleError(it)
-            }
+            balanceManager
+                .insertTransactionLog(payerUuid, shards.toLong(), receiverUuid, transactionReason, notes)
+                .getOrElse { handleError(it) }
 
             Result.success(Unit)
         }
