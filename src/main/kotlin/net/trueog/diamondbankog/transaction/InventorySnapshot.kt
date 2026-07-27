@@ -22,7 +22,6 @@ private constructor(
     val holder: UUID,
     val balanceManager: BalanceManager,
 ) : Inventory by original {
-
     companion object {
         fun from(inventory: PlayerInventory, balanceManager: BalanceManager): InventorySnapshot {
             if (!Bukkit.isPrimaryThread()) {

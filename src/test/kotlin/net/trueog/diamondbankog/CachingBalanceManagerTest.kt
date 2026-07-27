@@ -2,9 +2,11 @@ package net.trueog.diamondbankog
 
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
 import kotlinx.coroutines.test.runTest
 import net.trueog.diamondbankog.Constants.playerUuid
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
+import net.trueog.diamondbankog.balance.Cache
 import net.trueog.diamondbankog.balance.CachingBalanceManager
 import net.trueog.diamondbankog.balance.shard.PlayerShards
 import net.trueog.diamondbankog.balance.shard.ShardType
@@ -18,6 +20,7 @@ import org.junit.jupiter.params.provider.CsvSource
 
 class CachingBalanceManagerTest {
     @MockK private lateinit var postgreSQL: PostgreSQL
+    @SpyK private var cache = Cache()
 
     private lateinit var manager: CachingBalanceManager
 
@@ -30,7 +33,12 @@ class CachingBalanceManagerTest {
         val constructor = CachingBalanceManager::class.java.getDeclaredConstructor()
         constructor.isAccessible = true
         manager = constructor.newInstance()
-        manager.postgreSQL = postgreSQL
+        val postgreSQL = manager::class.java.getDeclaredField("postgreSQL")
+        postgreSQL.isAccessible = true
+        postgreSQL.set(manager, this.postgreSQL)
+        val cache = manager::class.java.getDeclaredField("cache")
+        cache.isAccessible = true
+        cache.set(manager, this.cache)
     }
 
     @ParameterizedTest(name = "{0}")
@@ -44,7 +52,7 @@ class CachingBalanceManagerTest {
 
         assertAll(
             { assertFalse(result.isFailure, "setPlayerShards result should not be a failure") },
-            { assertEquals(10, manager.cache.getBalance(playerUuid, shardType).getOrNull()) },
+            { assertEquals(10, cache.getBalance(playerUuid, shardType).getOrNull()) },
             { coVerify { postgreSQL.setPlayerShards(playerUuid, 10, shardType) } },
         )
     }
@@ -78,7 +86,7 @@ class CachingBalanceManagerTest {
 
         assertAll(
             { assertTrue(result.isFailure, "setPlayerShards result should be a failure") },
-            { assertEquals(-1, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(-1, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
         )
     }
 
@@ -92,7 +100,7 @@ class CachingBalanceManagerTest {
 
         assertAll(
             { assertFalse(result.isFailure, "addToBankShards result should not be a failure") },
-            { assertEquals(5, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(5, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
             { coVerify { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } },
         )
     }
@@ -107,7 +115,7 @@ class CachingBalanceManagerTest {
 
         assertAll(
             { assertFalse(result.isFailure, "addToBankShards result should not be a failure") },
-            { assertEquals(10, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(10, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
             { coVerify { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } },
         )
     }
@@ -122,7 +130,7 @@ class CachingBalanceManagerTest {
 
         assertAll(
             { assertFalse(result.isFailure, "subtractFromBankShards result should not be a failure") },
-            { assertEquals(6, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(6, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
             { coVerify { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } },
         )
     }
@@ -130,7 +138,7 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Subtract From Bank Shards (insufficient balance)")
     fun subtractFromBankShardsInsufficientBalance() = runTest {
-        manager.cache.setBalance(playerUuid, 2, ShardType.BANK)
+        cache.setBalance(playerUuid, 2, ShardType.BANK)
         coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(2)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } returns Result.failure(Exception())
 
@@ -143,7 +151,7 @@ class CachingBalanceManagerTest {
                     "subtractFromBankShards result should be an InsufficientBalanceException",
                 )
             },
-            { assertEquals(2, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(2, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
             { coVerify(exactly = 0) { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } },
         )
     }
@@ -210,7 +218,7 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Get All Shards partial cache miss still hits DB")
     fun getAllShardsPartialCacheMiss() = runTest {
-        manager.cache.setBalance(playerUuid, 1, ShardType.BANK)
+        cache.setBalance(playerUuid, 1, ShardType.BANK)
         coEvery { postgreSQL.getAllShards(playerUuid) } returns Result.success(PlayerShards(1, 2, 3))
 
         val result = manager.getAllShards(playerUuid)
@@ -230,25 +238,25 @@ class CachingBalanceManagerTest {
 
         assertAll(
             { assertFalse(result.isFailure, "cacheForPlayer result should not be a failure") },
-            { assertEquals(1, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
-            { assertEquals(2, manager.cache.getBalance(playerUuid, ShardType.INVENTORY).getOrNull()) },
-            { assertEquals(3, manager.cache.getBalance(playerUuid, ShardType.ENDER_CHEST).getOrNull()) },
+            { assertEquals(1, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(2, cache.getBalance(playerUuid, ShardType.INVENTORY).getOrNull()) },
+            { assertEquals(3, cache.getBalance(playerUuid, ShardType.ENDER_CHEST).getOrNull()) },
         )
     }
 
     @Test
     @DisplayName("Remove Cache For Player")
     suspend fun removeCacheForPlayer() {
-        manager.cache.setBalance(playerUuid, 1, ShardType.BANK)
-        manager.cache.setBalance(playerUuid, 2, ShardType.INVENTORY)
-        manager.cache.setBalance(playerUuid, 3, ShardType.ENDER_CHEST)
+        cache.setBalance(playerUuid, 1, ShardType.BANK)
+        cache.setBalance(playerUuid, 2, ShardType.INVENTORY)
+        cache.setBalance(playerUuid, 3, ShardType.ENDER_CHEST)
 
         manager.removeCacheForPlayer(playerUuid)
 
         assertAll(
-            { assertEquals(-1, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
-            { assertEquals(-1, manager.cache.getBalance(playerUuid, ShardType.INVENTORY).getOrNull()) },
-            { assertEquals(-1, manager.cache.getBalance(playerUuid, ShardType.ENDER_CHEST).getOrNull()) },
+            { assertEquals(-1, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(-1, cache.getBalance(playerUuid, ShardType.INVENTORY).getOrNull()) },
+            { assertEquals(-1, cache.getBalance(playerUuid, ShardType.ENDER_CHEST).getOrNull()) },
         )
     }
 }

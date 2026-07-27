@@ -15,8 +15,8 @@ import net.trueog.diamondbankog.balance.shard.ShardType
 import net.trueog.diamondbankog.persistence.PostgreSQL
 
 internal class CachingBalanceManager private constructor() : BalanceManager {
-    val cache = Cache()
-    lateinit var postgreSQL: PostgreSQL
+    private val cache = Cache()
+    private lateinit var postgreSQL: PostgreSQL
 
     companion object : BalanceManagerFactory {
         override fun create(): BalanceManager? {
@@ -26,7 +26,7 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         }
     }
 
-    val mutexMap = ConcurrentHashMap<UUID, ConcurrentHashMap<ShardType, Mutex>>()
+    private val mutexMap = ConcurrentHashMap<UUID, ConcurrentHashMap<ShardType, Mutex>>()
 
     private suspend fun <T> withLock(uuid: UUID, vararg types: ShardType, block: suspend () -> T): T {
         val shardTypeToMutex = mutexMap.computeIfAbsent(uuid) { ConcurrentHashMap() }
@@ -172,6 +172,6 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         withLock(uuid, ShardType.BANK, ShardType.INVENTORY, ShardType.ENDER_CHEST) { cache.removeAll(uuid) }
 
     override fun shutdown() {
-        postgreSQL.pool.disconnect().get()
+        postgreSQL.disconnect().get()
     }
 }

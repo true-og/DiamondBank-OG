@@ -18,7 +18,7 @@ import org.flywaydb.core.Flyway
 import org.postgresql.ds.PGSimpleDataSource
 
 internal class PostgreSQL private constructor() {
-    lateinit var pool: ConnectionPool<PostgreSQLConnection>
+    private lateinit var pool: ConnectionPool<PostgreSQLConnection>
 
     class NoRowsException : Exception()
 
@@ -57,6 +57,8 @@ internal class PostgreSQL private constructor() {
             }
         }
     }
+
+    fun disconnect() = pool.disconnect()
 
     suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())

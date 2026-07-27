@@ -9,12 +9,12 @@ import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
 import net.trueog.diamondbankog.balance.shard.ShardType
 
 internal class Cache {
-    val bankBalanceCache = Object2LongOpenHashMap<UUID>().apply { defaultReturnValue(-1L) }
-    val bankBalanceCacheLock = ReentrantReadWriteLock()
-    val inventoryBalanceCache = Object2LongOpenHashMap<UUID>().apply { defaultReturnValue(-1L) }
-    val inventoryBalanceCacheLock = ReentrantReadWriteLock()
-    val enderChestBalanceCache = Object2LongOpenHashMap<UUID>().apply { defaultReturnValue(-1L) }
-    val enderChestBalanceCacheLock = ReentrantReadWriteLock()
+    private val bankBalanceCache = Object2LongOpenHashMap<UUID>().apply { defaultReturnValue(-1L) }
+    private val bankBalanceCacheLock = ReentrantReadWriteLock()
+    private val inventoryBalanceCache = Object2LongOpenHashMap<UUID>().apply { defaultReturnValue(-1L) }
+    private val inventoryBalanceCacheLock = ReentrantReadWriteLock()
+    private val enderChestBalanceCache = Object2LongOpenHashMap<UUID>().apply { defaultReturnValue(-1L) }
+    private val enderChestBalanceCacheLock = ReentrantReadWriteLock()
 
     fun setBalance(uuid: UUID, value: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
