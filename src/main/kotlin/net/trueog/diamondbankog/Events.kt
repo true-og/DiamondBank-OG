@@ -23,7 +23,6 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityPickupItemEvent
-import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
@@ -33,6 +32,8 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 internal class Events : Listener {
+    private val vanillaWorlds = arrayOf("world", "world_nether", "world_the_end")
+
     @EventHandler(priority = EventPriority.MONITOR)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (economyDisabled) {
@@ -43,7 +44,7 @@ internal class Events : Listener {
         }
 
         val worldName = event.player.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+        if (!vanillaWorlds.contains(worldName)) return
 
         scope.launch {
             val hasEntry =
@@ -95,21 +96,22 @@ internal class Events : Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val worldName = event.player.world.name
-        val isVanillaWorld = worldName != "world" && worldName != "world_nether" && worldName != "world_the_end"
+        val isVanillaWorld = vanillaWorlds.contains(worldName)
         scope.launch {
             transactionLock.withLockSuspend(event.player.uniqueId) {
                 if (isVanillaWorld) {
-                    val inventoryShards = event.player.inventory.countTotal()
+                    val (inventoryShards, enderChestShards) =
+                        runOnMainThread {
+                            Pair(event.player.inventory.countTotal(), event.player.enderChest.countTotal())
+                        }
                     balanceManager
                         .setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY)
                         .getOrElse {
                             handleError(it)
                             return@withLockSuspend
                         }
-
-                    val enderChestDiamonds = event.player.enderChest.countTotal()
                     balanceManager
-                        .setPlayerShards(event.player.uniqueId, enderChestDiamonds, ShardType.ENDER_CHEST)
+                        .setPlayerShards(event.player.uniqueId, enderChestShards, ShardType.ENDER_CHEST)
                         .getOrElse {
                             handleError(it)
                             return@withLockSuspend
@@ -122,9 +124,8 @@ internal class Events : Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    fun onPlayerDeath(event: PlayerDeathEvent) {
-        val worldName = event.player.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+    fun onPlayerRespawn(event: PlayerRespawnEvent) {
+        if (!vanillaWorlds.contains(event.respawnLocation.world.name)) return
         scope.launch {
             transactionLock.withLockSuspend(event.player.uniqueId) {
                 val (inventoryShards, enderChestShards) =
@@ -145,10 +146,9 @@ internal class Events : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onEntityPickupItem(event: EntityPickupItemEvent) {
-        val player = event.entity
-        if (player !is Player) return
+        val player = event.entity as? Player ?: return
         val worldName = player.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+        if (!vanillaWorlds.contains(worldName)) return
 
         val itemStack = event.item.itemStack
         val itemType = itemStack.type
@@ -199,7 +199,7 @@ internal class Events : Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
         val worldName = event.player.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+        if (!vanillaWorlds.contains(worldName)) return
 
         val itemStack = event.itemDrop.itemStack
         val itemType = itemStack.type
@@ -240,10 +240,9 @@ internal class Events : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onInventoryMoveItem(event: InventoryClickEvent) {
-        val player = event.whoClicked
-        if (player !is Player) return
+        val player = event.whoClicked as? Player ?: return
         val worldName = player.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+        if (!vanillaWorlds.contains(worldName)) return
 
         if (event.inventory.type == InventoryType.CRAFTING) return
 
@@ -279,7 +278,7 @@ internal class Events : Listener {
     fun onPlayerInteract(event: PlayerInteractEvent) {
         val player = event.player
         val worldName = player.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+        if (!vanillaWorlds.contains(worldName)) return
 
         val clickedBlock = event.clickedBlock ?: return
         if (clickedBlock.type == Material.AIR) return
@@ -322,7 +321,7 @@ internal class Events : Listener {
     fun onPlayerInteractEntity(event: PlayerInteractEntityEvent) {
         val player = event.player
         val worldName = player.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+        if (!vanillaWorlds.contains(worldName)) return
 
         val itemStackInMainHand = player.inventory.itemInMainHand
         val itemTypeInMainHand = itemStackInMainHand.type
@@ -365,41 +364,38 @@ internal class Events : Listener {
             return
         }
 
-        val player = event.player
-        if (player !is Player) return
+        val player = event.player as? Player ?: return
 
         if (player.inventory.isLocked()) {
             return
         }
 
         val worldName = player.world.name
-        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+        if (!vanillaWorlds.contains(worldName)) return
 
         scope.launch {
             if (redis.getValue("diamondbankog:${player.uniqueId}:autocompress") == "true") {
                 compress(player)
             }
 
-            scope.launch {
-                transactionLock.withLockSuspend(player.uniqueId) {
-                    val (inventoryShards, enderChestShards) =
-                        runOnMainThread {
-                            Pair(
-                                player.inventory.countTotal(),
-                                if (event.inventory.type == InventoryType.ENDER_CHEST) player.enderChest.countTotal()
-                                else null,
-                            )
-                        }
-                    balanceManager.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
-                        handleError(it)
-                        return@withLockSuspend
+            transactionLock.withLockSuspend(player.uniqueId) {
+                val (inventoryShards, enderChestShards) =
+                    runOnMainThread {
+                        Pair(
+                            player.inventory.countTotal(),
+                            if (event.inventory.type == InventoryType.ENDER_CHEST) player.enderChest.countTotal()
+                            else null,
+                        )
                     }
+                balanceManager.setPlayerShards(player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                    handleError(it)
+                    return@withLockSuspend
+                }
 
-                    if (enderChestShards == null) return@withLockSuspend
-                    balanceManager.setPlayerShards(player.uniqueId, enderChestShards, ShardType.ENDER_CHEST).getOrElse {
-                        handleError(it)
-                        return@withLockSuspend
-                    }
+                if (enderChestShards == null) return@withLockSuspend
+                balanceManager.setPlayerShards(player.uniqueId, enderChestShards, ShardType.ENDER_CHEST).getOrElse {
+                    handleError(it)
+                    return@withLockSuspend
                 }
             }
         }
