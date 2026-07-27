@@ -2,8 +2,10 @@ package net.trueog.diamondbankog.balance
 
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.trueog.diamondbankog.DiamondBankException.EconomyDisabledException
+import net.trueog.diamondbankog.DiamondBankException.InsufficientBalanceException
 import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.debug
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -15,7 +17,6 @@ import net.trueog.diamondbankog.persistence.PostgreSQL
 internal class CachingBalanceManager private constructor() : BalanceManager {
     val cache = Cache()
     lateinit var postgreSQL: PostgreSQL
-    val beingModified = ConcurrentHashMap<Pair<UUID, ShardType>, AtomicInteger>()
 
     companion object : BalanceManagerFactory {
         override fun create(): BalanceManager? {
@@ -25,44 +26,49 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         }
     }
 
-    private fun increment(uuid: UUID, type: ShardType) {
-        beingModified.computeIfAbsent(uuid to type) { AtomicInteger(0) }.incrementAndGet()
-    }
+    val mutexMap = ConcurrentHashMap<UUID, ConcurrentHashMap<ShardType, Mutex>>()
 
-    private fun decrement(uuid: UUID, type: ShardType) {
-        beingModified.computeIfPresent(uuid to type) { _, counter ->
-            val newValue = counter.decrementAndGet()
-            if (newValue == 0) null else counter
-        }
+    private suspend fun <T> withLock(uuid: UUID, vararg types: ShardType, block: suspend () -> T): T {
+        val shardTypeToMutex = mutexMap.computeIfAbsent(uuid) { ConcurrentHashMap() }
+        val mutexes = types.sorted().map { shardTypeToMutex.computeIfAbsent(it) { Mutex() } }
+        return mutexes.foldRight(block) { mutex, acc -> { mutex.withLock { acc() } } }()
     }
 
     override suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
-        increment(uuid, type)
-        postgreSQL.setPlayerShards(uuid, shards, type).getOrElse {
-            return Result.failure(it)
+        return withLock(uuid, type) {
+            postgreSQL.setPlayerShards(uuid, shards, type).getOrElse {
+                return@withLock Result.failure(it)
+            }
+            cache.setBalance(uuid, shards, type)
+            return@withLock Result.success(Unit)
         }
-        cache.setBalance(uuid, shards, type)
-        decrement(uuid, type)
-        return Result.success(Unit)
     }
 
     private suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
-        increment(uuid, type)
-        val newBalance =
-            postgreSQL.addToPlayerShards(uuid, shards, type).getOrElse {
-                return Result.failure(it)
+        return withLock(uuid, type) {
+            val currentBalance =
+                postgreSQL.getShardTypeShards(uuid, type).getOrElse {
+                    return@withLock Result.failure(it)
+                }
+            if (currentBalance + shards < 0) {
+                return@withLock Result.failure(InsufficientBalanceException(currentBalance))
             }
-        cache.setBalance(uuid, newBalance, type).getOrElse {
-            return Result.failure(it)
+
+            val newBalance =
+                postgreSQL.addToPlayerShards(uuid, shards, type).getOrElse {
+                    return@withLock Result.failure(it)
+                }
+            cache.setBalance(uuid, newBalance, type).getOrElse {
+                return@withLock Result.failure(it)
+            }
+            return@withLock Result.success(Unit)
         }
-        decrement(uuid, type)
-        return Result.success(Unit)
     }
 
     override suspend fun addToBankShards(uuid: UUID, shards: Long): Result<Unit> =
@@ -78,44 +84,28 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
     override suspend fun getEnderChestShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     override suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
-        if ((beingModified[uuid to type]?.get() ?: 0) > 0) {
-            if (debug) {
-                plugin.logger.info("Cache miss (being modified) for $uuid!")
-            }
-            return postgreSQL.getShardTypeShards(uuid, type)
-        }
         val cacheBalance =
             cache.getBalance(uuid, type).getOrElse {
                 return Result.failure(it)
             }
-        if (cacheBalance == -1L) {
+        if (cacheBalance != -1L) return Result.success(cacheBalance)
+
+        return withLock(uuid, type) {
             if (debug) {
                 plugin.logger.info("Cache miss for $uuid!")
             }
-            increment(uuid, type)
             val dbBalance =
                 postgreSQL.getShardTypeShards(uuid, type).getOrElse {
-                    return Result.failure(it)
+                    return@withLock Result.failure(it)
                 }
             cache.setBalance(uuid, dbBalance, type)
-            decrement(uuid, type)
-            return Result.success(dbBalance)
-        } else if (debug) {
-            plugin.logger.info("Cache hit for $uuid!")
+            return@withLock Result.success(dbBalance)
         }
-        return Result.success(cacheBalance)
     }
 
     override suspend fun getTotalShards(uuid: UUID): Result<Long> = getAllShards(uuid).map { it.total }
 
     override suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
-        val anyBeingModified = beingModified.any { it.key.first == uuid && it.value.get() > 0 }
-        if (anyBeingModified) {
-            if (debug) {
-                plugin.logger.info("Cache miss (being modified) for $uuid!")
-            }
-            return postgreSQL.getAllShards(uuid)
-        }
         val cacheBankBalance =
             cache.getBalance(uuid, ShardType.BANK).getOrElse {
                 return Result.failure(it)
@@ -128,28 +118,24 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
             cache.getBalance(uuid, ShardType.ENDER_CHEST).getOrElse {
                 return Result.failure(it)
             }
-        if (cacheBankBalance == -1L || cacheInventoryBalance == -1L || cacheEnderChestBalance == -1L) {
+
+        if (cacheBankBalance != -1L && cacheInventoryBalance != -1L && cacheEnderChestBalance != -1L) {
+            return Result.success(PlayerShards(cacheBankBalance, cacheInventoryBalance, cacheEnderChestBalance))
+        }
+
+        return withLock(uuid, ShardType.BANK, ShardType.INVENTORY, ShardType.ENDER_CHEST) {
             if (debug) {
                 plugin.logger.info("Cache miss for $uuid!")
             }
-            increment(uuid, ShardType.BANK)
-            increment(uuid, ShardType.INVENTORY)
-            increment(uuid, ShardType.ENDER_CHEST)
             val dbPlayerShards =
                 postgreSQL.getAllShards(uuid).getOrElse {
-                    return Result.failure(it)
+                    return@withLock Result.failure(it)
                 }
             cache.setBalance(uuid, dbPlayerShards.bank, ShardType.BANK)
             cache.setBalance(uuid, dbPlayerShards.inventory, ShardType.INVENTORY)
             cache.setBalance(uuid, dbPlayerShards.enderChest, ShardType.ENDER_CHEST)
-            decrement(uuid, ShardType.BANK)
-            decrement(uuid, ShardType.INVENTORY)
-            decrement(uuid, ShardType.ENDER_CHEST)
-            return Result.success(dbPlayerShards)
-        } else if (debug) {
-            plugin.logger.info("Cache hit for $uuid!")
+            return@withLock Result.success(dbPlayerShards)
         }
-        return Result.success(PlayerShards(cacheBankBalance, cacheInventoryBalance, cacheEnderChestBalance))
     }
 
     override suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> = postgreSQL.getBaltop(offset)
@@ -170,20 +156,20 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
 
     override suspend fun hasEntry(uuid: UUID): Result<Boolean> = postgreSQL.hasEntry(uuid)
 
-    override suspend fun cacheForPlayer(uuid: UUID): Result<Unit> {
-        val playerShards =
-            postgreSQL.getAllShards(uuid).getOrElse {
-                return Result.failure(it)
-            }
-        cache.setBalance(uuid, playerShards.bank, ShardType.BANK)
-        cache.setBalance(uuid, playerShards.inventory, ShardType.INVENTORY)
-        cache.setBalance(uuid, playerShards.enderChest, ShardType.ENDER_CHEST)
-        return Result.success(Unit)
-    }
+    override suspend fun cacheForPlayer(uuid: UUID) =
+        withLock(uuid, ShardType.BANK, ShardType.INVENTORY, ShardType.ENDER_CHEST) {
+            val playerShards =
+                postgreSQL.getAllShards(uuid).getOrElse {
+                    return@withLock Result.failure(it)
+                }
+            cache.setBalance(uuid, playerShards.bank, ShardType.BANK)
+            cache.setBalance(uuid, playerShards.inventory, ShardType.INVENTORY)
+            cache.setBalance(uuid, playerShards.enderChest, ShardType.ENDER_CHEST)
+            return@withLock Result.success(Unit)
+        }
 
-    override fun removeCacheForPlayer(uuid: UUID) {
-        cache.removeAll(uuid)
-    }
+    override suspend fun removeCacheForPlayer(uuid: UUID) =
+        withLock(uuid, ShardType.BANK, ShardType.INVENTORY, ShardType.ENDER_CHEST) { cache.removeAll(uuid) }
 
     override fun shutdown() {
         postgreSQL.pool.disconnect().get()

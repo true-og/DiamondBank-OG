@@ -35,6 +35,7 @@ Exceptions are only applicable when using the Java API, when using the Kotlin AP
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
  *
+ * @param shards must not be negative
  * @param transactionReason the reason for this transaction for in the transaction log
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
@@ -42,7 +43,7 @@ Exceptions are only applicable when using the Java API, when using the Kotlin AP
 ```
 Kotlin:
 ```kotlin
-suspend fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit>
+suspend fun addToPlayerBankShards(uuid: UUID, shards: ULong, transactionReason: String, notes: String?): Result<Unit>
 ```
 Java:
 ```java
@@ -57,6 +58,7 @@ public void addToPlayerBankShards(UUID uuid, long shards, String transactionReas
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
  *
+ * @param shards must not be negative
  * @param transactionReason the reason for this transaction for in the transaction log
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
@@ -65,7 +67,7 @@ public void addToPlayerBankShards(UUID uuid, long shards, String transactionReas
 ```
 Kotlin:
 ```kotlin
-suspend fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit>
+suspend fun subtractFromPlayerBankShards(uuid: UUID, shards: ULong, transactionReason: String, notes: String?): Result<Unit>
 ```
 Java:
 ```java
@@ -181,6 +183,7 @@ public Map<@Nullable UUID, Long> getBaltop(int offset)
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
  *
+ * @param shards must not be negative
  * @param transactionReason the reason for this transaction for in the transaction log
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
@@ -191,7 +194,7 @@ public Map<@Nullable UUID, Long> getBaltop(int offset)
 ```
 Kotlin:
 ```kotlin
-suspend fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit>
+suspend fun consumeFromPlayer(uuid: UUID, shards: ULong, transactionReason: String, notes: String?): Result<Unit>
 ```
 Java:
 ```java
@@ -206,6 +209,7 @@ public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, 
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
  *
+ * @param shards must not be negative
  * @param transactionReason the reason for this transaction for in the transaction log
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
@@ -216,7 +220,7 @@ public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, 
 ```
 Kotlin:
 ```kotlin
-suspend fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?): Result<Unit>
+suspend fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: ULong, transactionReason: String, notes: String?): Result<Unit>
 ```
 Java:
 ```java

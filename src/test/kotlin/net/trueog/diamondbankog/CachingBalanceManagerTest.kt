@@ -2,7 +2,6 @@ package net.trueog.diamondbankog
 
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
-import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.test.runTest
 import net.trueog.diamondbankog.Constants.playerUuid
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -86,6 +85,7 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Add To Bank Shards")
     fun addToBankShards() = runTest {
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(0)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns Result.success(5)
 
         val result = manager.addToBankShards(playerUuid, 5)
@@ -100,6 +100,7 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Add To Bank Shards (with existing balance)")
     fun addToBankShardsWithExistingBalance() = runTest {
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(5)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns Result.success(10)
 
         val result = manager.addToBankShards(playerUuid, 5)
@@ -114,7 +115,7 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Subtract From Bank Shards")
     fun subtractFromBankShards() = runTest {
-        manager.cache.setBalance(playerUuid, 10, ShardType.BANK)
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(10)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } returns Result.success(6)
 
         val result = manager.subtractFromBankShards(playerUuid, 4)
@@ -127,8 +128,30 @@ class CachingBalanceManagerTest {
     }
 
     @Test
+    @DisplayName("Subtract From Bank Shards (insufficient balance)")
+    fun subtractFromBankShardsInsufficientBalance() = runTest {
+        manager.cache.setBalance(playerUuid, 2, ShardType.BANK)
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(2)
+        coEvery { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } returns Result.failure(Exception())
+
+        val result = manager.subtractFromBankShards(playerUuid, 4)
+
+        assertAll(
+            {
+                assertTrue(
+                    result.exceptionOrNull() is DiamondBankException.InsufficientBalanceException,
+                    "subtractFromBankShards result should be an InsufficientBalanceException",
+                )
+            },
+            { assertEquals(2, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { coVerify(exactly = 0) { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } },
+        )
+    }
+
+    @Test
     @DisplayName("Add To Bank Shards DB failure propagates")
     fun addToBankShardsDbFail() = runTest {
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(5)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns
             Result.failure(RuntimeException("db error"))
 
@@ -155,21 +178,6 @@ class CachingBalanceManagerTest {
     }
 
     @Test
-    @DisplayName("Get Bank Shards while being modified bypasses cache")
-    fun getBankShardsWhileBeingModified() = runTest {
-        manager.cache.setBalance(playerUuid, 5, ShardType.BANK)
-        manager.beingModified[playerUuid to ShardType.BANK] = AtomicInteger(1)
-        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(99)
-
-        val result = manager.getBankShards(playerUuid)
-
-        assertAll(
-            { assertEquals(99, result.getOrNull()) },
-            { coVerify { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } },
-        )
-    }
-
-    @Test
     @DisplayName("Get Total Shards (cache miss then hit)")
     fun getTotalShardsCacheMissThenHit() = runTest {
         coEvery { postgreSQL.getAllShards(playerUuid) } returns Result.success(PlayerShards(5, 6, 4))
@@ -182,18 +190,6 @@ class CachingBalanceManagerTest {
             { assertEquals(15, second.getOrNull()) },
             { coVerify(exactly = 1) { postgreSQL.getAllShards(playerUuid) } },
         )
-    }
-
-    @Test
-    @DisplayName("Get Total Shards while being modified bypasses cache")
-    fun getTotalShardsWhileBeingModified() = runTest {
-        manager.cache.setBalance(playerUuid, 3, ShardType.TOTAL)
-        manager.beingModified[playerUuid to ShardType.BANK] = AtomicInteger(1)
-        coEvery { postgreSQL.getAllShards(playerUuid) } returns Result.success(PlayerShards(20, 20, 10))
-
-        val result = manager.getTotalShards(playerUuid)
-
-        assertAll({ assertEquals(50, result.getOrNull()) }, { coVerify { postgreSQL.getAllShards(playerUuid) } })
     }
 
     @Test
@@ -242,7 +238,7 @@ class CachingBalanceManagerTest {
 
     @Test
     @DisplayName("Remove Cache For Player")
-    fun removeCacheForPlayer() {
+    suspend fun removeCacheForPlayer() {
         manager.cache.setBalance(playerUuid, 1, ShardType.BANK)
         manager.cache.setBalance(playerUuid, 2, ShardType.INVENTORY)
         manager.cache.setBalance(playerUuid, 3, ShardType.ENDER_CHEST)

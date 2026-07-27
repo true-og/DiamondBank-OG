@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.balance.command
 
 import kotlin.math.ceil
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
@@ -18,7 +17,6 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
 internal class Balancetop : CommandExecutor {
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         scope.launch {
             if (economyDisabled) {

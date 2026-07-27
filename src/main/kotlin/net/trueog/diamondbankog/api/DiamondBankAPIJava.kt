@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.api
 
 import java.util.*
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import net.trueog.diamondbankog.DiamondBankException
 import net.trueog.diamondbankog.DiamondBankException.*
@@ -19,7 +18,6 @@ import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import org.bukkit.Bukkit
 
-@OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPIJava {
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released.
@@ -27,6 +25,7 @@ class DiamondBankAPIJava {
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
      *
+     * @param shards must not be negative
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
@@ -34,6 +33,7 @@ class DiamondBankAPIJava {
     @Throws(EconomyDisabledException::class)
     @Suppress("unused")
     fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
+        require(shards >= 0) { "shards must not be negative" }
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
@@ -56,6 +56,7 @@ class DiamondBankAPIJava {
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
      *
+     * @param shards must not be negative
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
@@ -64,6 +65,7 @@ class DiamondBankAPIJava {
     @Throws(EconomyDisabledException::class, InsufficientBalanceException::class)
     @Suppress("unused")
     fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
+        require(shards >= 0) { "shards must not be negative" }
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
@@ -199,6 +201,7 @@ class DiamondBankAPIJava {
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
      *
+     * @param shards must not be negative
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
@@ -214,6 +217,7 @@ class DiamondBankAPIJava {
     )
     @Suppress("unused")
     fun consumeFromPlayer(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
+        require(shards >= 0) { "shards must not be negative" }
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {
@@ -253,6 +257,7 @@ class DiamondBankAPIJava {
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
      *
+     * @param shards must not be negative
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
@@ -268,6 +273,7 @@ class DiamondBankAPIJava {
     )
     @Suppress("unused")
     fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?) {
+        require(shards >= 0) { "shards must not be negative" }
         if (economyDisabled) throw EconomyDisabledException()
 
         return runBlocking {

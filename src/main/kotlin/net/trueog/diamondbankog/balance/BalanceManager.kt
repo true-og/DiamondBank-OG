@@ -41,7 +41,7 @@ interface BalanceManager {
 
     suspend fun cacheForPlayer(uuid: UUID): Result<Unit>
 
-    fun removeCacheForPlayer(uuid: UUID)
+    suspend fun removeCacheForPlayer(uuid: UUID)
 
     fun shutdown()
 }
