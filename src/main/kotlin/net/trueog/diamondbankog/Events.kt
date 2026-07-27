@@ -23,6 +23,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityPickupItemEvent
+import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
@@ -117,6 +118,28 @@ internal class Events : Listener {
                 }
 
                 balanceManager.removeCacheForPlayer(event.player.uniqueId)
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onPlayerDeath(event: PlayerDeathEvent) {
+        val worldName = event.player.world.name
+        if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") return
+        scope.launch {
+            transactionLock.withLockSuspend(event.player.uniqueId) {
+                val (inventoryShards, enderChestShards) =
+                    runOnMainThread { Pair(event.player.inventory.countTotal(), event.player.enderChest.countTotal()) }
+                balanceManager.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
+                    handleError(it)
+                    return@withLockSuspend
+                }
+                balanceManager
+                    .setPlayerShards(event.player.uniqueId, enderChestShards, ShardType.ENDER_CHEST)
+                    .getOrElse {
+                        handleError(it)
+                        return@withLockSuspend
+                    }
             }
         }
     }
