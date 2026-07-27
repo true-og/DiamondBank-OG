@@ -74,15 +74,14 @@ internal class Events : Listener {
             }
 
             transactionLock.withLockSuspend(event.player.uniqueId) {
-                val inventoryShards = event.player.inventory.countTotal()
+                val (inventoryShards, enderChestShards) =
+                    runOnMainThread { Pair(event.player.inventory.countTotal(), event.player.enderChest.countTotal()) }
                 balanceManager.setPlayerShards(event.player.uniqueId, inventoryShards, ShardType.INVENTORY).getOrElse {
                     handleError(it)
                     return@withLockSuspend
                 }
-
-                val enderChestDiamonds = event.player.enderChest.countTotal()
                 balanceManager
-                    .setPlayerShards(event.player.uniqueId, enderChestDiamonds, ShardType.ENDER_CHEST)
+                    .setPlayerShards(event.player.uniqueId, enderChestShards, ShardType.ENDER_CHEST)
                     .getOrElse {
                         handleError(it)
                         return@withLockSuspend
