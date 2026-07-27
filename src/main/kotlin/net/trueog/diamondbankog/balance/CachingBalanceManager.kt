@@ -4,6 +4,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import net.trueog.diamondbankog.DiamondBankException.EconomyDisabledException
+import net.trueog.diamondbankog.DiamondBankException.InsufficientBalanceException
 import net.trueog.diamondbankog.DiamondBankException.InvalidArgumentException
 import net.trueog.diamondbankog.DiamondBankOG.Companion.debug
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -54,6 +55,14 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         increment(uuid, type)
+        val currentBalance =
+            getShardTypeShards(uuid, type).getOrElse {
+                return Result.failure(it)
+            }
+        if (currentBalance + shards < 0) {
+            return Result.failure(InsufficientBalanceException(currentBalance))
+        }
+
         val newBalance =
             postgreSQL.addToPlayerShards(uuid, shards, type).getOrElse {
                 return Result.failure(it)

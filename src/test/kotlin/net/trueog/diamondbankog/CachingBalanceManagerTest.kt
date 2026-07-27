@@ -86,6 +86,7 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Add To Bank Shards")
     fun addToBankShards() = runTest {
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(0)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns Result.success(5)
 
         val result = manager.addToBankShards(playerUuid, 5)
@@ -100,6 +101,7 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Add To Bank Shards (with existing balance)")
     fun addToBankShardsWithExistingBalance() = runTest {
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(5)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns Result.success(10)
 
         val result = manager.addToBankShards(playerUuid, 5)
@@ -114,7 +116,7 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Subtract From Bank Shards")
     fun subtractFromBankShards() = runTest {
-        manager.cache.setBalance(playerUuid, 10, ShardType.BANK)
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(10)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } returns Result.success(6)
 
         val result = manager.subtractFromBankShards(playerUuid, 4)
@@ -127,8 +129,30 @@ class CachingBalanceManagerTest {
     }
 
     @Test
+    @DisplayName("Subtract From Bank Shards (insufficient balance)")
+    fun subtractFromBankShardsInsufficientBalance() = runTest {
+        manager.cache.setBalance(playerUuid, 2, ShardType.BANK)
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(2)
+        coEvery { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } returns Result.failure(Exception())
+
+        val result = manager.subtractFromBankShards(playerUuid, 4)
+
+        assertAll(
+            {
+                assertTrue(
+                    result.exceptionOrNull() is DiamondBankException.InsufficientBalanceException,
+                    "subtractFromBankShards result should be an InsufficientBalanceException",
+                )
+            },
+            { assertEquals(2, manager.cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { coVerify(exactly = 0) { postgreSQL.addToPlayerShards(playerUuid, -4, ShardType.BANK) } },
+        )
+    }
+
+    @Test
     @DisplayName("Add To Bank Shards DB failure propagates")
     fun addToBankShardsDbFail() = runTest {
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(5)
         coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns
             Result.failure(RuntimeException("db error"))
 
