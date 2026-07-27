@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.api
 
 import java.util.*
-import kotlinx.coroutines.DelicateCoroutinesApi
 import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
@@ -17,7 +16,6 @@ import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import org.bukkit.Bukkit
 
-@OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPIKotlin {
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released

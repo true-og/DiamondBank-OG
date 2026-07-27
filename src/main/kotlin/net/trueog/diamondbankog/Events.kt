@@ -1,6 +1,5 @@
 package net.trueog.diamondbankog
 
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
@@ -32,7 +31,6 @@ import org.bukkit.event.player.*
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-@OptIn(DelicateCoroutinesApi::class)
 internal class Events : Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     fun onPlayerJoin(event: PlayerJoinEvent) {

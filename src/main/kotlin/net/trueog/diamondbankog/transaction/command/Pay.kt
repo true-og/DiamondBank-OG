@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.transaction.command
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.luckperms.api.LuckPerms
@@ -29,7 +28,6 @@ internal class Pay(
     val luckPerms: LuckPerms = DiamondBankOG.luckPerms,
     val transactionLock: TransactionLock = DiamondBankOG.transactionLock,
 ) : CommandExecutor {
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         if (CommonCommandInterlude.run(sender, "pay", config, mm)) {
             return true

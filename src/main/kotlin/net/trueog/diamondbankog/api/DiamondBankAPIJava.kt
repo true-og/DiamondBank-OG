@@ -1,7 +1,6 @@
 package net.trueog.diamondbankog.api
 
 import java.util.*
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import net.trueog.diamondbankog.DiamondBankException
 import net.trueog.diamondbankog.DiamondBankException.*
@@ -19,7 +18,6 @@ import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import org.bukkit.Bukkit
 
-@OptIn(DelicateCoroutinesApi::class)
 class DiamondBankAPIJava {
     /**
      * WARNING: if the player has a transaction lock applied this function will wait until its released.
