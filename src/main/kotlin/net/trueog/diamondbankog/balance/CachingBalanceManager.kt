@@ -91,6 +91,8 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         shardsToSubtractFromSender: Long,
         shardsToAddToReceiver: Long,
     ): Result<Unit> {
+        require(shardsToSubtractFromSender >= 0) { "shardsToSubtractFromSender must not be negative" }
+        require(shardsToAddToReceiver >= 0) { "shardsToAddToReceiver must not be negative" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return withLock(ShardType.BANK, sender, receiver) {
@@ -100,13 +102,6 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
                 }
             if (currentBalanceFrom < shardsToSubtractFromSender) {
                 return@withLock Result.failure(InsufficientBalanceException(currentBalanceFrom))
-            }
-            val currentBalanceTo =
-                postgreSQL.getShardTypeShards(receiver, ShardType.BANK).getOrElse {
-                    return@withLock Result.failure(it)
-                }
-            if (currentBalanceTo + shardsToAddToReceiver < 0) {
-                return@withLock Result.failure(InsufficientBalanceException(currentBalanceTo))
             }
 
             postgreSQL

@@ -4,6 +4,7 @@ import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.SpyK
 import kotlinx.coroutines.test.runTest
+import net.trueog.diamondbankog.Constants.otherPlayerUuid
 import net.trueog.diamondbankog.Constants.playerUuid
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.balance.Cache
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
@@ -95,13 +97,14 @@ class CachingBalanceManagerTest {
     @CsvSource("No existing balance, 5, 0", "Existing balance, 10, 5")
     fun addToBankShards(@Suppress("UNUSED_PARAMETER") name: String, toRemove: Long, existingBalance: Long) = runTest {
         coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(existingBalance)
-        coEvery { postgreSQL.addToPlayerShards(playerUuid, toRemove, ShardType.BANK) } returns Result.success(toRemove-existingBalance)
+        coEvery { postgreSQL.addToPlayerShards(playerUuid, toRemove, ShardType.BANK) } returns
+            Result.success(toRemove - existingBalance)
 
         val result = manager.addToBankShards(playerUuid, toRemove)
 
         assertAll(
             { assertFalse(result.isFailure, "addToBankShards result should not be a failure") },
-            { assertEquals(toRemove-existingBalance, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(toRemove - existingBalance, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
             { coVerify { postgreSQL.addToPlayerShards(playerUuid, toRemove, ShardType.BANK) } },
         )
     }
@@ -154,10 +157,68 @@ class CachingBalanceManagerTest {
         assertTrue(result.isFailure, "addToBankShards result should be a failure")
     }
 
-    @Test
-    @DisplayName("Transfer Bank Shards (with existing balance)")
-    fun transferBankShardsWithExistingBalance() = runTest {
+    @ParameterizedTest(name = "{0}")
+    @DisplayName("Transfer Bank Shards")
+    @CsvSource("No existing balance, 5, 0", "Existing balance, 5, 5")
+    fun transferBankShards(
+        @Suppress("UNUSED_PARAMETER") name: String,
+        toTransfer: Long,
+        receiverExistingBalance: Long,
+    ) = runTest {
+        val senderExistingBalance = 10L
+        val newSenderBalance = senderExistingBalance - toTransfer
+        val newReceiverBalance = receiverExistingBalance + toTransfer
 
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns
+            Result.success(senderExistingBalance)
+        coEvery { postgreSQL.getShardTypeShards(otherPlayerUuid, ShardType.BANK) } returns
+            Result.success(receiverExistingBalance)
+        coEvery { postgreSQL.transferBankShards(playerUuid, otherPlayerUuid, toTransfer, toTransfer) } returns
+            Result.success(mapOf(playerUuid to newSenderBalance, otherPlayerUuid to newReceiverBalance))
+
+        val result = manager.transferBankShards(playerUuid, otherPlayerUuid, toTransfer, toTransfer)
+
+        assertAll(
+            { assertFalse(result.isFailure, "transferBankShards result should not be a failure") },
+            { assertEquals(newSenderBalance, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(newReceiverBalance, cache.getBalance(otherPlayerUuid, ShardType.BANK).getOrNull()) },
+            { coVerify { postgreSQL.transferBankShards(playerUuid, otherPlayerUuid, toTransfer, toTransfer) } },
+        )
+    }
+
+    @Test
+    @DisplayName("Transfer Bank Shards (insufficient balance)")
+    fun transferBankShardsInsufficientBalance() = runTest {
+        cache.setBalance(playerUuid, 2, ShardType.BANK)
+        cache.setBalance(otherPlayerUuid, 0, ShardType.BANK)
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(2)
+        coEvery { postgreSQL.transferBankShards(playerUuid, otherPlayerUuid, 4, 4) } returns Result.failure(Exception())
+
+        val result = manager.transferBankShards(playerUuid, otherPlayerUuid, 4, 4)
+
+        assertAll(
+            {
+                assertTrue(
+                    result.exceptionOrNull() is DiamondBankException.InsufficientBalanceException,
+                    "transferBankShards result should be an InsufficientBalanceException",
+                )
+            },
+            { assertEquals(2, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { assertEquals(0, cache.getBalance(otherPlayerUuid, ShardType.BANK).getOrNull()) },
+            { coVerify(exactly = 0) { postgreSQL.transferBankShards(playerUuid, otherPlayerUuid, 4, 4) } },
+        )
+    }
+
+    @Test
+    @DisplayName("Transfer Bank Shards fails for negative shardsToSubtractFromSender")
+    fun transferBankShardsNegativeSubtract() = runTest {
+        assertThrows<IllegalArgumentException> { manager.transferBankShards(playerUuid, playerUuid, -1, 5) }
+    }
+
+    @Test
+    @DisplayName("Transfer Bank Shards fails for negative shardsToAddToReceiver")
+    fun transferBankShardsNegativeAdd() = runTest {
+        assertThrows<IllegalArgumentException> { manager.transferBankShards(playerUuid, playerUuid, 5, -1) }
     }
 
     @ParameterizedTest(name = "{0}")
