@@ -212,13 +212,19 @@ class CachingBalanceManagerTest {
     @Test
     @DisplayName("Transfer Bank Shards fails for negative shardsToSubtractFromSender")
     fun transferBankShardsNegativeSubtract() = runTest {
-        assertThrows<IllegalArgumentException> { manager.transferBankShards(playerUuid, playerUuid, -1, 5) }
+        assertThrows<IllegalArgumentException> { manager.transferBankShards(playerUuid, otherPlayerUuid, -1, 5) }
     }
 
     @Test
     @DisplayName("Transfer Bank Shards fails for negative shardsToAddToReceiver")
     fun transferBankShardsNegativeAdd() = runTest {
-        assertThrows<IllegalArgumentException> { manager.transferBankShards(playerUuid, playerUuid, 5, -1) }
+        assertThrows<IllegalArgumentException> { manager.transferBankShards(playerUuid, otherPlayerUuid, 5, -1) }
+    }
+
+    @Test
+    @DisplayName("Transfer Bank Shards fails for equal sender and receiver")
+    fun transferBankShardsEqualSenderReceiver() = runTest {
+        assertThrows<IllegalArgumentException> { manager.transferBankShards(playerUuid, playerUuid, 5, 5) }
     }
 
     @ParameterizedTest(name = "{0}")

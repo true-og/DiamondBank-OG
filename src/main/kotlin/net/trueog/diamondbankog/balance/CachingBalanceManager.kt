@@ -93,6 +93,7 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
     ): Result<Unit> {
         require(shardsToSubtractFromSender >= 0) { "shardsToSubtractFromSender must not be negative" }
         require(shardsToAddToReceiver >= 0) { "shardsToAddToReceiver must not be negative" }
+        require(sender != receiver) { "sender and receiver must not be equal" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return withLock(ShardType.BANK, sender, receiver) {
