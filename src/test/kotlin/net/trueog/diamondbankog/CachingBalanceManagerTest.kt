@@ -90,33 +90,19 @@ class CachingBalanceManagerTest {
         )
     }
 
-    @Test
+    @ParameterizedTest(name = "{0}")
     @DisplayName("Add To Bank Shards")
-    fun addToBankShards() = runTest {
-        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(0)
-        coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns Result.success(5)
+    @CsvSource("No existing balance, 5, 0", "Existing balance, 10, 5")
+    fun addToBankShards(@Suppress("UNUSED_PARAMETER") name: String, toRemove: Long, existingBalance: Long) = runTest {
+        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(existingBalance)
+        coEvery { postgreSQL.addToPlayerShards(playerUuid, toRemove, ShardType.BANK) } returns Result.success(toRemove-existingBalance)
 
-        val result = manager.addToBankShards(playerUuid, 5)
-
-        assertAll(
-            { assertFalse(result.isFailure, "addToBankShards result should not be a failure") },
-            { assertEquals(5, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
-            { coVerify { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } },
-        )
-    }
-
-    @Test
-    @DisplayName("Add To Bank Shards (with existing balance)")
-    fun addToBankShardsWithExistingBalance() = runTest {
-        coEvery { postgreSQL.getShardTypeShards(playerUuid, ShardType.BANK) } returns Result.success(5)
-        coEvery { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } returns Result.success(10)
-
-        val result = manager.addToBankShards(playerUuid, 5)
+        val result = manager.addToBankShards(playerUuid, toRemove)
 
         assertAll(
             { assertFalse(result.isFailure, "addToBankShards result should not be a failure") },
-            { assertEquals(10, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
-            { coVerify { postgreSQL.addToPlayerShards(playerUuid, 5, ShardType.BANK) } },
+            { assertEquals(toRemove-existingBalance, cache.getBalance(playerUuid, ShardType.BANK).getOrNull()) },
+            { coVerify { postgreSQL.addToPlayerShards(playerUuid, toRemove, ShardType.BANK) } },
         )
     }
 
@@ -166,6 +152,12 @@ class CachingBalanceManagerTest {
         val result = manager.addToBankShards(playerUuid, 5)
 
         assertTrue(result.isFailure, "addToBankShards result should be a failure")
+    }
+
+    @Test
+    @DisplayName("Transfer Bank Shards (with existing balance)")
+    fun transferBankShardsWithExistingBalance() = runTest {
+
     }
 
     @ParameterizedTest(name = "{0}")
