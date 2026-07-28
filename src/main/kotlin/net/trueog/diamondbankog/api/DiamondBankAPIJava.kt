@@ -71,6 +71,7 @@ class DiamondBankAPIJava {
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
                 balanceManager.subtractFromBankShards(uuid, shards).getOrElse {
+                    if (it is InsufficientBalanceException) throw it
                     handleError(it)
                     throw EconomyDisabledException()
                 }

@@ -65,6 +65,7 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             balanceManager.subtractFromBankShards(uuid, shards.toLong()).getOrElse {
+                if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
                 handleError(it)
                 return@withLockSuspend Result.failure(EconomyDisabledException())
             }
