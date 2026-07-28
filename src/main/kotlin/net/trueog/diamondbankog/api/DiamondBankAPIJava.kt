@@ -11,8 +11,7 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.balance.shard.PlayerShards
 import net.trueog.diamondbankog.balance.shard.ShardType
 import net.trueog.diamondbankog.transaction.CommonOperations
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.lock
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.unlock
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
@@ -226,31 +225,25 @@ class DiamondBankAPIJava {
                 val player = Bukkit.getPlayer(uuid) ?: throw PlayerNotOnlineException()
                 if (!player.hasPlayedBefore()) throw InvalidPlayerException()
 
-                val inventorySnapshot = runOnMainThread {
-                    player.inventory.lock()
-                    InventorySnapshot.from(player.inventory, balanceManager)
-                }
+                player.inventory.withLockSuspend {
+                    val inventorySnapshot = runOnMainThread { InventorySnapshot.from(player.inventory, balanceManager) }
 
-                val toSubtract =
-                    CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrElse {
-                        player.inventory.unlock()
-                        if (it is DatabaseException) {
-                            handleError(it)
-                            throw EconomyDisabledException()
+                    val toSubtract =
+                        CommonOperations.consume(player.uniqueId, shards, inventorySnapshot).getOrElse {
+                            if (it is DatabaseException) {
+                                handleError(it)
+                                throw EconomyDisabledException()
+                            }
+                            throw it
                         }
-                        throw it
+
+                    balanceManager.subtractFromBankShards(player.uniqueId, toSubtract).getOrElse {
+                        if (it is InsufficientBalanceException) throw it
+                        handleError(it)
+                        throw EconomyDisabledException()
                     }
 
-                balanceManager.subtractFromBankShards(player.uniqueId, toSubtract).getOrElse {
-                    player.inventory.unlock()
-                    if (it is InsufficientBalanceException) throw it
-                    handleError(it)
-                    throw EconomyDisabledException()
-                }
-
-                runOnMainThread {
-                    inventorySnapshot.restoreTo(player.inventory)
-                    player.inventory.unlock()
+                    runOnMainThread { inventorySnapshot.restoreTo(player.inventory) }
                 }
 
                 balanceManager.insertTransactionLog(uuid, shards, null, transactionReason, notes).getOrElse {
@@ -293,33 +286,27 @@ class DiamondBankAPIJava {
                 val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
                 if (!receiver.hasPlayedBefore()) throw InvalidPlayerException()
 
-                val inventorySnapshot = runOnMainThread {
-                    sender.inventory.lock()
-                    InventorySnapshot.from(sender.inventory, balanceManager)
-                }
+                sender.inventory.withLockSuspend {
+                    val inventorySnapshot = runOnMainThread { InventorySnapshot.from(sender.inventory, balanceManager) }
 
-                val shardsToSubtractFromSender =
-                    CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot).getOrElse {
-                        sender.inventory.unlock()
-                        if (it is DatabaseException) {
+                    val shardsToSubtractFromSender =
+                        CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot).getOrElse {
+                            if (it is DatabaseException) {
+                                handleError(it)
+                                throw EconomyDisabledException()
+                            }
+                            throw it
+                        }
+
+                    balanceManager
+                        .transferBankShards(senderUuid, receiverUuid, shardsToSubtractFromSender, shards)
+                        .getOrElse {
+                            if (it is InsufficientBalanceException) throw it
                             handleError(it)
                             throw EconomyDisabledException()
                         }
-                        throw it
-                    }
 
-                balanceManager
-                    .transferBankShards(senderUuid, receiverUuid, shardsToSubtractFromSender, shards)
-                    .getOrElse {
-                        sender.inventory.unlock()
-                        if (it is InsufficientBalanceException) throw it
-                        handleError(it)
-                        throw EconomyDisabledException()
-                    }
-
-                runOnMainThread {
-                    inventorySnapshot.restoreTo(sender.inventory)
-                    sender.inventory.unlock()
+                    runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
                 }
 
                 balanceManager
