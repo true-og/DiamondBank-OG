@@ -65,40 +65,38 @@ internal class PostgreSQL private constructor() {
 
     suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
-        val playerShards: PlayerShards
-
         try {
             val connection = pool.asSuspending.connect()
 
-            val result =
+            val playerShards =
                 connection
                     .inTransaction { conn ->
-                        conn.sendPreparedStatement(
-                            "INSERT INTO diamond(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
-                                "RETURNING bank_shards, inventory_shards, ender_chest_shards",
-                            listOf(uuid, shards),
-                        )
+                        conn
+                            .sendPreparedStatement(
+                                "INSERT INTO diamond(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
+                                    "RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                                listOf(uuid, shards),
+                            )
+                            .thenApply { result ->
+                                if (result.rows.isEmpty()) {
+                                    throw Exception()
+                                }
+                                val row = result.rows[0]
+                                val bankShards = row.getLong("bank_shards")
+                                val inventoryShards = row.getLong("inventory_shards")
+                                val enderChestShards = row.getLong("ender_chest_shards")
+                                if (bankShards == null || inventoryShards == null || enderChestShards == null) {
+                                    throw Exception()
+                                }
+                                PlayerShards(bankShards, inventoryShards, enderChestShards)
+                            }
                     }
                     .await()
-
-            if (result.rows.isEmpty()) {
-                throw Exception()
-            }
-            val row = result.rows[0]
-            val bankShards = row.getLong("bank_shards")
-            val inventoryShards = row.getLong("inventory_shards")
-            val enderChestShards = row.getLong("ender_chest_shards")
-            if (bankShards == null || inventoryShards == null || enderChestShards == null) {
-                throw Exception()
-            }
-
-            playerShards = PlayerShards(bankShards, inventoryShards, enderChestShards)
+            DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
+            return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
-
-        DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
-        return Result.success(Unit)
     }
 
     suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Long> {
