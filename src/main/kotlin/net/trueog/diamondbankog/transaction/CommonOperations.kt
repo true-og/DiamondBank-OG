@@ -12,7 +12,7 @@ import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 
 object CommonOperations {
-    /** @return Amount of shards to subtract from player's bank balance */
+    /** @return Amount of shards that should be removed from player's bank balance */
     suspend fun consume(
         uuid: UUID,
         shards: Long,

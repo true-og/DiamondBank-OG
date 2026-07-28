@@ -155,7 +155,12 @@ internal class PostgreSQL private constructor() {
         return playerShards
     }
 
-    suspend fun transferBankShards(from: UUID, to: UUID, shards: Long): Result<Map<UUID, Long>> {
+    suspend fun transferBankShards(
+        sender: UUID,
+        receiver: UUID,
+        shardsToSubtractFromSender: Long,
+        shardsToAddToReceiver: Long,
+    ): Result<Map<UUID, Long>> {
         try {
             val connection = pool.asSuspending.connect()
 
@@ -164,8 +169,24 @@ internal class PostgreSQL private constructor() {
                     .inTransaction { conn ->
                         scope.future {
                             mapOf<UUID, suspend () -> PlayerShards>(
-                                    from to { internalAddToPlayerShards(from, -shards, ShardType.BANK, conn) },
-                                    to to { internalAddToPlayerShards(to, shards, ShardType.BANK, conn) },
+                                    sender to
+                                        {
+                                            internalAddToPlayerShards(
+                                                sender,
+                                                -shardsToSubtractFromSender,
+                                                ShardType.BANK,
+                                                conn,
+                                            )
+                                        },
+                                    receiver to
+                                        {
+                                            internalAddToPlayerShards(
+                                                receiver,
+                                                shardsToAddToReceiver,
+                                                ShardType.BANK,
+                                                conn,
+                                            )
+                                        },
                                 )
                                 .toSortedMap() // Sort to avoid deadlock
                                 .mapValues { it.value() }

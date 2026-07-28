@@ -221,7 +221,7 @@ class DiamondBankAPIKotlin {
                 InventorySnapshot.from(sender.inventory, balanceManager)
             }
 
-            val toTransfer =
+            val shardsToSubtractFromSender =
                 CommonOperations.consume(sender.uniqueId, shards.toLong(), inventorySnapshot).getOrElse {
                     sender.inventory.unlock()
                     if (it is DatabaseException) {
@@ -231,12 +231,14 @@ class DiamondBankAPIKotlin {
                     return@withLockSuspend Result.failure(it)
                 }
 
-            balanceManager.transferBankShards(senderUuid, receiverUuid, toTransfer).getOrElse {
-                sender.inventory.unlock()
-                if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
-                handleError(it)
-                return@withLockSuspend Result.failure(it)
-            }
+            balanceManager
+                .transferBankShards(senderUuid, receiverUuid, shardsToSubtractFromSender, shards.toLong())
+                .getOrElse {
+                    sender.inventory.unlock()
+                    if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
+                    handleError(it)
+                    return@withLockSuspend Result.failure(it)
+                }
 
             runOnMainThread {
                 inventorySnapshot.restoreTo(sender.inventory)

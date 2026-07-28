@@ -298,7 +298,7 @@ class DiamondBankAPIJava {
                     InventorySnapshot.from(sender.inventory, balanceManager)
                 }
 
-                val toTransfer =
+                val shardsToSubtractFromSender =
                     CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot).getOrElse {
                         sender.inventory.unlock()
                         if (it is DatabaseException) {
@@ -308,12 +308,14 @@ class DiamondBankAPIJava {
                         throw it
                     }
 
-                balanceManager.transferBankShards(senderUuid, receiverUuid, toTransfer).getOrElse {
-                    sender.inventory.unlock()
-                    if (it is InsufficientBalanceException) throw it
-                    handleError(it)
-                    throw EconomyDisabledException()
-                }
+                balanceManager
+                    .transferBankShards(senderUuid, receiverUuid, shardsToSubtractFromSender, shards)
+                    .getOrElse {
+                        sender.inventory.unlock()
+                        if (it is InsufficientBalanceException) throw it
+                        handleError(it)
+                        throw EconomyDisabledException()
+                    }
 
                 runOnMainThread {
                     inventorySnapshot.restoreTo(sender.inventory)

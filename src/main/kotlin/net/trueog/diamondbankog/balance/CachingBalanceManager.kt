@@ -85,27 +85,32 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
     override suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit> =
         addToPlayerShards(uuid, -shards, ShardType.BANK)
 
-    override suspend fun transferBankShards(from: UUID, to: UUID, shards: Long): Result<Unit> {
+    override suspend fun transferBankShards(
+        sender: UUID,
+        receiver: UUID,
+        shardsToSubtractFromSender: Long,
+        shardsToAddToReceiver: Long,
+    ): Result<Unit> {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
-        return withLock(ShardType.BANK, from, to) {
+        return withLock(ShardType.BANK, sender, receiver) {
             val currentBalanceFrom =
-                postgreSQL.getShardTypeShards(from, ShardType.BANK).getOrElse {
+                postgreSQL.getShardTypeShards(sender, ShardType.BANK).getOrElse {
                     return@withLock Result.failure(it)
                 }
-            if (currentBalanceFrom < shards) {
+            if (currentBalanceFrom < shardsToSubtractFromSender) {
                 return@withLock Result.failure(InsufficientBalanceException(currentBalanceFrom))
             }
             val currentBalanceTo =
-                postgreSQL.getShardTypeShards(to, ShardType.BANK).getOrElse {
+                postgreSQL.getShardTypeShards(receiver, ShardType.BANK).getOrElse {
                     return@withLock Result.failure(it)
                 }
-            if (currentBalanceTo + shards < 0) {
+            if (currentBalanceTo + shardsToAddToReceiver < 0) {
                 return@withLock Result.failure(InsufficientBalanceException(currentBalanceTo))
             }
 
             postgreSQL
-                .transferBankShards(from, to, shards)
+                .transferBankShards(sender, receiver, shardsToSubtractFromSender, shardsToAddToReceiver)
                 .getOrElse {
                     return@withLock Result.failure(it)
                 }

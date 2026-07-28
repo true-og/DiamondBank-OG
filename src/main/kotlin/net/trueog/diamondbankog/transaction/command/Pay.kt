@@ -96,7 +96,7 @@ internal class Pay(
                         InventorySnapshot.from(sender.inventory, balanceManager)
                     }
 
-                    val toTransfer =
+                    val shardsToSubtractFromSender =
                         CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot, config, balanceManager, mm)
                             .getOrElse {
                                 when (it) {
@@ -126,16 +126,18 @@ internal class Pay(
                                 }
                             }
 
-                    balanceManager.transferBankShards(sender.uniqueId, receiver.uniqueId, toTransfer).getOrElse {
-                        handleError(it)
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                    balanceManager
+                        .transferBankShards(sender.uniqueId, receiver.uniqueId, shardsToSubtractFromSender, shards)
+                        .getOrElse {
+                            handleError(it)
+                            sender.sendMessage(
+                                mm.deserialize(
+                                    "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                )
                             )
-                        )
-                        sender.inventory.unlock()
-                        return@tryWithLockSuspend
-                    }
+                            sender.inventory.unlock()
+                            return@tryWithLockSuspend
+                        }
 
                     runOnMainThread {
                         inventorySnapshot.restoreTo(sender.inventory)

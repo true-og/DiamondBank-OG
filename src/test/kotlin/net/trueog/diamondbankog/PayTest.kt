@@ -90,6 +90,7 @@ class PayTest {
         every { server.getPlayer(otherPlayerUuid) } returns otherPlayer
 
         every { otherPlayer.hasPlayedBefore() } returns true
+        coEvery { balanceManager.transferBankShards(any(), any(), any(), any()) } returns Result.success(Unit)
         coEvery { balanceManager.addToBankShards(any(), any()) } returns Result.success(Unit)
         coEvery { balanceManager.setPlayerShards(any(), any(), ShardType.INVENTORY) } returns Result.success(Unit)
         coEvery { balanceManager.subtractFromBankShards(any(), any()) } returns Result.success(Unit)
@@ -116,10 +117,10 @@ class PayTest {
                     "1.0 <aqua>Diamond",
                     arrayOf(ItemStack(Material.DIAMOND, 1)),
                     0,
-                    -1,
+                    0,
                     "1",
                     arrayOf<Long>(),
-                    arrayOf<Long>(9),
+                    9,
                     0,
                     0,
                     0,
@@ -129,10 +130,10 @@ class PayTest {
                     "2.0 <aqua>Diamonds",
                     arrayOf(ItemStack(Material.DIAMOND, 3)),
                     0,
-                    -1,
+                    0,
                     "2",
                     arrayOf<Long>(),
-                    arrayOf<Long>(2 * 9),
+                    2 * 9,
                     0,
                     1,
                     0,
@@ -142,10 +143,10 @@ class PayTest {
                     "2.2 <aqua>Diamonds",
                     arrayOf(ItemStack(Material.DIAMOND, 3)),
                     0,
-                    -1,
+                    0,
                     "2.2",
                     arrayOf<Long>(),
-                    arrayOf<Long>(20),
+                    20,
                     7,
                     0,
                     0,
@@ -155,10 +156,10 @@ class PayTest {
                     "2.2 <aqua>Diamonds",
                     arrayOf(Shard.createItemStack(2), ItemStack(Material.DIAMOND, 3)),
                     0,
-                    -1,
+                    0,
                     "2.2",
                     arrayOf<Long>(),
-                    arrayOf<Long>(20),
+                    20,
                     0,
                     1,
                     0,
@@ -168,10 +169,10 @@ class PayTest {
                     "2.2 <aqua>Diamonds",
                     arrayOf(ItemStack(Material.DIAMOND_BLOCK, 1)),
                     0,
-                    -1,
+                    0,
                     "2.2",
                     arrayOf<Long>(),
-                    arrayOf<Long>(20),
+                    20,
                     7,
                     6,
                     0,
@@ -181,10 +182,10 @@ class PayTest {
                     "3.0 <aqua>Diamonds",
                     arrayOf(ItemStack(Material.DIAMOND, 4)),
                     0,
-                    -1,
+                    0,
                     "2.9",
                     arrayOf<Long>(),
-                    arrayOf<Long>(27),
+                    27,
                     0,
                     1,
                     0,
@@ -194,10 +195,10 @@ class PayTest {
                     "1.8 <aqua>Diamonds",
                     Array(35) { ItemStack(Material.DIRT, 1) } + arrayOf(ItemStack(Material.DIAMOND, 3)),
                     0,
-                    -1,
+                    0,
                     "1.8",
                     arrayOf<Long>(1),
-                    arrayOf<Long>(17),
+                    17,
                     0,
                     1,
                     0,
@@ -207,10 +208,10 @@ class PayTest {
                     "1.1 <aqua>Diamonds",
                     Array(35) { ItemStack(Material.DIRT, 1) } + arrayOf(ItemStack(Material.DIAMOND_BLOCK, 2)),
                     0,
-                    -1,
+                    0,
                     "1.1",
                     arrayOf<Long>(63, 8),
-                    arrayOf<Long>(10),
+                    10,
                     0,
                     0,
                     1,
@@ -223,7 +224,7 @@ class PayTest {
                     5,
                     "1",
                     arrayOf<Long>(),
-                    arrayOf<Long>(9),
+                    9,
                     5,
                     0,
                     0,
@@ -236,7 +237,7 @@ class PayTest {
                     45,
                     "5",
                     arrayOf<Long>(),
-                    arrayOf<Long>(45),
+                    45,
                     0,
                     0,
                     0,
@@ -255,7 +256,7 @@ class PayTest {
         bankShardsRemoved: Long,
         commandArg: String,
         addedShardsPlayer: Array<Long>,
-        addedShardsOtherPlayer: Array<Long>,
+        addedShardsOtherPlayer: Long,
         invShardCount: Long,
         invDiamondCount: Long,
         invDiamondBlockCount: Long,
@@ -292,13 +293,16 @@ class PayTest {
                         )
                     }
                 }
-                add {
-                    if (bankShardsRemoved != -1L)
-                        coVerify { balanceManager.subtractFromBankShards(playerUuid, bankShardsRemoved) }
-                }
                 addedShardsPlayer.forEach { add { coVerify { balanceManager.addToBankShards(playerUuid, it) } } }
-                addedShardsOtherPlayer.forEach {
-                    add { coVerify { balanceManager.addToBankShards(otherPlayerUuid, it) } }
+                add {
+                    coVerify {
+                        balanceManager.transferBankShards(
+                            playerUuid,
+                            otherPlayerUuid,
+                            bankShardsRemoved,
+                            addedShardsOtherPlayer,
+                        )
+                    }
                 }
                 add { assertEquals(invShardCount, inventory.countShards(), "Shard count") }
                 add { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") }
