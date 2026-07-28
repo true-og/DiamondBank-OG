@@ -96,36 +96,37 @@ internal class Pay(
                         InventorySnapshot.from(sender.inventory, balanceManager)
                     }
 
-                    CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot, config, balanceManager, mm)
-                        .getOrElse {
-                            when (it) {
-                                is DiamondBankException.InsufficientFundsException -> {
-                                    sender.sendMessage(
-                                        mm.deserialize(
-                                            "${config.prefix}<reset>: <red>You are ${
+                    val toTransfer =
+                        CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot, config, balanceManager, mm)
+                            .getOrElse {
+                                when (it) {
+                                    is DiamondBankException.InsufficientFundsException -> {
+                                        sender.sendMessage(
+                                            mm.deserialize(
+                                                "${config.prefix}<reset>: <red>You are ${
                                                 CommonOperations.shardsToDiamondsFull(
                                                     it.short
                                                 )
                                             } <red>short for that payment."
+                                            )
                                         )
-                                    )
-                                    sender.inventory.unlock()
-                                    return@tryWithLockSuspend
-                                }
+                                        sender.inventory.unlock()
+                                        return@tryWithLockSuspend
+                                    }
 
-                                else -> {
-                                    sender.sendMessage(
-                                        mm.deserialize(
-                                            "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                    else -> {
+                                        sender.sendMessage(
+                                            mm.deserialize(
+                                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                            )
                                         )
-                                    )
-                                    sender.inventory.unlock()
-                                    return@tryWithLockSuspend
+                                        sender.inventory.unlock()
+                                        return@tryWithLockSuspend
+                                    }
                                 }
                             }
-                        }
 
-                    balanceManager.addToBankShards(receiver.uniqueId, shards).getOrElse {
+                    balanceManager.transferBankShards(sender.uniqueId, receiver.uniqueId, toTransfer).getOrElse {
                         handleError(it)
                         sender.sendMessage(
                             mm.deserialize(
