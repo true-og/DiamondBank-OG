@@ -9,8 +9,7 @@ import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.CommonOperations
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.lock
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.unlock
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.util.CommonCommandInterlude
@@ -80,82 +79,84 @@ internal class Withdraw(
         scope.launch {
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                    val inventorySnapshot = runOnMainThread {
-                        sender.inventory.lock()
-                        InventorySnapshot.from(sender.inventory, balanceManager)
-                    }
-
-                    val bankShards =
-                        balanceManager.getBankShards(sender.uniqueId).getOrElse {
-                            sender.inventory.unlock()
-                            sender.sendMessage(
-                                mm.deserialize(
-                                    "${config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
-                                )
-                            )
-                            return@tryWithLockSuspend
-                        }
-
                     val shardsToWithdraw =
-                        if (shards == -1L) {
-                            bankShards
-                        } else {
-                            shards
-                        }
+                        sender.inventory
+                            .withLockSuspend {
+                                val inventorySnapshot = runOnMainThread {
+                                    InventorySnapshot.from(sender.inventory, balanceManager)
+                                }
 
-                    if (shards != -1L && shards > bankShards) {
-                        sender.inventory.unlock()
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>Cannot withdraw ${
-                                    CommonOperations.shardsToDiamondsFull(
-                                        shardsToWithdraw
-                                    )
-                                } <red>because your bank only contains ${
-                                    CommonOperations.shardsToDiamondsFull(
+                                val bankShards =
+                                    balanceManager.getBankShards(sender.uniqueId).getOrElse {
+                                        sender.sendMessage(
+                                            mm.deserialize(
+                                                "${config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
+                                            )
+                                        )
+                                        return@withLockSuspend Result.failure(Exception())
+                                    }
+
+                                val shardsToWithdraw =
+                                    if (shards == -1L) {
                                         bankShards
+                                    } else {
+                                        shards
+                                    }
+
+                                if (shards != -1L && shards > bankShards) {
+                                    sender.sendMessage(
+                                        mm.deserialize(
+                                            "${config.prefix}<reset>: <red>Cannot withdraw ${
+                                        CommonOperations.shardsToDiamondsFull(
+                                            shardsToWithdraw
+                                        )
+                                    } <red>because your bank only contains ${
+                                        CommonOperations.shardsToDiamondsFull(
+                                            bankShards
+                                        )
+                                    }<red>."
+                                        )
                                     )
-                                }<red>."
-                            )
-                        )
-                        return@tryWithLockSuspend
-                    }
+                                    return@withLockSuspend Result.failure(Exception())
+                                }
 
-                    val diamondsToAdd = floor(shardsToWithdraw / 9.0).toInt()
-                    val shardsChange = shardsToWithdraw.toInt() % 9
+                                val diamondsToAdd = floor(shardsToWithdraw / 9.0).toInt()
+                                val shardsChange = shardsToWithdraw.toInt() % 9
 
-                    if (
-                        inventorySnapshot.addItem(ItemStack(Material.DIAMOND, diamondsToAdd)).isNotEmpty() ||
-                            inventorySnapshot.addItem(Shard.createItemStack(shardsChange)).isNotEmpty()
-                    ) {
-                        sender.inventory.unlock()
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>You don't have enough inventory space to withdraw ${
-                                    CommonOperations.shardsToDiamondsFull(
-                                        shardsToWithdraw
+                                if (
+                                    inventorySnapshot
+                                        .addItem(ItemStack(Material.DIAMOND, diamondsToAdd))
+                                        .isNotEmpty() ||
+                                        inventorySnapshot.addItem(Shard.createItemStack(shardsChange)).isNotEmpty()
+                                ) {
+                                    sender.sendMessage(
+                                        mm.deserialize(
+                                            "${config.prefix}<reset>: <red>You don't have enough inventory space to withdraw ${
+                                        CommonOperations.shardsToDiamondsFull(
+                                            shardsToWithdraw
+                                        )
+                                    }<red>."
+                                        )
                                     )
-                                }<red>."
-                            )
-                        )
-                        return@tryWithLockSuspend
-                    }
+                                    return@withLockSuspend Result.failure(Exception())
+                                }
 
-                    balanceManager.subtractFromBankShards(sender.uniqueId, shardsToWithdraw).getOrElse {
-                        handleError(it)
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
-                            )
-                        )
-                        sender.inventory.unlock()
-                        return@tryWithLockSuspend
-                    }
+                                balanceManager.subtractFromBankShards(sender.uniqueId, shardsToWithdraw).getOrElse {
+                                    handleError(it)
+                                    sender.sendMessage(
+                                        mm.deserialize(
+                                            "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                        )
+                                    )
+                                    return@withLockSuspend Result.failure(Exception())
+                                }
 
-                    runOnMainThread {
-                        inventorySnapshot.restoreTo(sender.inventory)
-                        sender.inventory.unlock()
-                    }
+                                runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
+                                Result.success(shardsToWithdraw)
+                            }
+                            .getOrElse {
+                                return@tryWithLockSuspend
+                            }
 
                     sender.sendMessage(
                         mm.deserialize(

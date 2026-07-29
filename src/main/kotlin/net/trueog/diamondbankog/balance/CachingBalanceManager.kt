@@ -34,6 +34,14 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         return mutexes.foldRight(block) { mutex, acc -> { mutex.withLock { acc() } } }()
     }
 
+    private suspend fun <T> withLock(type: ShardType, vararg uuids: UUID, block: suspend () -> T): T {
+        val mutexes =
+            uuids.sorted().map { uuid ->
+                mutexMap.computeIfAbsent(uuid) { ConcurrentHashMap() }.computeIfAbsent(type) { Mutex() }
+            }
+        return mutexes.foldRight(block) { mutex, acc -> { mutex.withLock { acc() } } }()
+    }
+
     override suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
         if (economyDisabled) return Result.failure(EconomyDisabledException())
@@ -76,6 +84,36 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
 
     override suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit> =
         addToPlayerShards(uuid, -shards, ShardType.BANK)
+
+    override suspend fun transferBankShards(
+        sender: UUID,
+        receiver: UUID,
+        shardsToSubtractFromSender: Long,
+        shardsToAddToReceiver: Long,
+    ): Result<Unit> {
+        require(shardsToSubtractFromSender >= 0) { "shardsToSubtractFromSender must not be negative" }
+        require(shardsToAddToReceiver >= 0) { "shardsToAddToReceiver must not be negative" }
+        require(sender != receiver) { "sender and receiver must not be equal" }
+        if (economyDisabled) return Result.failure(EconomyDisabledException())
+
+        return withLock(ShardType.BANK, sender, receiver) {
+            val currentBalanceFrom =
+                postgreSQL.getShardTypeShards(sender, ShardType.BANK).getOrElse {
+                    return@withLock Result.failure(it)
+                }
+            if (currentBalanceFrom < shardsToSubtractFromSender) {
+                return@withLock Result.failure(InsufficientBalanceException(currentBalanceFrom))
+            }
+
+            postgreSQL
+                .transferBankShards(sender, receiver, shardsToSubtractFromSender, shardsToAddToReceiver)
+                .getOrElse {
+                    return@withLock Result.failure(it)
+                }
+                .forEach { (uuid, shards) -> cache.setBalance(uuid, shards, ShardType.BANK) }
+            return@withLock Result.success(Unit)
+        }
+    }
 
     override suspend fun getBankShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.BANK)
 

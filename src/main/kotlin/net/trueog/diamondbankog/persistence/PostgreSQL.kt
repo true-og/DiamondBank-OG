@@ -1,17 +1,20 @@
 package net.trueog.diamondbankog.persistence
 
+import com.github.jasync.sql.db.Connection
 import com.github.jasync.sql.db.asSuspending
 import com.github.jasync.sql.db.pool.ConnectionPool
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnection
 import com.github.jasync.sql.db.postgresql.PostgreSQLConnectionBuilder
 import java.util.*
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.future.future
 import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG
 import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
+import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.balance.shard.PlayerShards
 import net.trueog.diamondbankog.balance.shard.ShardType
 import org.flywaydb.core.Flyway
@@ -62,89 +65,144 @@ internal class PostgreSQL private constructor() {
 
     suspend fun setPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Unit> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
-        val playerShards: PlayerShards
-
         try {
             val connection = pool.asSuspending.connect()
 
-            val result =
+            val playerShards =
                 connection
                     .inTransaction { conn ->
-                        conn.sendPreparedStatement(
-                            "INSERT INTO diamond(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
-                                "RETURNING bank_shards, inventory_shards, ender_chest_shards",
-                            listOf(uuid, shards),
-                        )
+                        conn
+                            .sendPreparedStatement(
+                                "INSERT INTO diamond(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = excluded.${type.string} " +
+                                    "RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                                listOf(uuid, shards),
+                            )
+                            .thenApply { result ->
+                                if (result.rows.isEmpty()) {
+                                    throw Exception()
+                                }
+                                val row = result.rows[0]
+                                val bankShards = row.getLong("bank_shards")
+                                val inventoryShards = row.getLong("inventory_shards")
+                                val enderChestShards = row.getLong("ender_chest_shards")
+                                if (bankShards == null || inventoryShards == null || enderChestShards == null) {
+                                    throw Exception()
+                                }
+                                PlayerShards(bankShards, inventoryShards, enderChestShards)
+                            }
                     }
                     .await()
-
-            if (result.rows.isEmpty()) {
-                throw Exception()
-            }
-            val row = result.rows[0]
-            val bankShards = row.getLong("bank_shards")
-            val inventoryShards = row.getLong("inventory_shards")
-            val enderChestShards = row.getLong("ender_chest_shards")
-            if (bankShards == null || inventoryShards == null || enderChestShards == null) {
-                throw Exception()
-            }
-
-            playerShards = PlayerShards(bankShards, inventoryShards, enderChestShards)
+            DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
+            return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
-
-        DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
-        return Result.success(Unit)
     }
 
     suspend fun addToPlayerShards(uuid: UUID, shards: Long, type: ShardType): Result<Long> {
         if (type == ShardType.TOTAL) return Result.failure(InvalidArgumentException())
-        val playerShards: PlayerShards
 
         try {
             val connection = pool.asSuspending.connect()
-
-            val result =
+            val playerShards =
                 connection
-                    .inTransaction { conn ->
-                        conn.sendPreparedStatement(
-                            "INSERT INTO diamond(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = diamond.${type.string} + excluded.${type.string} " +
-                                "WHERE diamond.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
-                            listOf(uuid, shards),
-                        )
-                    }
+                    .inTransaction { conn -> scope.future { internalAddToPlayerShards(uuid, shards, type, conn) } }
                     .await()
 
-            if (result.rows.isEmpty()) {
-                val shards =
-                    balanceManager.getShardTypeShards(uuid, type).getOrElse {
-                        return Result.failure(it)
-                    }
-                throw InsufficientBalanceException(shards)
+            DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
+            return when (type) {
+                ShardType.BANK -> Result.success(playerShards.bank)
+                ShardType.INVENTORY -> Result.success(playerShards.inventory)
+                ShardType.ENDER_CHEST -> Result.success(playerShards.enderChest)
+                else -> Result.failure(InvalidArgumentException())
             }
-            val row = result.rows[0]
-            val bankShards = row.getLong("bank_shards")
-            val inventoryShards = row.getLong("inventory_shards")
-            val enderChestShards = row.getLong("ender_chest_shards")
-            if (bankShards == null || inventoryShards == null || enderChestShards == null) {
-                throw Exception()
-            }
-
-            playerShards = PlayerShards(bankShards, inventoryShards, enderChestShards)
         } catch (e: Exception) {
             if (e is InsufficientBalanceException) {
                 return Result.failure(e)
             }
             return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
+    }
 
-        DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
-        return when (type) {
-            ShardType.BANK -> Result.success(playerShards.bank)
-            ShardType.INVENTORY -> Result.success(playerShards.inventory)
-            ShardType.ENDER_CHEST -> Result.success(playerShards.enderChest)
-            else -> Result.failure(InvalidArgumentException())
+    private suspend fun internalAddToPlayerShards(
+        uuid: UUID,
+        shards: Long,
+        type: ShardType,
+        conn: Connection,
+    ): PlayerShards {
+        val result =
+            conn
+                .sendPreparedStatement(
+                    "INSERT INTO diamond(uuid, ${type.string}) VALUES(?, ?) ON CONFLICT (uuid) DO UPDATE SET ${type.string} = diamond.${type.string} + excluded.${type.string} " +
+                        "WHERE diamond.${type.string} + excluded.${type.string} >= 0 RETURNING bank_shards, inventory_shards, ender_chest_shards",
+                    listOf(uuid, shards),
+                )
+                .await()
+
+        if (result.rows.isEmpty()) {
+            val shards = balanceManager.getShardTypeShards(uuid, type).getOrElse { throw it }
+            throw InsufficientBalanceException(shards)
+        }
+        val row = result.rows[0]
+        val bankShards = row.getLong("bank_shards")
+        val inventoryShards = row.getLong("inventory_shards")
+        val enderChestShards = row.getLong("ender_chest_shards")
+        if (bankShards == null || inventoryShards == null || enderChestShards == null) {
+            throw Exception()
+        }
+
+        val playerShards = PlayerShards(bankShards, inventoryShards, enderChestShards)
+        return playerShards
+    }
+
+    suspend fun transferBankShards(
+        sender: UUID,
+        receiver: UUID,
+        shardsToSubtractFromSender: Long,
+        shardsToAddToReceiver: Long,
+    ): Result<Map<UUID, Long>> {
+        try {
+            val connection = pool.asSuspending.connect()
+
+            val playerShardsMap =
+                connection
+                    .inTransaction { conn ->
+                        scope.future {
+                            mapOf<UUID, suspend () -> PlayerShards>(
+                                    sender to
+                                        {
+                                            internalAddToPlayerShards(
+                                                sender,
+                                                -shardsToSubtractFromSender,
+                                                ShardType.BANK,
+                                                conn,
+                                            )
+                                        },
+                                    receiver to
+                                        {
+                                            internalAddToPlayerShards(
+                                                receiver,
+                                                shardsToAddToReceiver,
+                                                ShardType.BANK,
+                                                conn,
+                                            )
+                                        },
+                                )
+                                .toSortedMap() // Sort to avoid deadlock
+                                .mapValues { it.value() }
+                        }
+                    }
+                    .await()
+
+            playerShardsMap.forEach { (uuid, playerShards) ->
+                DiamondBankOG.eventManager.sendUpdate(uuid, playerShards)
+            }
+            return Result.success(playerShardsMap.mapValues { (_, playerShards) -> playerShards.bank })
+        } catch (e: Exception) {
+            if (e is InsufficientBalanceException) {
+                return Result.failure(e)
+            }
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
         }
     }
 
@@ -280,23 +338,23 @@ internal class PostgreSQL private constructor() {
             val result =
                 connection
                     .inTransaction { conn ->
-                        // @formatter:off
                         conn.sendPreparedStatement(
-                            "WITH ranked AS (" +
-                                "SELECT " +
-                                "uuid, total_shards, ROW_NUMBER() OVER (ORDER BY total_shards DESC, uuid DESC) AS rn " +
-                                "FROM diamond" +
-                                "), " +
-                                "target AS (" +
-                                "SELECT rn, ((rn - 1) / 9) * 9 AS page_offset FROM ranked WHERE uuid = ?), " +
-                                "paged AS (" +
-                                "SELECT ranked.*, target.page_offset FROM ranked JOIN target ON true " +
-                                "WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 9" +
-                                ") " +
-                                "SELECT uuid, total_shards, page_offset FROM paged ORDER BY rn",
+                            """
+                            WITH ranked AS (
+                                SELECT uuid, total_shards, ROW_NUMBER() OVER (ORDER BY total_shards DESC, uuid DESC) AS rn
+                                FROM diamond
+                            ),
+                            target AS (
+                                SELECT rn, ((rn - 1) / 9) * 9 AS page_offset FROM ranked WHERE uuid = ?)
+                                paged AS
+                                SELECT ranked.*, target.page_offset FROM ranked JOIN target ON true
+                                WHERE ranked.rn > target.page_offset AND ranked.rn <= target.page_offset + 9
+                            )
+                            SELECT uuid, total_shards, page_offset FROM paged ORDER BY rn
+                            """
+                                .trimIndent(),
                             listOf(uuid),
                         )
-                        // @formatter:on
                     }
                     .await()
             val baltop = mutableMapOf<UUID?, Long>()

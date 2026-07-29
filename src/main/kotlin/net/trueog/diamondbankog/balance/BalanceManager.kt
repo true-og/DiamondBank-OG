@@ -11,6 +11,13 @@ interface BalanceManager {
 
     suspend fun subtractFromBankShards(uuid: UUID, shards: Long): Result<Unit>
 
+    suspend fun transferBankShards(
+        sender: UUID,
+        receiver: UUID,
+        shardsToSubtractFromSender: Long,
+        shardsToAddToReceiver: Long,
+    ): Result<Unit>
+
     suspend fun getBankShards(uuid: UUID): Result<Long>
 
     suspend fun getInventoryShards(uuid: UUID): Result<Long>

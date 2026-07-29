@@ -7,8 +7,7 @@ import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.CommonOperations
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.lock
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.unlock
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.transaction.InventorySnapshotUtils
 import net.trueog.diamondbankog.transaction.TransactionLock
@@ -77,54 +76,64 @@ internal class Deposit(
         scope.launch {
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                    val inventorySnapshot = runOnMainThread {
-                        sender.inventory.lock()
-                        InventorySnapshot.from(sender.inventory, balanceManager)
-                    }
-
-                    val removedInShards: Long =
-                        if (shards == -1L) {
-                            InventorySnapshotUtils.removeAll(inventorySnapshot).toLong()
-                        } else {
-                            InventorySnapshotUtils.removeShards(inventorySnapshot, shards, config, balanceManager, mm)
-                                .getOrElse {
-                                    sender.sendMessage(
-                                        mm.deserialize("${config.prefix}<reset>: <red>Something went wrong.")
-                                    )
-                                    sender.inventory.unlock()
-                                    handleError(it)
-                                    return@tryWithLockSuspend
+                    val removedInShards =
+                        sender.inventory
+                            .withLockSuspend {
+                                val inventorySnapshot = runOnMainThread {
+                                    InventorySnapshot.from(sender.inventory, balanceManager)
                                 }
-                                .toLong()
-                        }
-                    if (shards != -1L && removedInShards != shards) {
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>You do not have ${
-                                    CommonOperations.shardsToDiamondsFull(
-                                        shards
+
+                                val removedInShards: Long =
+                                    if (shards == -1L) {
+                                        InventorySnapshotUtils.removeAll(inventorySnapshot).toLong()
+                                    } else {
+                                        InventorySnapshotUtils.removeShards(
+                                                inventorySnapshot,
+                                                shards,
+                                                config,
+                                                balanceManager,
+                                                mm,
+                                            )
+                                            .getOrElse {
+                                                sender.sendMessage(
+                                                    mm.deserialize(
+                                                        "${config.prefix}<reset>: <red>Something went wrong."
+                                                    )
+                                                )
+                                                handleError(it)
+                                                return@withLockSuspend Result.failure(Exception())
+                                            }
+                                            .toLong()
+                                    }
+                                if (shards != -1L && removedInShards != shards) {
+                                    sender.sendMessage(
+                                        mm.deserialize(
+                                            "${config.prefix}<reset>: <red>You do not have ${
+                                        CommonOperations.shardsToDiamondsFull(
+                                            shards
+                                        )
+                                    } <red>to deposit."
+                                        )
                                     )
-                                } <red>to deposit."
-                            )
-                        )
-                        sender.inventory.unlock()
-                        return@tryWithLockSuspend
-                    }
+                                    return@withLockSuspend Result.failure(Exception())
+                                }
 
-                    balanceManager.addToBankShards(sender.uniqueId, removedInShards).getOrElse {
-                        handleError(it)
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>Something went wrong while trying to add to your balance."
-                            )
-                        )
-                        return@tryWithLockSuspend
-                    }
+                                balanceManager.addToBankShards(sender.uniqueId, removedInShards).getOrElse {
+                                    handleError(it)
+                                    sender.sendMessage(
+                                        mm.deserialize(
+                                            "${config.prefix}<reset>: <red>Something went wrong while trying to add to your balance."
+                                        )
+                                    )
+                                    return@withLockSuspend Result.failure(Exception())
+                                }
 
-                    runOnMainThread {
-                        inventorySnapshot.restoreTo(sender.inventory)
-                        sender.inventory.unlock()
-                    }
+                                runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
+                                Result.success(removedInShards)
+                            }
+                            .getOrElse {
+                                return@tryWithLockSuspend
+                            }
 
                     sender.sendMessage(
                         mm.deserialize(

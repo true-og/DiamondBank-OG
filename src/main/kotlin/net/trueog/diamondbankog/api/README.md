@@ -214,17 +214,17 @@ public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, 
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.InvalidPlayerException
- * @throws DiamondBankException.PayerNotOnlineException
+ * @throws DiamondBankException.SenderNotOnlineException
  * @throws DiamondBankException.InsufficientFundsException
  */
 ```
 Kotlin:
 ```kotlin
-suspend fun playerPayPlayer(payerUuid: UUID, receiverUuid: UUID, shards: ULong, transactionReason: String, notes: String?): Result<Unit>
+suspend fun playerPayPlayer(senderUuid: UUID, receiverUuid: UUID, shards: ULong, transactionReason: String, notes: String?): Result<Unit>
 ```
 Java:
 ```java
-public void playerPayPlayer(UUID payerUuid, UUID receiverUuid, long shards, String transactionReason, @Nullable String notes)
+public void playerPayPlayer(UUID senderUuid, UUID receiverUuid, long shards, String transactionReason, @Nullable String notes)
 ```
 
 ### registerEventListener

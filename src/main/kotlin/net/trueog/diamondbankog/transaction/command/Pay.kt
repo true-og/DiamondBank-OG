@@ -8,8 +8,7 @@ import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.CommonOperations
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.lock
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.unlock
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.util.CommonCommandInterlude
@@ -91,55 +90,70 @@ internal class Pay(
         scope.launch {
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                    val inventorySnapshot = runOnMainThread {
-                        sender.inventory.lock()
-                        InventorySnapshot.from(sender.inventory, balanceManager)
-                    }
+                    sender.inventory
+                        .withLockSuspend {
+                            val inventorySnapshot = runOnMainThread {
+                                InventorySnapshot.from(sender.inventory, balanceManager)
+                            }
 
-                    CommonOperations.consume(sender.uniqueId, shards, inventorySnapshot, config, balanceManager, mm)
-                        .getOrElse {
-                            when (it) {
-                                is DiamondBankException.InsufficientFundsException -> {
-                                    sender.sendMessage(
-                                        mm.deserialize(
-                                            "${config.prefix}<reset>: <red>You are ${
-                                                CommonOperations.shardsToDiamondsFull(
-                                                    it.short
-                                                )
-                                            } <red>short for that payment."
-                                        )
+                            val shardsToSubtractFromSender =
+                                CommonOperations.consume(
+                                        sender.uniqueId,
+                                        shards,
+                                        inventorySnapshot,
+                                        config,
+                                        balanceManager,
+                                        mm,
                                     )
-                                    sender.inventory.unlock()
-                                    return@tryWithLockSuspend
-                                }
+                                    .getOrElse {
+                                        when (it) {
+                                            is DiamondBankException.InsufficientFundsException -> {
+                                                sender.sendMessage(
+                                                    mm.deserialize(
+                                                        "${config.prefix}<reset>: <red>You are ${
+                                                        CommonOperations.shardsToDiamondsFull(
+                                                            it.short
+                                                        )
+                                                    } <red>short for that payment."
+                                                    )
+                                                )
+                                                return@withLockSuspend Result.failure(Exception())
+                                            }
 
-                                else -> {
+                                            else -> {
+                                                sender.sendMessage(
+                                                    mm.deserialize(
+                                                        "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
+                                                    )
+                                                )
+                                                return@withLockSuspend Result.failure(Exception())
+                                            }
+                                        }
+                                    }
+
+                            balanceManager
+                                .transferBankShards(
+                                    sender.uniqueId,
+                                    receiver.uniqueId,
+                                    shardsToSubtractFromSender,
+                                    shards,
+                                )
+                                .getOrElse {
+                                    handleError(it)
                                     sender.sendMessage(
                                         mm.deserialize(
                                             "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                                         )
                                     )
-                                    sender.inventory.unlock()
-                                    return@tryWithLockSuspend
+                                    return@withLockSuspend Result.failure(Exception())
                                 }
-                            }
+
+                            runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
+                            Result.success(Unit)
                         }
-
-                    balanceManager.addToBankShards(receiver.uniqueId, shards).getOrElse {
-                        handleError(it)
-                        sender.sendMessage(
-                            mm.deserialize(
-                                "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
-                            )
-                        )
-                        sender.inventory.unlock()
-                        return@tryWithLockSuspend
-                    }
-
-                    runOnMainThread {
-                        inventorySnapshot.restoreTo(sender.inventory)
-                        sender.inventory.unlock()
-                    }
+                        .getOrElse {
+                            return@tryWithLockSuspend
+                        }
 
                     sender.sendMessage(
                         mm.deserialize(

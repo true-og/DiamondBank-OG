@@ -5,7 +5,7 @@ sealed class DiamondBankException(message: String) : Exception(message) {
 
     class InvalidPlayerException : DiamondBankException("Invalid player")
 
-    class PayerNotOnlineException : DiamondBankException("Payer is not online")
+    class SenderNotOnlineException : DiamondBankException("Sender is not online")
 
     class PlayerNotOnlineException : DiamondBankException("Player is not online")
 

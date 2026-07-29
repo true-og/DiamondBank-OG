@@ -12,6 +12,7 @@ import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 
 object CommonOperations {
+    /** @return Amount of shards that should be removed from player's bank balance */
     suspend fun consume(
         uuid: UUID,
         shards: Long,
@@ -19,7 +20,7 @@ object CommonOperations {
         config: Config = DiamondBankOG.config,
         balanceManager: BalanceManager = DiamondBankOG.balanceManager,
         mm: MiniMessage = DiamondBankOG.mm,
-    ): Result<Unit> {
+    ): Result<Long> {
         val bankShards =
             balanceManager.getBankShards(uuid).getOrElse {
                 return Result.failure(it)
@@ -41,10 +42,7 @@ object CommonOperations {
             } else {
                 shards
             }
-        balanceManager.subtractFromBankShards(uuid, shardsToSubtract).getOrElse {
-            return Result.failure(it)
-        }
-        return Result.success(Unit)
+        return Result.success(shardsToSubtract)
     }
 
     fun diamondsToShards(diamonds: Float): Result<Long> {
