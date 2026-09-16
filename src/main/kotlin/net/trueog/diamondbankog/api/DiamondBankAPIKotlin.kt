@@ -33,6 +33,9 @@ class DiamondBankAPIKotlin {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
+            val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+
             balanceManager.addToBankShards(uuid, shards.toLong()).getOrElse {
                 handleError(it)
                 return@withLockSuspend Result.failure(EconomyDisabledException())
@@ -63,6 +66,9 @@ class DiamondBankAPIKotlin {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
+            val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+
             balanceManager.subtractFromBankShards(uuid, shards.toLong()).getOrElse {
                 if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
                 handleError(it)

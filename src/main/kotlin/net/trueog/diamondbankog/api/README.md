@@ -39,6 +39,7 @@ Exceptions are only applicable when using the Java API, when using the Kotlin AP
  * @param transactionReason the reason for this transaction for in the transaction log
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
+ * @throws DiamondBankException.InvalidPlayerException
  */
 ```
 Kotlin:
@@ -63,6 +64,7 @@ public void addToPlayerBankShards(UUID uuid, long shards, String transactionReas
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.InsufficientBalanceException
+ * @throws DiamondBankException.InvalidPlayerException
  */
 ```
 Kotlin:

@@ -28,8 +28,9 @@ class DiamondBankAPIJava {
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
+     * @throws DiamondBankException.InvalidPlayerException
      */
-    @Throws(EconomyDisabledException::class)
+    @Throws(EconomyDisabledException::class, InvalidPlayerException::class)
     @Suppress("unused")
     fun addToPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         require(shards >= 0) { "shards must not be negative" }
@@ -37,6 +38,9 @@ class DiamondBankAPIJava {
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
+                val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+
                 balanceManager.addToBankShards(uuid, shards).getOrElse {
                     handleError(it)
                     throw EconomyDisabledException()
@@ -60,8 +64,9 @@ class DiamondBankAPIJava {
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
      * @throws DiamondBankException.InsufficientBalanceException
+     * @throws DiamondBankException.InvalidPlayerException
      */
-    @Throws(EconomyDisabledException::class, InsufficientBalanceException::class)
+    @Throws(EconomyDisabledException::class, InsufficientBalanceException::class, InvalidPlayerException::class)
     @Suppress("unused")
     fun subtractFromPlayerBankShards(uuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         require(shards >= 0) { "shards must not be negative" }
@@ -69,6 +74,9 @@ class DiamondBankAPIJava {
 
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
+                val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+
                 balanceManager.subtractFromBankShards(uuid, shards).getOrElse {
                     if (it is InsufficientBalanceException) throw it
                     handleError(it)
