@@ -188,7 +188,6 @@ public Map<@Nullable UUID, Long> getBaltop(int offset)
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.InvalidPlayerException
- * @throws DiamondBankException.PlayerNotOnlineException
  * @throws DiamondBankException.InsufficientFundsException
  */
 ```
@@ -214,7 +213,6 @@ public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, 
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
  * @throws DiamondBankException.InvalidPlayerException
- * @throws DiamondBankException.SenderNotOnlineException
  * @throws DiamondBankException.InsufficientFundsException
  */
 ```

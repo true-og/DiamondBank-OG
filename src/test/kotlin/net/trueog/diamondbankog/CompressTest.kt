@@ -24,7 +24,7 @@ import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.balance.shard.ShardType
 import net.trueog.diamondbankog.config.Config
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isLocked
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isInventoryLocked
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.transaction.command.Compress
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
@@ -168,7 +168,7 @@ class CompressTest {
             { assertEquals(invShardCount, inventory.countShards(), "Shard count") },
             { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") },
             { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -191,7 +191,7 @@ class CompressTest {
         blockStateMeta.blockState = shulkerBoxState
         shulkerBox.itemMeta = blockStateMeta
 
-        val inventory = mockPlayerInventory(player, playerUuid, arrayOf(shulkerBox))
+        mockPlayerInventory(player, playerUuid, arrayOf(shulkerBox))
 
         val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf("yes"))
@@ -208,7 +208,7 @@ class CompressTest {
                     "Diamond block count",
                 )
             },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -235,7 +235,7 @@ class CompressTest {
             { assertEquals(invShardCount, inventory.countShards(), "Shard count") },
             { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") },
             { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -259,7 +259,7 @@ class CompressTest {
                 }
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -284,7 +284,7 @@ class CompressTest {
                 }
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -309,7 +309,7 @@ class CompressTest {
                 }
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -326,7 +326,7 @@ class CompressTest {
         assertAll(
             { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: <red>Invalid argument.")) } },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -350,7 +350,7 @@ class CompressTest {
                 }
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -371,7 +371,7 @@ class CompressTest {
                 }
             },
             { assertEquals(9, inventory.countDiamonds(), "Diamond count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -379,7 +379,7 @@ class CompressTest {
     @Test
     @DisplayName("Compress without yes while holding a shulker box should fail")
     fun compressNoYesHoldingShulkerBox() = runTest {
-        val inventory = mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.SHULKER_BOX)))
+        mockPlayerInventory(player, playerUuid, arrayOf(ItemStack(Material.SHULKER_BOX)))
 
         val compress = Compress(config, balanceManager, mm, scope, transactionLock)
         compress.onCommand(player, command, "compress", arrayOf())
@@ -395,7 +395,7 @@ class CompressTest {
                     )
                 }
             },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }

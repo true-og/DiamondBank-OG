@@ -7,7 +7,7 @@ import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.CommonOperations
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withInventoryLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.transaction.InventorySnapshotUtils
 import net.trueog.diamondbankog.transaction.TransactionLock
@@ -77,10 +77,10 @@ internal class Deposit(
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
                     val removedInShards =
-                        sender.inventory
-                            .withLockSuspend {
+                        sender.uniqueId
+                            .withInventoryLockSuspend {
                                 val inventorySnapshot = runOnMainThread {
-                                    InventorySnapshot.from(sender.inventory, balanceManager)
+                                    InventorySnapshot.from(sender.uniqueId, balanceManager)
                                 }
 
                                 val removedInShards: Long =
@@ -101,7 +101,7 @@ internal class Deposit(
                                                     )
                                                 )
                                                 handleError(it)
-                                                return@withLockSuspend Result.failure(Exception())
+                                                return@withInventoryLockSuspend Result.failure(Exception())
                                             }
                                             .toLong()
                                     }
@@ -115,7 +115,7 @@ internal class Deposit(
                                     } <red>to deposit."
                                         )
                                     )
-                                    return@withLockSuspend Result.failure(Exception())
+                                    return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
                                 balanceManager.addToBankShards(sender.uniqueId, removedInShards).getOrElse {
@@ -125,10 +125,10 @@ internal class Deposit(
                                             "${config.prefix}<reset>: <red>Something went wrong while trying to add to your balance."
                                         )
                                     )
-                                    return@withLockSuspend Result.failure(Exception())
+                                    return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
-                                runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
+                                runOnMainThread { inventorySnapshot.restoreTo(sender.uniqueId) }
                                 Result.success(removedInShards)
                             }
                             .getOrElse {

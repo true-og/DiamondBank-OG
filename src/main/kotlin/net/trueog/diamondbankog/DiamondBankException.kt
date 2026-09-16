@@ -5,10 +5,6 @@ sealed class DiamondBankException(message: String) : Exception(message) {
 
     class InvalidPlayerException : DiamondBankException("Invalid player")
 
-    class SenderNotOnlineException : DiamondBankException("Sender is not online")
-
-    class PlayerNotOnlineException : DiamondBankException("Player is not online")
-
     class DatabaseException(message: String) : DiamondBankException(message)
 
     class InsufficientBalanceException(val balance: Long) : DiamondBankException("Insufficient balance")

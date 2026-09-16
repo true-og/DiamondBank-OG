@@ -12,7 +12,7 @@ import net.trueog.diamondbankog.autocompress.AutoCompress.compress
 import net.trueog.diamondbankog.autodeposit.AutoDeposit.deposit
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.balance.shard.ShardType
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isLocked
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isInventoryLocked
 import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
@@ -171,7 +171,7 @@ internal class Events : Listener {
             return
         }
 
-        if (player.inventory.isLocked()) {
+        if (player.uniqueId.isInventoryLocked()) {
             event.isCancelled = true
             return
         }
@@ -222,7 +222,7 @@ internal class Events : Listener {
             return
         }
 
-        if (event.player.inventory.isLocked()) {
+        if (event.player.uniqueId.isInventoryLocked()) {
             event.isCancelled = true
             return
         }
@@ -268,7 +268,7 @@ internal class Events : Listener {
             return
         }
 
-        if (player.inventory.isLocked()) {
+        if (player.uniqueId.isInventoryLocked()) {
             event.isCancelled = true
             return
         }
@@ -311,7 +311,7 @@ internal class Events : Listener {
             return
         }
 
-        if (player.inventory.isLocked()) {
+        if (player.uniqueId.isInventoryLocked()) {
             event.isCancelled = true
             return
         }
@@ -352,7 +352,7 @@ internal class Events : Listener {
             return
         }
 
-        if (player.inventory.isLocked()) {
+        if (player.uniqueId.isInventoryLocked()) {
             event.isCancelled = true
             return
         }
@@ -366,7 +366,7 @@ internal class Events : Listener {
 
         val player = event.player as? Player ?: return
 
-        if (player.inventory.isLocked()) {
+        if (player.uniqueId.isInventoryLocked()) {
             return
         }
 

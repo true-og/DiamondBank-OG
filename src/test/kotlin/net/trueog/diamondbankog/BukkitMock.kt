@@ -59,6 +59,9 @@ object BukkitMock {
     fun mockBukkit(): Server {
         val server = mockk<Server>()
         mockkStatic(Bukkit::class)
+        val serverField = Bukkit::class.java.getDeclaredField("server")
+        serverField.isAccessible = true
+        serverField.set(null, server)
         every { Bukkit.getServer() } returns server
         every { server.isPrimaryThread } returns true
         every { Bukkit.isPrimaryThread() } returns true

@@ -9,7 +9,7 @@ import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.CommonOperations
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withInventoryLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.util.CommonCommandInterlude
@@ -80,10 +80,10 @@ internal class Withdraw(
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
                     val shardsToWithdraw =
-                        sender.inventory
-                            .withLockSuspend {
+                        sender.uniqueId
+                            .withInventoryLockSuspend {
                                 val inventorySnapshot = runOnMainThread {
-                                    InventorySnapshot.from(sender.inventory, balanceManager)
+                                    InventorySnapshot.from(sender.uniqueId, balanceManager)
                                 }
 
                                 val bankShards =
@@ -93,7 +93,7 @@ internal class Withdraw(
                                                 "${config.prefix}<reset>: <red>Something went wrong while trying to get your balance."
                                             )
                                         )
-                                        return@withLockSuspend Result.failure(Exception())
+                                        return@withInventoryLockSuspend Result.failure(Exception())
                                     }
 
                                 val shardsToWithdraw =
@@ -117,7 +117,7 @@ internal class Withdraw(
                                     }<red>."
                                         )
                                     )
-                                    return@withLockSuspend Result.failure(Exception())
+                                    return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
                                 val diamondsToAdd = floor(shardsToWithdraw / 9.0).toInt()
@@ -138,7 +138,7 @@ internal class Withdraw(
                                     }<red>."
                                         )
                                     )
-                                    return@withLockSuspend Result.failure(Exception())
+                                    return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
                                 balanceManager.subtractFromBankShards(sender.uniqueId, shardsToWithdraw).getOrElse {
@@ -148,10 +148,10 @@ internal class Withdraw(
                                             "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                                         )
                                     )
-                                    return@withLockSuspend Result.failure(Exception())
+                                    return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
-                                runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
+                                runOnMainThread { inventorySnapshot.restoreTo(sender.uniqueId) }
                                 Result.success(shardsToWithdraw)
                             }
                             .getOrElse {

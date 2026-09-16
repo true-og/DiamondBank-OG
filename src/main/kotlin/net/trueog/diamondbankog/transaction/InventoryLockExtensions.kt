@@ -1,41 +1,41 @@
 package net.trueog.diamondbankog.transaction
 
 import java.util.Collections
+import java.util.UUID
 import java.util.WeakHashMap
-import org.bukkit.inventory.PlayerInventory
 
 object InventoryLockExtensions {
-    val lockMap: MutableSet<PlayerInventory> = Collections.newSetFromMap(Collections.synchronizedMap(WeakHashMap()))
+    val lockMap: MutableSet<UUID> = Collections.newSetFromMap(Collections.synchronizedMap(WeakHashMap()))
 
-    fun <T> PlayerInventory.withLock(block: () -> T): T {
-        this.lock()
+    fun <T> UUID.withInventoryLock(block: () -> T): T {
+        this.lockInventory()
         try {
             return block()
         } finally {
-            this.unlock()
+            this.unlockInventory()
         }
     }
 
-    suspend fun <T> PlayerInventory.withLockSuspend(block: suspend () -> T): T {
-        this.lock()
+    suspend fun <T> UUID.withInventoryLockSuspend(block: suspend () -> T): T {
+        this.lockInventory()
         try {
             return block()
         } finally {
-            this.unlock()
+            this.unlockInventory()
         }
     }
 
-    private fun PlayerInventory.lock() {
+    private fun UUID.lockInventory() {
         val added = lockMap.add(this)
         if (!added) throw IllegalStateException("Inventory was already locked")
     }
 
-    private fun PlayerInventory.unlock() {
+    private fun UUID.unlockInventory() {
         val removed = lockMap.remove(this)
         if (!removed) throw IllegalStateException("Inventory was not locked")
     }
 
-    fun PlayerInventory.isLocked(): Boolean {
+    fun UUID.isInventoryLocked(): Boolean {
         return this in lockMap
     }
 }
