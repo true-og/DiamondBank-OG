@@ -212,10 +212,10 @@ class DiamondBankAPIKotlin {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(senderUuid) {
-            val sender = Bukkit.getOfflinePlayer(senderUuid)
+            val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
             if (!sender.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
-            val receiver = Bukkit.getOfflinePlayer(receiverUuid)
+            val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
             if (!receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
             sender.uniqueId

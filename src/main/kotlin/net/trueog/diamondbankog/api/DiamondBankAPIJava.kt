@@ -268,10 +268,10 @@ class DiamondBankAPIJava {
 
         return runBlocking {
             transactionLock.withLockSuspend(senderUuid) {
-                val sender = Bukkit.getOfflinePlayer(senderUuid)
+                val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
                 if (!sender.hasPlayedBefore()) throw InvalidPlayerException()
 
-                val receiver = Bukkit.getOfflinePlayer(receiverUuid)
+                val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
                 if (!receiver.hasPlayedBefore()) throw InvalidPlayerException()
 
                 sender.uniqueId.withInventoryLockSuspend {
