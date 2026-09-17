@@ -139,7 +139,7 @@ internal class PostgreSQL private constructor() {
                 .await()
 
         if (result.rows.isEmpty()) {
-            val shards = getShardTypeShards(uuid, type).getOrElse { throw it }
+            val shards = internalGetShardTypeShards(uuid, type, conn).getOrElse { throw it }
             throw InsufficientBalanceException(shards)
         }
         val row = result.rows[0]
@@ -271,12 +271,21 @@ internal class PostgreSQL private constructor() {
     }
 
     suspend fun getShardTypeShards(uuid: UUID, type: ShardType): Result<Long> {
-        var shards: Long?
         try {
             val connection = pool.asSuspending.connect()
 
+            return internalGetShardTypeShards(uuid, type, connection)
+        } catch (e: Exception) {
+            plugin.logger.severe(e.toString())
+            return Result.failure(DatabaseException(e.message ?: "Database exception"))
+        }
+    }
+
+    private suspend fun internalGetShardTypeShards(uuid: UUID, type: ShardType, conn: Connection): Result<Long> {
+        var shards: Long?
+        try {
             val result =
-                connection
+                conn
                     .inTransaction { conn ->
                         conn.sendPreparedStatement(
                             "SELECT ${type.string} FROM diamond WHERE uuid = ? LIMIT 1",
