@@ -8,6 +8,7 @@ postgresPort: 5432
 postgresDatabase: diamond
 postgresUser: ^{DIAMONDBANKOG_POSTGRES_USER}
 postgresPassword: ^{DIAMONDBANKOG_POSTGRES_PASSWORD}
+postgresMaxActiveConnections: 10
 
 # ---Redis(-compatible) key value store---
 redisHost: 127.0.0.1

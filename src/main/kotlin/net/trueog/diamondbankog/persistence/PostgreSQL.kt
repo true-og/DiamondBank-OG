@@ -42,12 +42,12 @@ internal class PostgreSQL private constructor() {
 
                 postgreSQL.pool =
                     PostgreSQLConnectionBuilder.createConnectionPool {
-                        maxActiveConnections = 6
                         host = config.postgresHost
                         port = config.postgresPort
                         database = config.postgresDatabase
                         username = config.postgresUser
                         password = config.postgresPassword
+                        maxActiveConnections = config.postgresMaxActiveConnections
                     }
                 return postgreSQL
             } catch (e: Exception) {

@@ -12,6 +12,7 @@ private constructor(
     override val postgresDatabase: String,
     override val postgresUser: String,
     override val postgresPassword: String?,
+    override val postgresMaxActiveConnections: Int,
     override val redisHost: String,
     override val redisPort: Int,
     override val redisDatabase: Int,
@@ -30,6 +31,7 @@ private constructor(
             val postgresDatabase = yamlConfig.parseKeyAs<String>("postgresDatabase")
             val postgresUser = yamlConfig.parseKeyAs<String>("postgresUser")
             val postgresPassword = yamlConfig.parseKeyAs<String?>("postgresPassword")
+            val postgresMaxActiveConnections = yamlConfig.parseKeyAs<Int>("postgresMaxActiveConnections")
 
             val redisHost = yamlConfig.parseKeyAs<String>("redisHost")
             val redisPort = yamlConfig.parseKeyAs<Int>("redisPort")
@@ -42,6 +44,7 @@ private constructor(
                     postgresPort == null ||
                     postgresDatabase == null ||
                     postgresUser == null ||
+                    postgresMaxActiveConnections == null ||
                     redisHost == null ||
                     redisPort == null ||
                     redisDatabase == null
@@ -56,6 +59,7 @@ private constructor(
                 postgresDatabase,
                 postgresUser,
                 postgresPassword,
+                postgresMaxActiveConnections,
                 redisHost,
                 redisPort,
                 redisDatabase,
