@@ -7,6 +7,7 @@ interface Config {
     val postgresDatabase: String
     val postgresUser: String
     val postgresPassword: String?
+    val postgresMaxActiveConnections: Int
     val redisHost: String
     val redisPort: Int
     val redisDatabase: Int
