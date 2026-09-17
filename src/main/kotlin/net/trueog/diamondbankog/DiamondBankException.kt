@@ -5,6 +5,8 @@ sealed class DiamondBankException(message: String) : Exception(message) {
 
     class InvalidPlayerException : DiamondBankException("Invalid player")
 
+    class SenderEqualToReceiverException : DiamondBankException("Sender is equal to the receiver")
+
     class DatabaseException(message: String) : DiamondBankException(message)
 
     class InsufficientBalanceException(val balance: Long) : DiamondBankException("Insufficient balance")

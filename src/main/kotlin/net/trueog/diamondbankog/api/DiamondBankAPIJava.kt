@@ -16,10 +16,11 @@ import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import org.bukkit.Bukkit
+import org.bukkit.entity.Player
 
 class DiamondBankAPIJava {
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released.
+     * WARNING: if the player has a transaction lock applied this function will block until its released.
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -39,7 +40,7 @@ class DiamondBankAPIJava {
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
                 val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+                if (player !is Player && !player.hasPlayedBefore()) throw InvalidPlayerException()
 
                 balanceManager.addToBankShards(uuid, shards).getOrElse {
                     handleError(it)
@@ -54,7 +55,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -75,7 +76,7 @@ class DiamondBankAPIJava {
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
                 val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+                if (player !is Player && !player.hasPlayedBefore()) throw InvalidPlayerException()
 
                 balanceManager.subtractFromBankShards(uuid, shards).getOrElse {
                     if (it is InsufficientBalanceException) throw it
@@ -91,7 +92,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -103,7 +104,7 @@ class DiamondBankAPIJava {
     fun getBankShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.BANK)
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -115,7 +116,7 @@ class DiamondBankAPIJava {
     fun getInventoryShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.INVENTORY)
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -127,7 +128,7 @@ class DiamondBankAPIJava {
     fun getEnderChestShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -139,7 +140,7 @@ class DiamondBankAPIJava {
     fun getTotalShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.TOTAL)
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -183,7 +184,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -204,7 +205,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -225,7 +226,7 @@ class DiamondBankAPIJava {
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
                 val player = Bukkit.getOfflinePlayer(uuid)
-                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+                if (player !is Player && !player.hasPlayedBefore()) throw InvalidPlayerException()
 
                 player.uniqueId.withInventoryLockSuspend {
                     val inventorySnapshot = runOnMainThread { InventorySnapshot.from(player.uniqueId, balanceManager) }
@@ -256,7 +257,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -265,22 +266,29 @@ class DiamondBankAPIJava {
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
+     * @throws DiamondBankException.SenderEqualToReceiverException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.InsufficientFundsException
      */
-    @Throws(EconomyDisabledException::class, InvalidPlayerException::class, InsufficientFundsException::class)
+    @Throws(
+        EconomyDisabledException::class,
+        SenderEqualToReceiverException::class,
+        InvalidPlayerException::class,
+        InsufficientFundsException::class,
+    )
     @Suppress("unused")
     fun playerPayPlayer(senderUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         require(shards >= 0) { "shards must not be negative" }
         if (economyDisabled) throw EconomyDisabledException()
+        if (senderUuid == receiverUuid) throw SenderEqualToReceiverException()
 
         return runBlocking {
             transactionLock.withLockSuspend(senderUuid) {
                 val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
-                if (!sender.hasPlayedBefore()) throw InvalidPlayerException()
+                if (sender !is Player && !sender.hasPlayedBefore()) throw InvalidPlayerException()
 
                 val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
-                if (!receiver.hasPlayedBefore()) throw InvalidPlayerException()
+                if (receiver !is Player && !receiver.hasPlayedBefore()) throw InvalidPlayerException()
 
                 sender.uniqueId.withInventoryLockSuspend {
                     val inventorySnapshot = runOnMainThread { InventorySnapshot.from(sender.uniqueId, balanceManager) }

@@ -14,10 +14,11 @@ import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import org.bukkit.Bukkit
+import org.bukkit.entity.Player
 
 class DiamondBankAPIKotlin {
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
@@ -34,7 +35,8 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (player !is Player && !player.hasPlayedBefore())
+                return@withLockSuspend Result.failure(InvalidPlayerException())
 
             balanceManager.addToBankShards(uuid, shards.toLong()).getOrElse {
                 handleError(it)
@@ -50,7 +52,7 @@ class DiamondBankAPIKotlin {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
@@ -67,7 +69,8 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (player !is Player && !player.hasPlayedBefore())
+                return@withLockSuspend Result.failure(InvalidPlayerException())
 
             balanceManager.subtractFromBankShards(uuid, shards.toLong()).getOrElse {
                 if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
@@ -83,21 +86,21 @@ class DiamondBankAPIKotlin {
         }
     }
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused") suspend fun getBankShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.BANK)
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused")
     suspend fun getInventoryShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.INVENTORY)
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused")
     suspend fun getEnderChestShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused") suspend fun getTotalShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.TOTAL)
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused")
     suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
@@ -143,7 +146,7 @@ class DiamondBankAPIKotlin {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
@@ -160,7 +163,8 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             val player = Bukkit.getOfflinePlayer(uuid)
-            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (player !is Player && !player.hasPlayedBefore())
+                return@withLockSuspend Result.failure(InvalidPlayerException())
 
             player.uniqueId
                 .withInventoryLockSuspend {
@@ -197,7 +201,7 @@ class DiamondBankAPIKotlin {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * WARNING: This function can return a CouldNotRemoveEnoughException, make sure you handle it properly. It has a
      * field called notRemoved that has the amount of shards not removed, you should continue with the originally
@@ -216,13 +220,16 @@ class DiamondBankAPIKotlin {
     ): Result<Unit> {
         require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
+        if (senderUuid == receiverUuid) return Result.failure(SenderEqualToReceiverException())
 
         return transactionLock.withLockSuspend(senderUuid) {
             val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
-            if (!sender.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (sender !is Player && !sender.hasPlayedBefore())
+                return@withLockSuspend Result.failure(InvalidPlayerException())
 
             val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
-            if (!receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (receiver !is Player && !receiver.hasPlayedBefore())
+                return@withLockSuspend Result.failure(InvalidPlayerException())
 
             sender.uniqueId
                 .withInventoryLockSuspend {
