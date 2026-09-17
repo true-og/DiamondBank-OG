@@ -14,6 +14,7 @@ import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import org.bukkit.Bukkit
+import org.bukkit.entity.Player
 
 class DiamondBankAPIKotlin {
     /**
@@ -34,7 +35,7 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (player !is Player && !player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
             balanceManager.addToBankShards(uuid, shards.toLong()).getOrElse {
                 handleError(it)
@@ -67,7 +68,7 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (player !is Player && !player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
             balanceManager.subtractFromBankShards(uuid, shards.toLong()).getOrElse {
                 if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
@@ -160,7 +161,7 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(uuid) {
             val player = Bukkit.getOfflinePlayer(uuid)
-            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (player !is Player && !player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
             player.uniqueId
                 .withInventoryLockSuspend {
@@ -219,10 +220,10 @@ class DiamondBankAPIKotlin {
 
         return transactionLock.withLockSuspend(senderUuid) {
             val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
-            if (!sender.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (sender !is Player && !sender.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
             val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
-            if (!receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+            if (receiver !is Player && !receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
             sender.uniqueId
                 .withInventoryLockSuspend {

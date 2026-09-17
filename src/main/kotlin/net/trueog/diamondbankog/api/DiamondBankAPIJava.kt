@@ -16,6 +16,7 @@ import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import org.bukkit.Bukkit
+import org.bukkit.entity.Player
 
 class DiamondBankAPIJava {
     /**
@@ -39,7 +40,7 @@ class DiamondBankAPIJava {
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
                 val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+                if (player !is Player && !player.hasPlayedBefore()) throw InvalidPlayerException()
 
                 balanceManager.addToBankShards(uuid, shards).getOrElse {
                     handleError(it)
@@ -75,7 +76,7 @@ class DiamondBankAPIJava {
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
                 val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
-                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+                if (player !is Player && !player.hasPlayedBefore()) throw InvalidPlayerException()
 
                 balanceManager.subtractFromBankShards(uuid, shards).getOrElse {
                     if (it is InsufficientBalanceException) throw it
@@ -225,7 +226,7 @@ class DiamondBankAPIJava {
         return runBlocking {
             transactionLock.withLockSuspend(uuid) {
                 val player = Bukkit.getOfflinePlayer(uuid)
-                if (!player.hasPlayedBefore()) throw InvalidPlayerException()
+                if (player !is Player && !player.hasPlayedBefore()) throw InvalidPlayerException()
 
                 player.uniqueId.withInventoryLockSuspend {
                     val inventorySnapshot = runOnMainThread { InventorySnapshot.from(player.uniqueId, balanceManager) }
@@ -277,10 +278,10 @@ class DiamondBankAPIJava {
         return runBlocking {
             transactionLock.withLockSuspend(senderUuid) {
                 val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
-                if (!sender.hasPlayedBefore()) throw InvalidPlayerException()
+                if (sender !is Player && !sender.hasPlayedBefore()) throw InvalidPlayerException()
 
                 val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
-                if (!receiver.hasPlayedBefore()) throw InvalidPlayerException()
+                if (receiver !is Player && !receiver.hasPlayedBefore()) throw InvalidPlayerException()
 
                 sender.uniqueId.withInventoryLockSuspend {
                     val inventorySnapshot = runOnMainThread { InventorySnapshot.from(sender.uniqueId, balanceManager) }
