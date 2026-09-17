@@ -220,6 +220,7 @@ class DiamondBankAPIKotlin {
     ): Result<Unit> {
         require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
+        if (senderUuid == receiverUuid) return Result.failure(SenderEqualToReceiverException())
 
         return transactionLock.withLockSuspend(senderUuid) {
             val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)

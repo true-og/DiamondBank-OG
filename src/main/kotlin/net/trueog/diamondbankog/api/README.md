@@ -214,6 +214,7 @@ public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, 
  * @param transactionReason the reason for this transaction for in the transaction log
  * @param notes any specifics for this transaction that may be nice to know for in the transaction log
  * @throws DiamondBankException.EconomyDisabledException
+ * @throws DiamondBankException.SenderEqualToReceiverException
  * @throws DiamondBankException.InvalidPlayerException
  * @throws DiamondBankException.InsufficientFundsException
  */

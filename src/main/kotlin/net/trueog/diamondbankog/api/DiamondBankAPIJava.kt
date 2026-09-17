@@ -266,14 +266,21 @@ class DiamondBankAPIJava {
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      * @throws DiamondBankException.EconomyDisabledException
+     * @throws DiamondBankException.SenderEqualToReceiverException
      * @throws DiamondBankException.InvalidPlayerException
      * @throws DiamondBankException.InsufficientFundsException
      */
-    @Throws(EconomyDisabledException::class, InvalidPlayerException::class, InsufficientFundsException::class)
+    @Throws(
+        EconomyDisabledException::class,
+        SenderEqualToReceiverException::class,
+        InvalidPlayerException::class,
+        InsufficientFundsException::class,
+    )
     @Suppress("unused")
     fun playerPayPlayer(senderUuid: UUID, receiverUuid: UUID, shards: Long, transactionReason: String, notes: String?) {
         require(shards >= 0) { "shards must not be negative" }
         if (economyDisabled) throw EconomyDisabledException()
+        if (senderUuid == receiverUuid) throw SenderEqualToReceiverException()
 
         return runBlocking {
             transactionLock.withLockSuspend(senderUuid) {
