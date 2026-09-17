@@ -10,7 +10,6 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import net.trueog.diamondbankog.DiamondBankException.*
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
 import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
 import net.trueog.diamondbankog.DiamondBankOG.Companion.plugin
@@ -140,7 +139,7 @@ internal class PostgreSQL private constructor() {
                 .await()
 
         if (result.rows.isEmpty()) {
-            val shards = balanceManager.getShardTypeShards(uuid, type).getOrElse { throw it }
+            val shards = getShardTypeShards(uuid, type).getOrElse { throw it }
             throw InsufficientBalanceException(shards)
         }
         val row = result.rows[0]

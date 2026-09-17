@@ -56,6 +56,8 @@ dependencies {
     compileOnly("org.purpurmc.purpur:purpur-api:1.19.4-R0.1-SNAPSHOT") // Declare Purpur API version to be packaged.
     compileOnly("net.luckperms:api:5.5") // Import the LuckPerms API.
 
+    compileOnlyApi("net.trueog.utilities-og:Utilities-OG") // Import TrueOG Network Utilities-OG Java API (from source).
+
     implementation("io.lettuce:lettuce-core:7.5.1.RELEASE") // Import the Lettuce API for keydb.
 
     implementation("org.flywaydb:flyway-core:12.3.0")

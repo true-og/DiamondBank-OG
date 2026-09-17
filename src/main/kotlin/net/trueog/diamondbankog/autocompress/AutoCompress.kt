@@ -8,12 +8,12 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
 import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
 import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.balance.shard.Shard
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withInventoryLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
-import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
-import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
-import net.trueog.diamondbankog.util.InventoryExtensions.countShards
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -34,8 +34,8 @@ internal object AutoCompress {
             }
 
             transactionLock.withLockSuspend(player.uniqueId) {
-                player.inventory.withLockSuspend {
-                    val inventorySnapshot = runOnMainThread { InventorySnapshot.from(player.inventory, balanceManager) }
+                player.uniqueId.withInventoryLockSuspend {
+                    val inventorySnapshot = runOnMainThread { InventorySnapshot.from(player.uniqueId, balanceManager) }
 
                     val shardsInInventory = inventorySnapshot.countShards().toInt()
                     val diamondsInInventory = inventorySnapshot.countDiamonds().toInt()
@@ -75,7 +75,7 @@ internal object AutoCompress {
                                     "${config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
                                 )
                             )
-                            return@withLockSuspend
+                            return@withInventoryLockSuspend
                         }
                     }
 
@@ -93,7 +93,7 @@ internal object AutoCompress {
                                     "${config.prefix}<reset>: <red>You do not have enough space in your inventory to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
                                 )
                             )
-                            return@withLockSuspend
+                            return@withInventoryLockSuspend
                         }
                     }
 
@@ -105,7 +105,7 @@ internal object AutoCompress {
                                     "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
-                            return@withLockSuspend
+                            return@withInventoryLockSuspend
                         }
                     }
 
@@ -117,7 +117,7 @@ internal object AutoCompress {
                                     "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
-                            return@withLockSuspend
+                            return@withInventoryLockSuspend
                         }
                     } else if (changeInDiamonds < 0) {
                         val removeMap = inventorySnapshot.removeItem(ItemStack(Material.DIAMOND, abs(changeInDiamonds)))
@@ -127,7 +127,7 @@ internal object AutoCompress {
                                     "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
-                            return@withLockSuspend
+                            return@withInventoryLockSuspend
                         }
                     }
 
@@ -139,7 +139,7 @@ internal object AutoCompress {
                                     "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
-                            return@withLockSuspend
+                            return@withInventoryLockSuspend
                         }
                     } else if (changeInDiamondBlocks < 0) {
                         val removeMap =
@@ -150,11 +150,11 @@ internal object AutoCompress {
                                     "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your inventory."
                                 )
                             )
-                            return@withLockSuspend
+                            return@withInventoryLockSuspend
                         }
                     }
 
-                    runOnMainThread { inventorySnapshot.restoreTo(player.inventory) }
+                    runOnMainThread { inventorySnapshot.restoreTo(player.uniqueId) }
                 }
             }
         }

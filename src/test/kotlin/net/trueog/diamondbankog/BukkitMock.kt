@@ -18,40 +18,17 @@ import org.bukkit.persistence.PersistentDataType
 
 object BukkitMock {
     private fun first(item: ItemStack?, inventory: Array<ItemStack?>): Int {
-        if (item == null) {
-            return -1
-        }
-        for (i in inventory.indices) {
-            if (inventory[i] == null) continue
-
-            if (item.isSimilar(inventory[i])) {
-                return i
-            }
-        }
-        return -1
+        if (item == null) return -1
+        return inventory.indexOfFirst { it != null && item.isSimilar(it) }
     }
 
     private fun firstPartial(item: ItemStack?, inventory: Array<ItemStack?>): Int {
-        val filteredItem = item?.clone()
-        if (item == null) {
-            return -1
-        }
-        for (i in inventory.indices) {
-            val cItem = inventory[i]
-            if (cItem != null && cItem.amount < 64 && cItem.isSimilar(filteredItem)) {
-                return i
-            }
-        }
-        return -1
+        if (item == null) return -1
+        return inventory.indexOfFirst { it != null && it.amount < 64 && it.isSimilar(item) }
     }
 
     private fun firstEmpty(inventory: Array<ItemStack?>): Int {
-        for (i in inventory.indices) {
-            if (inventory[i] == null) {
-                return i
-            }
-        }
-        return -1
+        return inventory.indexOfFirst { it == null }
     }
 
     const val MAX_AMOUNT = 64
@@ -59,6 +36,9 @@ object BukkitMock {
     fun mockBukkit(): Server {
         val server = mockk<Server>()
         mockkStatic(Bukkit::class)
+        val serverField = Bukkit::class.java.getDeclaredField("server")
+        serverField.isAccessible = true
+        serverField.set(null, server)
         every { Bukkit.getServer() } returns server
         every { server.isPrimaryThread } returns true
         every { Bukkit.isPrimaryThread() } returns true
@@ -207,41 +187,33 @@ object BukkitMock {
         every { inventory.removeItem(any()) } answers
             {
                 val items = firstArg<Array<out ItemStack?>>()
-                val leftover = HashMap<Int?, ItemStack?>()
+                val leftover = HashMap<Int, ItemStack>()
 
                 items.forEachIndexed { index, item ->
-                    if (item == null) {
-                        throw IllegalArgumentException("ItemStack cannot be null")
-                    }
+                    requireNotNull(item) { "ItemStack cannot be null" }
 
-                    if (item.type.isAir) {
-                        return@forEachIndexed
-                    }
+                    if (item.type.isAir) return@forEachIndexed
                     var toDelete = item.amount
 
-                    while (true) {
+                    while (toDelete > 0) {
                         val first = first(item, contents)
 
                         if (first == -1) {
                             item.amount = toDelete
                             leftover[index] = item
-                            break
+                            toDelete = 0
                         } else {
-                            val itemStack = contents[first]
-                            val amount = itemStack!!.amount
+                            val itemStack = contents[first]!!
+                            val removed = minOf(itemStack.amount, toDelete)
 
-                            if (amount <= toDelete) {
-                                toDelete -= amount
+                            itemStack.amount -= removed
+                            toDelete -= removed
+
+                            if (itemStack.amount == 0) {
                                 contents[first] = null
                             } else {
-                                itemStack.amount = amount - toDelete
                                 contents[first] = itemStack
-                                toDelete = 0
                             }
-                        }
-
-                        if (toDelete <= 0) {
-                            break
                         }
                     }
                 }
@@ -262,54 +234,39 @@ object BukkitMock {
         return inventory
     }
 
-    fun addToInventory(items: Array<out ItemStack?>, contents: Array<ItemStack?>): HashMap<Int?, ItemStack?> {
-        val leftover = HashMap<Int?, ItemStack?>()
+    fun addToInventory(items: Array<out ItemStack?>, contents: Array<ItemStack?>): HashMap<Int, ItemStack> {
+        val leftover = HashMap<Int, ItemStack>()
 
         items.forEachIndexed { index, item ->
-            if (item == null) {
-                throw IllegalArgumentException("ItemStack cannot be null")
-            }
+            requireNotNull(item) { "ItemStack cannot be null" }
 
-            if (item.type.isAir) {
-                return@forEachIndexed
-            }
-            while (true) {
+            if (item.type.isAir) return@forEachIndexed
+
+            while (item.amount > 0) {
                 val firstPartial = firstPartial(item, contents)
 
-                if (firstPartial == -1) {
-                    val firstFree = firstEmpty(contents)
+                if (firstPartial != -1) {
+                    val stack = contents[firstPartial]!!
+                    val space = MAX_AMOUNT - stack.amount
+                    val amount = minOf(item.amount, space)
 
-                    if (firstFree == -1) {
-                        leftover[index] = item
-                        break
-                    } else {
-                        if (item.amount > MAX_AMOUNT) {
-                            val stack = item.clone()
-                            stack.amount = MAX_AMOUNT
-                            contents[firstFree] = stack.clone()
-                            item.amount = -MAX_AMOUNT
-                        } else {
-                            contents[firstFree] = item.clone()
-                            break
-                        }
-                    }
-                } else {
-                    val partialItem = contents[firstPartial]?.clone()
-
-                    val amount = item.amount
-                    val partialAmount = partialItem!!.amount
-
-                    if (amount + partialAmount <= MAX_AMOUNT) {
-                        partialItem.amount = amount + partialAmount
-                        contents[firstPartial] = partialItem.clone()
-                        break
-                    }
-
-                    partialItem.amount = MAX_AMOUNT
-
-                    contents[firstPartial] = partialItem.clone()
-                    item.amount = amount + partialAmount - MAX_AMOUNT
+                    stack.amount += amount
+                    item.amount -= amount
+                    continue
                 }
+
+                val empty = firstEmpty(contents)
+
+                if (empty == -1) {
+                    leftover[index] = item.clone()
+                    break
+                }
+
+                val amount = minOf(item.amount, MAX_AMOUNT)
+
+                contents[empty] = item.clone().apply { this.amount = amount }
+
+                item.amount -= amount
             }
         }
         return leftover

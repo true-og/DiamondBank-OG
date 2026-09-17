@@ -36,7 +36,7 @@ object CommonOperations {
                         .toLong()
                 if (removedInShards != toRemoveShards) {
                     val short = toRemoveShards - removedInShards
-                    throw InsufficientFundsException(short)
+                    return Result.failure(InsufficientFundsException(short))
                 }
                 bankShards
             } else {

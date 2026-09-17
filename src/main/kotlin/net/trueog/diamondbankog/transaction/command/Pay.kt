@@ -8,7 +8,7 @@ import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.CommonOperations
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withInventoryLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.util.CommonCommandInterlude
@@ -90,10 +90,10 @@ internal class Pay(
         scope.launch {
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
-                    sender.inventory
-                        .withLockSuspend {
+                    sender.uniqueId
+                        .withInventoryLockSuspend {
                             val inventorySnapshot = runOnMainThread {
-                                InventorySnapshot.from(sender.inventory, balanceManager)
+                                InventorySnapshot.from(sender.uniqueId, balanceManager)
                             }
 
                             val shardsToSubtractFromSender =
@@ -117,7 +117,7 @@ internal class Pay(
                                                     } <red>short for that payment."
                                                     )
                                                 )
-                                                return@withLockSuspend Result.failure(Exception())
+                                                return@withInventoryLockSuspend Result.failure(Exception())
                                             }
 
                                             else -> {
@@ -126,7 +126,7 @@ internal class Pay(
                                                         "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                                                     )
                                                 )
-                                                return@withLockSuspend Result.failure(Exception())
+                                                return@withInventoryLockSuspend Result.failure(Exception())
                                             }
                                         }
                                     }
@@ -145,10 +145,10 @@ internal class Pay(
                                             "${config.prefix}<reset>: <red>A severe error has occurred. Please notify a staff member."
                                         )
                                     )
-                                    return@withLockSuspend Result.failure(Exception())
+                                    return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
-                            runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
+                            runOnMainThread { inventorySnapshot.restoreTo(sender.uniqueId) }
                             Result.success(Unit)
                         }
                         .getOrElse {

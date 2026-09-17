@@ -8,7 +8,7 @@ import net.trueog.diamondbankog.*
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.config.Config
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withInventoryLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.util.CommonCommandInterlude
@@ -16,12 +16,16 @@ import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.util.InventoryExtensions.countShards
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.PlayerInventory
 import org.bukkit.inventory.meta.BlockStateMeta
 
 internal class Compress(
@@ -44,10 +48,10 @@ internal class Compress(
             when (
                 transactionLock.tryWithLockSuspend(sender.uniqueId) {
                     val summaryString =
-                        sender.inventory
-                            .withLockSuspend {
+                        sender.uniqueId
+                            .withInventoryLockSuspend {
                                 val inventorySnapshot = runOnMainThread {
-                                    InventorySnapshot.from(sender.inventory, balanceManager)
+                                    InventorySnapshot.from(sender.uniqueId, balanceManager)
                                 }
 
                                 val (inventory, blockStateMeta, blockState) =
@@ -58,13 +62,13 @@ internal class Compress(
                                                     "${config.prefix}<reset>: <red>Do not provide more arguments than \"yes\" if you want to compress the items in the shulker box you're holding."
                                                 )
                                             )
-                                            return@withLockSuspend Result.failure(Exception())
+                                            return@withInventoryLockSuspend Result.failure(Exception())
                                         }
                                         if (args[0] != "yes") {
                                             sender.sendMessage(
                                                 mm.deserialize("${config.prefix}<reset>: <red>Invalid argument.")
                                             )
-                                            return@withLockSuspend Result.failure(Exception())
+                                            return@withInventoryLockSuspend Result.failure(Exception())
                                         }
 
                                         val itemInMainHand = inventorySnapshot.itemInMainHand
@@ -74,7 +78,7 @@ internal class Compress(
                                                     "${config.prefix}<reset>: <red>You are not holding a shulker box."
                                                 )
                                             )
-                                            return@withLockSuspend Result.failure(Exception())
+                                            return@withInventoryLockSuspend Result.failure(Exception())
                                         }
 
                                         val blockStateMeta = itemInMainHand.itemMeta as BlockStateMeta
@@ -91,12 +95,17 @@ internal class Compress(
                                             "${config.prefix}<reset>: <#FFA500>Are you sure you want to compress the Diamond currency items in the shulker box you're holding? If so, run \"/compress yes\""
                                         )
                                     )
-                                    return@withLockSuspend Result.failure(Exception())
+                                    return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
-                                val shardsInInventory = inventory.countShards().toInt()
-                                val diamondsInInventory = inventory.countDiamonds().toInt()
-                                val diamondBlocksInInventory = inventory.countDiamondBlocks().toInt()
+                                // Make sure we use the PlayerInventory implementations if it is one
+                                val playerInventory = inventory as? PlayerInventory
+                                val shardsInInventory =
+                                    (playerInventory?.countShards() ?: inventory.countShards()).toInt()
+                                val diamondsInInventory =
+                                    (playerInventory?.countDiamonds() ?: inventory.countDiamonds()).toInt()
+                                val diamondBlocksInInventory =
+                                    (playerInventory?.countDiamondBlocks() ?: inventory.countDiamondBlocks()).toInt()
 
                                 finalShards = shardsInInventory
                                 finalDiamonds = diamondsInInventory
@@ -132,7 +141,7 @@ internal class Compress(
                                                 "${config.prefix}<reset>: <red>You do not have enough space in your ${if (isShulkerBox) "shulker box" else "inventory"} to compress all the Diamond currency items (<green>+$changeInDiamonds <aqua>Diamonds<red>)."
                                             )
                                         )
-                                        return@withLockSuspend Result.failure(Exception())
+                                        return@withInventoryLockSuspend Result.failure(Exception())
                                     }
                                 }
 
@@ -150,7 +159,7 @@ internal class Compress(
                                                 "${config.prefix}<reset>: <red>You do not have enough space in your ${if (isShulkerBox) "shulker box" else "inventory"} to compress all the Diamond currency items (<green>+$changeInDiamondBlocks <aqua>Diamond Blocks<red>)."
                                             )
                                         )
-                                        return@withLockSuspend Result.failure(Exception())
+                                        return@withInventoryLockSuspend Result.failure(Exception())
                                     }
                                 }
 
@@ -164,7 +173,7 @@ internal class Compress(
                                                 "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                             )
                                         )
-                                        return@withLockSuspend Result.failure(Exception())
+                                        return@withInventoryLockSuspend Result.failure(Exception())
                                     }
                                     summaryStringBuilder.append(
                                         "\n<red>$changeInShards Diamond Shard${if (changeInShards != -1) "s" else ""}"
@@ -179,7 +188,7 @@ internal class Compress(
                                                 "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                             )
                                         )
-                                        return@withLockSuspend Result.failure(Exception())
+                                        return@withInventoryLockSuspend Result.failure(Exception())
                                     }
                                     summaryStringBuilder.append(
                                         "\n<green>+$changeInDiamonds Diamond${if (changeInDiamonds != 1) "s" else ""}"
@@ -193,7 +202,7 @@ internal class Compress(
                                                 "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                             )
                                         )
-                                        return@withLockSuspend Result.failure(Exception())
+                                        return@withInventoryLockSuspend Result.failure(Exception())
                                     }
                                     summaryStringBuilder.append(
                                         "\n<red>$changeInDiamonds Diamond${if (changeInDiamonds != -1) "s" else ""}"
@@ -209,7 +218,7 @@ internal class Compress(
                                                 "${config.prefix}<reset>: <red>Something went wrong while trying to compress the Diamond currency items in your ${if (isShulkerBox) "shulker box" else "inventory"}."
                                             )
                                         )
-                                        return@withLockSuspend Result.failure(Exception())
+                                        return@withInventoryLockSuspend Result.failure(Exception())
                                     }
                                     summaryStringBuilder.append(
                                         "\n<green>+$changeInDiamondBlocks Diamond Block${if (changeInDiamondBlocks != 1) "s" else ""}"
@@ -225,10 +234,10 @@ internal class Compress(
                                     sender.sendMessage(
                                         mm.deserialize("${config.prefix}<reset>: <#FFA500>Nothing found to compress.")
                                     )
-                                    return@withLockSuspend Result.failure(Exception())
+                                    return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
-                                runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
+                                runOnMainThread { inventorySnapshot.restoreTo(sender.uniqueId) }
                                 Result.success(summaryStringBuilder.toString())
                             }
                             .getOrElse {

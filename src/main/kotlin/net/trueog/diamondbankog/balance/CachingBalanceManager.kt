@@ -176,7 +176,10 @@ internal class CachingBalanceManager private constructor() : BalanceManager {
         }
     }
 
-    override suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> = postgreSQL.getBaltop(offset)
+    override suspend fun getBaltop(offset: Int): Result<Map<UUID?, Long>> {
+        require(offset >= 0) { "offset must not be negative" }
+        return postgreSQL.getBaltop(offset)
+    }
 
     override suspend fun getBaltopWithUuid(uuid: UUID): Result<Pair<Map<UUID?, Long>, Long>> =
         postgreSQL.getBaltopWithUuid(uuid)

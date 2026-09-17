@@ -9,7 +9,7 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.balance.shard.PlayerShards
 import net.trueog.diamondbankog.balance.shard.ShardType
 import net.trueog.diamondbankog.transaction.CommonOperations
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withLockSuspend
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withInventoryLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
 import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
@@ -27,12 +27,15 @@ class DiamondBankAPIKotlin {
         uuid: UUID,
         shards: ULong,
         transactionReason: String,
-        notes: String?,
+        notes: String? = null,
     ): Result<Unit> {
         require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
+            val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+
             balanceManager.addToBankShards(uuid, shards.toLong()).getOrElse {
                 handleError(it)
                 return@withLockSuspend Result.failure(EconomyDisabledException())
@@ -57,12 +60,15 @@ class DiamondBankAPIKotlin {
         uuid: UUID,
         shards: ULong,
         transactionReason: String,
-        notes: String?,
+        notes: String? = null,
     ): Result<Unit> {
         require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
+            val player = Bukkit.getPlayer(uuid) ?: Bukkit.getOfflinePlayer(uuid)
+            if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
+
             balanceManager.subtractFromBankShards(uuid, shards.toLong()).getOrElse {
                 if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
                 handleError(it)
@@ -143,34 +149,39 @@ class DiamondBankAPIKotlin {
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
      */
     @Suppress("unused")
-    suspend fun consumeFromPlayer(uuid: UUID, shards: ULong, transactionReason: String, notes: String?): Result<Unit> {
+    suspend fun consumeFromPlayer(
+        uuid: UUID,
+        shards: ULong,
+        transactionReason: String,
+        notes: String? = null,
+    ): Result<Unit> {
         require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(uuid) {
-            val player = Bukkit.getPlayer(uuid) ?: return@withLockSuspend Result.failure(PlayerNotOnlineException())
+            val player = Bukkit.getOfflinePlayer(uuid)
             if (!player.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
-            player.inventory
-                .withLockSuspend {
-                    val inventorySnapshot = runOnMainThread { InventorySnapshot.from(player.inventory, balanceManager) }
+            player.uniqueId
+                .withInventoryLockSuspend {
+                    val inventorySnapshot = runOnMainThread { InventorySnapshot.from(player.uniqueId, balanceManager) }
 
                     val toSubtract =
                         CommonOperations.consume(player.uniqueId, shards.toLong(), inventorySnapshot).getOrElse {
                             if (it is DatabaseException) {
                                 handleError(it)
-                                return@withLockSuspend Result.failure(EconomyDisabledException())
+                                return@withInventoryLockSuspend Result.failure(EconomyDisabledException())
                             }
-                            return@withLockSuspend Result.failure(it)
+                            return@withInventoryLockSuspend Result.failure(it)
                         }
 
                     balanceManager.subtractFromBankShards(player.uniqueId, toSubtract).getOrElse {
-                        if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
+                        if (it is InsufficientBalanceException) return@withInventoryLockSuspend Result.failure(it)
                         handleError(it)
-                        return@withLockSuspend Result.failure(EconomyDisabledException())
+                        return@withInventoryLockSuspend Result.failure(EconomyDisabledException())
                     }
 
-                    runOnMainThread { inventorySnapshot.restoreTo(player.inventory) }
+                    runOnMainThread { inventorySnapshot.restoreTo(player.uniqueId) }
                     Result.success(Unit)
                 }
                 .getOrElse {
@@ -201,41 +212,40 @@ class DiamondBankAPIKotlin {
         receiverUuid: UUID,
         shards: ULong,
         transactionReason: String,
-        notes: String?,
+        notes: String? = null,
     ): Result<Unit> {
         require(shards <= Long.MAX_VALUE.toULong()) { "shards must not be above the max value of a Long" }
         if (economyDisabled) return Result.failure(EconomyDisabledException())
 
         return transactionLock.withLockSuspend(senderUuid) {
-            val sender =
-                Bukkit.getPlayer(senderUuid) ?: return@withLockSuspend Result.failure(SenderNotOnlineException())
+            val sender = Bukkit.getPlayer(senderUuid) ?: Bukkit.getOfflinePlayer(senderUuid)
             if (!sender.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
             val receiver = Bukkit.getPlayer(receiverUuid) ?: Bukkit.getOfflinePlayer(receiverUuid)
             if (!receiver.hasPlayedBefore()) return@withLockSuspend Result.failure(InvalidPlayerException())
 
-            sender.inventory
-                .withLockSuspend {
-                    val inventorySnapshot = runOnMainThread { InventorySnapshot.from(sender.inventory, balanceManager) }
+            sender.uniqueId
+                .withInventoryLockSuspend {
+                    val inventorySnapshot = runOnMainThread { InventorySnapshot.from(sender.uniqueId, balanceManager) }
 
                     val shardsToSubtractFromSender =
                         CommonOperations.consume(sender.uniqueId, shards.toLong(), inventorySnapshot).getOrElse {
                             if (it is DatabaseException) {
                                 handleError(it)
-                                return@withLockSuspend Result.failure(EconomyDisabledException())
+                                return@withInventoryLockSuspend Result.failure(EconomyDisabledException())
                             }
-                            return@withLockSuspend Result.failure(it)
+                            return@withInventoryLockSuspend Result.failure(it)
                         }
 
                     balanceManager
                         .transferBankShards(senderUuid, receiverUuid, shardsToSubtractFromSender, shards.toLong())
                         .getOrElse {
-                            if (it is InsufficientBalanceException) return@withLockSuspend Result.failure(it)
+                            if (it is InsufficientBalanceException) return@withInventoryLockSuspend Result.failure(it)
                             handleError(it)
-                            return@withLockSuspend Result.failure(EconomyDisabledException())
+                            return@withInventoryLockSuspend Result.failure(EconomyDisabledException())
                         }
 
-                    runOnMainThread { inventorySnapshot.restoreTo(sender.inventory) }
+                    runOnMainThread { inventorySnapshot.restoreTo(sender.uniqueId) }
                     Result.success(Unit)
                 }
                 .getOrElse {

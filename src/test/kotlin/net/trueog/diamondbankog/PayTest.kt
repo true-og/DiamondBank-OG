@@ -23,13 +23,13 @@ import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.balance.shard.ShardType
 import net.trueog.diamondbankog.config.Config
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isLocked
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isInventoryLocked
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.transaction.command.Pay
-import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
-import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
-import net.trueog.diamondbankog.util.InventoryExtensions.countShards
-import net.trueog.diamondbankog.util.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countTotal
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Server
@@ -193,7 +193,9 @@ class PayTest {
                 Arguments.of(
                     "1.8 Diamonds from inventory with overflow",
                     "1.8 <aqua>Diamonds",
-                    Array(35) { ItemStack(Material.DIRT, 1) } + arrayOf(ItemStack(Material.DIAMOND, 3)),
+                    Array(36) { ItemStack(Material.DIRT, 1) } +
+                        Array(4) { ItemStack(Material.AIR, 1) } +
+                        arrayOf(ItemStack(Material.DIAMOND, 3)),
                     0,
                     0,
                     "1.8",
@@ -206,7 +208,9 @@ class PayTest {
                 Arguments.of(
                     "1.1 Diamonds from inventory with diamond block with overflow",
                     "1.1 <aqua>Diamonds",
-                    Array(35) { ItemStack(Material.DIRT, 1) } + arrayOf(ItemStack(Material.DIAMOND_BLOCK, 2)),
+                    Array(36) { ItemStack(Material.DIRT, 1) } +
+                        Array(4) { ItemStack(Material.AIR, 1) } +
+                        arrayOf(ItemStack(Material.DIAMOND_BLOCK, 2)),
                     0,
                     0,
                     "1.1",
@@ -307,7 +311,7 @@ class PayTest {
                 add { assertEquals(invShardCount, inventory.countShards(), "Shard count") }
                 add { assertEquals(invDiamondCount, inventory.countDiamonds(), "Diamond count") }
                 add { assertEquals(invDiamondBlockCount, inventory.countDiamondBlocks(), "Diamond block count") }
-                add { assertFalse(inventory.isLocked(), "Inventory locked") }
+                add { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") }
                 add { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") }
             }
         )
@@ -333,7 +337,7 @@ class PayTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -359,7 +363,7 @@ class PayTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -385,7 +389,7 @@ class PayTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -411,7 +415,7 @@ class PayTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -437,7 +441,7 @@ class PayTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -461,7 +465,7 @@ class PayTest {
             { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $errorMessage.")) } },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -486,7 +490,7 @@ class PayTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }

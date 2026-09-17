@@ -17,12 +17,12 @@ import net.trueog.diamondbankog.Utils.waitForCoroutines
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.ShardType
 import net.trueog.diamondbankog.config.Config
-import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isLocked
+import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isInventoryLocked
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.transaction.command.Withdraw
-import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
-import net.trueog.diamondbankog.util.InventoryExtensions.countShards
-import net.trueog.diamondbankog.util.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countTotal
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Server
@@ -63,6 +63,7 @@ class WithdrawTest {
 
         every { Bukkit.getPlayer("player") } returns player
         every { server.getPlayer("player") } returns player
+        every { server.getPlayer(playerUuid) } returns player
 
         coEvery { balanceManager.addToBankShards(any(), any()) } returns Result.success(Unit)
         coEvery { balanceManager.setPlayerShards(any(), any(), ShardType.INVENTORY) } returns Result.success(Unit)
@@ -117,7 +118,7 @@ class WithdrawTest {
             { coVerify { balanceManager.subtractFromBankShards(playerUuid, removedShardCount) } },
             { assertEquals(invShardsCount, inventory.countShards(), "Shard count") },
             { assertEquals(invDiamondsCount, inventory.countDiamonds(), "Diamond count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -142,7 +143,7 @@ class WithdrawTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -168,7 +169,7 @@ class WithdrawTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -194,7 +195,7 @@ class WithdrawTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -220,7 +221,7 @@ class WithdrawTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -245,7 +246,7 @@ class WithdrawTest {
                 { verify { player.sendMessage(Component.text("DiamondBank-OG<reset>: $errorMessage.")) } },
                 { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
                 { assertEquals(0, inventory.countTotal(), "Total count") },
-                { assertFalse(inventory.isLocked(), "Inventory locked") },
+                { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
                 { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
             )
         }
@@ -270,7 +271,7 @@ class WithdrawTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -297,7 +298,7 @@ class WithdrawTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
@@ -306,7 +307,7 @@ class WithdrawTest {
     @DisplayName("Withdraw when not enough inventory space should fail")
     fun withdrawNotEnoughInventorySpace() = runTest {
         coEvery { balanceManager.getBankShards(playerUuid) } returns Result.success(18)
-        val inventory = mockPlayerInventory(player, playerUuid, Array(36) { ItemStack(Material.DIRT, 1) })
+        val inventory = mockPlayerInventory(player, playerUuid, Array(41) { ItemStack(Material.DIRT, 1) })
 
         val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf("2"))
@@ -324,7 +325,7 @@ class WithdrawTest {
             },
             { coVerify(exactly = 0) { balanceManager.subtractFromBankShards(any(), any()) } },
             { assertEquals(0, inventory.countTotal(), "Total count") },
-            { assertFalse(inventory.isLocked(), "Inventory locked") },
+            { assertFalse(playerUuid.isInventoryLocked(), "Inventory locked") },
             { assertFalse(transactionLock.isLocked(playerUuid), "Transaction lock") },
         )
     }
