@@ -5,6 +5,9 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.config.Config
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
@@ -99,34 +102,22 @@ object InventorySnapshotUtils {
 
     /** @return the amount of shards that could be removed */
     fun removeAllShards(inventory: InventorySnapshot): Int {
-        val shards = countShards(inventory)
+        val shards = inventory.countShards().toInt()
         inventory.removeItem(Shard.createItemStack(shards))
         return shards
     }
 
     /** @return the amount of diamonds that could be removed */
     fun removeAllDiamonds(inventory: InventorySnapshot): Int {
-        val diamonds = countDiamonds(inventory)
+        val diamonds = inventory.countDiamonds().toInt()
         inventory.remove(Material.DIAMOND)
         return diamonds
     }
 
     /** @return the amount of diamond blocks that could be removed */
     fun removeAllDiamondBlocks(inventory: InventorySnapshot): Int {
-        val diamondBlocks = countDiamondBlocks(inventory)
+        val diamondBlocks = inventory.countDiamondBlocks().toInt()
         inventory.remove(Material.DIAMOND_BLOCK)
         return diamondBlocks
-    }
-
-    fun countShards(inventory: InventorySnapshot): Int {
-        return inventory.all(Material.PRISMARINE_SHARD).values.filter { Shard.isShardItem(it) }.sumOf { it.amount }
-    }
-
-    fun countDiamonds(inventory: InventorySnapshot): Int {
-        return inventory.all(Material.DIAMOND).values.sumOf { it.amount }
-    }
-
-    fun countDiamondBlocks(inventory: InventorySnapshot): Int {
-        return inventory.all(Material.DIAMOND_BLOCK).values.sumOf { it.amount }
     }
 }
