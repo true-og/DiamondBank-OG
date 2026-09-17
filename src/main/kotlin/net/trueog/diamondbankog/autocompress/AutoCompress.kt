@@ -10,10 +10,10 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withInventoryLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
-import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
-import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
-import net.trueog.diamondbankog.util.InventoryExtensions.countShards
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack

@@ -20,9 +20,9 @@ import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isInventoryLocked
 import net.trueog.diamondbankog.transaction.TransactionLock
 import net.trueog.diamondbankog.transaction.command.Withdraw
-import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
-import net.trueog.diamondbankog.util.InventoryExtensions.countShards
-import net.trueog.diamondbankog.util.InventoryExtensions.countTotal
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countTotal
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Server
@@ -307,7 +307,7 @@ class WithdrawTest {
     @DisplayName("Withdraw when not enough inventory space should fail")
     fun withdrawNotEnoughInventorySpace() = runTest {
         coEvery { balanceManager.getBankShards(playerUuid) } returns Result.success(18)
-        val inventory = mockPlayerInventory(player, playerUuid, Array(36) { ItemStack(Material.DIRT, 1) })
+        val inventory = mockPlayerInventory(player, playerUuid, Array(41) { ItemStack(Material.DIRT, 1) })
 
         val withdraw = Withdraw(config, balanceManager, mm, scope, transactionLock)
         withdraw.onCommand(player, command, "withdraw", arrayOf("2"))

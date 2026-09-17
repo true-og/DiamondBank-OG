@@ -30,6 +30,9 @@ import net.trueog.diamondbankog.transaction.command.Compress
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.util.InventoryExtensions.countShards
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Server
@@ -129,7 +132,9 @@ class CompressTest {
             listOf(
                 Arguments.of(
                     "10 shards",
-                    Array(35) { ItemStack(Material.DIRT, 1) } + arrayOf(Shard.createItemStack(10)),
+                    Array(36) { ItemStack(Material.DIRT, 1) } +
+                        Array(4) { ItemStack(Material.AIR, 1) } +
+                        arrayOf(Shard.createItemStack(10)),
                     "You do not have enough space in your inventory to compress all the Diamond currency items (<green>+1 <aqua>Diamonds<red>).",
                     10,
                     0,
@@ -137,7 +142,9 @@ class CompressTest {
                 ),
                 Arguments.of(
                     "10 diamonds",
-                    Array(35) { ItemStack(Material.DIRT, 1) } + arrayOf(ItemStack(Material.DIAMOND, 10)),
+                    Array(36) { ItemStack(Material.DIRT, 1) } +
+                        Array(4) { ItemStack(Material.AIR, 1) } +
+                        arrayOf(ItemStack(Material.DIAMOND, 10)),
                     "You do not have enough space in your inventory to compress all the Diamond currency items (<green>+1 <aqua>Diamond Blocks<red>).",
                     0,
                     10,

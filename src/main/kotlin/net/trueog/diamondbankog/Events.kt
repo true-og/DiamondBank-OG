@@ -16,6 +16,7 @@ import net.trueog.diamondbankog.transaction.InventoryLockExtensions.isInventoryL
 import net.trueog.diamondbankog.util.ErrorHandler.handleError
 import net.trueog.diamondbankog.util.InventoryExtensions.countTotal
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countTotal
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player

@@ -16,12 +16,16 @@ import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.util.InventoryExtensions.countShards
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
+import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.PlayerInventory
 import org.bukkit.inventory.meta.BlockStateMeta
 
 internal class Compress(
@@ -94,9 +98,14 @@ internal class Compress(
                                     return@withInventoryLockSuspend Result.failure(Exception())
                                 }
 
-                                val shardsInInventory = inventory.countShards().toInt()
-                                val diamondsInInventory = inventory.countDiamonds().toInt()
-                                val diamondBlocksInInventory = inventory.countDiamondBlocks().toInt()
+                                // Make sure we use the PlayerInventory implementations if it is one
+                                val playerInventory = inventory as? PlayerInventory
+                                val shardsInInventory =
+                                    (playerInventory?.countShards() ?: inventory.countShards()).toInt()
+                                val diamondsInInventory =
+                                    (playerInventory?.countDiamonds() ?: inventory.countDiamonds()).toInt()
+                                val diamondBlocksInInventory =
+                                    (playerInventory?.countDiamondBlocks() ?: inventory.countDiamondBlocks()).toInt()
 
                                 finalShards = shardsInInventory
                                 finalDiamonds = diamondsInInventory

@@ -22,13 +22,15 @@ object Utils {
 
     fun mockPlayerInventory(player: Player, uuid: UUID, contents: Array<ItemStack?>): PlayerInventory {
         val playerInventory = mockk<PlayerInventory>()
-        var contents = contents.copyOf(36)
+        var contents = contents.copyOf(41)
         every { playerInventory.contents } answers { contents }
-        every { playerInventory.storageContents = any() } answers { contents = firstArg() }
+        every { playerInventory.contents = any() } answers { contents = firstArg() }
+        every { playerInventory.armorContents } answers { contents.dropLast(1).takeLast(4).toTypedArray() }
+        every { playerInventory.itemInOffHand } answers { contents[40] ?: ItemStack(Material.AIR) }
         every { playerInventory.all(any<Material>()) } answers
             {
                 val material = firstArg<Material>()
-                allImpl(contents, material)
+                allImpl(contents.take(36).toTypedArray(), material)
             }
         every { playerInventory.heldItemSlot } returns 0
         every { playerInventory.holder!!.uniqueId } returns uuid
