@@ -18,7 +18,7 @@ import org.bukkit.entity.Player
 
 class DiamondBankAPIKotlin {
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
@@ -51,7 +51,7 @@ class DiamondBankAPIKotlin {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
@@ -84,21 +84,21 @@ class DiamondBankAPIKotlin {
         }
     }
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused") suspend fun getBankShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.BANK)
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused")
     suspend fun getInventoryShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.INVENTORY)
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused")
     suspend fun getEnderChestShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused") suspend fun getTotalShards(uuid: UUID): Result<Long> = getShardTypeShards(uuid, ShardType.TOTAL)
 
-    /** WARNING: if the player has a transaction lock applied this function will wait until its released */
+    /** WARNING: if the player has a transaction lock applied this function will block until its released */
     @Suppress("unused")
     suspend fun getAllShards(uuid: UUID): Result<PlayerShards> {
         if (economyDisabled) return Result.failure(EconomyDisabledException())
@@ -144,7 +144,7 @@ class DiamondBankAPIKotlin {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * @param transactionReason the reason for this transaction for in the transaction log
      * @param notes any specifics for this transaction that may be nice to know for in the transaction log
@@ -198,7 +198,7 @@ class DiamondBankAPIKotlin {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * WARNING: This function can return a CouldNotRemoveEnoughException, make sure you handle it properly. It has a
      * field called notRemoved that has the amount of shards not removed, you should continue with the originally

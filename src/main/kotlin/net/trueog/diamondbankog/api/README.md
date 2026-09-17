@@ -30,7 +30,7 @@ Exceptions are only applicable when using the Java API, when using the Kotlin AP
 ### addToPlayerShards
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released.
+ * WARNING: if the player has a transaction lock applied this function will block until its released.
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
@@ -54,7 +54,7 @@ public void addToPlayerBankShards(UUID uuid, long shards, String transactionReas
 ### subtractFromPlayerBankShards
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released
+ * WARNING: if the player has a transaction lock applied this function will block until its released
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
@@ -79,7 +79,7 @@ public void subtractFromPlayerBankShards(UUID uuid, long shards, String transact
 ### getBankShards
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released
+ * WARNING: if the player has a transaction lock applied this function will block until its released
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
@@ -99,7 +99,7 @@ public long getBankShards(UUID uuid)
 ### getInventoryShards
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released
+ * WARNING: if the player has a transaction lock applied this function will block until its released
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
@@ -119,7 +119,7 @@ public long getInventoryShards(UUID uuid)
 ### getEnderChestShards
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released
+ * WARNING: if the player has a transaction lock applied this function will block until its released
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
@@ -139,7 +139,7 @@ public long getEnderChestShards(UUID uuid)
 ### getTotalShards
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released
+ * WARNING: if the player has a transaction lock applied this function will block until its released
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
@@ -160,7 +160,7 @@ public long getTotalShards(UUID uuid)
 ### getBaltop
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released
+ * WARNING: if the player has a transaction lock applied this function will block until its released
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
@@ -180,7 +180,7 @@ public Map<@Nullable UUID, Long> getBaltop(int offset)
 ### consumeFromPlayer
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released
+ * WARNING: if the player has a transaction lock applied this function will block until its released
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture
@@ -205,7 +205,7 @@ public void consumeFromPlayer(UUID uuid, long shards, String transactionReason, 
 ### playerPayPlayer
 ```kotlin
 /**
- * WARNING: if the player has a transaction lock applied this function will wait until its released
+ * WARNING: if the player has a transaction lock applied this function will block until its released
  *
  * This function also blocks for the database call, this is so you don't have to manually run .get() on a
  * CompletableFuture

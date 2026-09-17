@@ -20,7 +20,7 @@ import org.bukkit.entity.Player
 
 class DiamondBankAPIJava {
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released.
+     * WARNING: if the player has a transaction lock applied this function will block until its released.
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -55,7 +55,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -92,7 +92,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -104,7 +104,7 @@ class DiamondBankAPIJava {
     fun getBankShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.BANK)
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -116,7 +116,7 @@ class DiamondBankAPIJava {
     fun getInventoryShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.INVENTORY)
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -128,7 +128,7 @@ class DiamondBankAPIJava {
     fun getEnderChestShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.ENDER_CHEST)
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -140,7 +140,7 @@ class DiamondBankAPIJava {
     fun getTotalShards(uuid: UUID): Long = getShardTypeShards(uuid, ShardType.TOTAL)
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -184,7 +184,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -205,7 +205,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
@@ -257,7 +257,7 @@ class DiamondBankAPIJava {
     }
 
     /**
-     * WARNING: if the player has a transaction lock applied this function will wait until its released
+     * WARNING: if the player has a transaction lock applied this function will block until its released
      *
      * This function also blocks for the database call, this is so you don't have to manually run .get() on a
      * CompletableFuture
