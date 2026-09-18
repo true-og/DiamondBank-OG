@@ -151,24 +151,24 @@ internal class Events : Listener {
         val worldName = player.world.name
         if (!vanillaWorlds.contains(worldName)) return
 
-        val itemStack = event.item.itemStack
-        val itemType = itemStack.type
-        if (
-            itemType != Material.DIAMOND &&
-                itemType != Material.DIAMOND_BLOCK &&
-                itemType != Material.SHULKER_BOX &&
-                !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
-        ) {
-            return
-        }
-
         if (economyDisabled) {
+            val itemStack = event.item.itemStack
+            val itemType = itemStack.type
+            if (
+                itemType != Material.DIAMOND &&
+                    itemType != Material.DIAMOND_BLOCK &&
+                    itemType != Material.SHULKER_BOX &&
+                    !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
+            ) {
+                return
+            }
+
+            event.isCancelled = true
             player.sendMessage(
                 mm.deserialize(
                     "${config.prefix}<reset>: <red>You cannot pick up any economy-related items while the economy is disabled."
                 )
             )
-            event.isCancelled = true
             return
         }
 
@@ -202,18 +202,18 @@ internal class Events : Listener {
         val worldName = event.player.world.name
         if (!vanillaWorlds.contains(worldName)) return
 
-        val itemStack = event.itemDrop.itemStack
-        val itemType = itemStack.type
-        if (
-            itemType != Material.DIAMOND &&
-                itemType != Material.DIAMOND_BLOCK &&
-                itemType != Material.SHULKER_BOX &&
-                !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
-        ) {
-            return
-        }
-
         if (economyDisabled) {
+            val itemStack = event.itemDrop.itemStack
+            val itemType = itemStack.type
+            if (
+                itemType != Material.DIAMOND &&
+                    itemType != Material.DIAMOND_BLOCK &&
+                    itemType != Material.SHULKER_BOX &&
+                    !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
+            ) {
+                return
+            }
+
             event.isCancelled = true
             event.player.sendMessage(
                 mm.deserialize(
@@ -240,26 +240,25 @@ internal class Events : Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    fun onInventoryMoveItem(event: InventoryClickEvent) {
+    fun onInventoryClickEvent(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
         val worldName = player.world.name
         if (!vanillaWorlds.contains(worldName)) return
 
-        if (event.inventory.type == InventoryType.CRAFTING) return
-
-        val itemStack = event.currentItem ?: return
-        val itemType = itemStack.type
-
-        if (
-            itemType != Material.DIAMOND &&
-                itemType != Material.DIAMOND_BLOCK &&
-                itemType != Material.SHULKER_BOX &&
-                !(itemType == Material.PRISMARINE_SHARD && itemStack.persistentDataContainer.has(Shard.namespacedKey))
-        ) {
-            return
-        }
-
         if (economyDisabled) {
+            val itemStack = event.currentItem ?: return
+            val itemType = itemStack.type
+
+            if (
+                itemType != Material.DIAMOND &&
+                    itemType != Material.DIAMOND_BLOCK &&
+                    itemType != Material.SHULKER_BOX &&
+                    !(itemType == Material.PRISMARINE_SHARD &&
+                        itemStack.persistentDataContainer.has(Shard.namespacedKey))
+            ) {
+                return
+            }
+
             event.isCancelled = true
             player.sendMessage(
                 mm.deserialize(
@@ -284,25 +283,25 @@ internal class Events : Listener {
         val clickedBlock = event.clickedBlock ?: return
         if (clickedBlock.type == Material.AIR) return
 
-        if (event.action.isLeftClick) {
-            if (clickedBlock.type != Material.DIAMOND_BLOCK && clickedBlock.type != Material.SHULKER_BOX) {
-                return
-            }
-        } else {
-            val itemStack = event.item ?: return
-            val itemType = itemStack.type
-
-            if (
-                itemType != Material.DIAMOND &&
-                    itemType != Material.DIAMOND_BLOCK &&
-                    itemType != Material.SHULKER_BOX &&
-                    !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
-            ) {
-                return
-            }
-        }
-
         if (economyDisabled) {
+            if (event.action.isLeftClick) {
+                if (clickedBlock.type != Material.DIAMOND_BLOCK && clickedBlock.type != Material.SHULKER_BOX) {
+                    return
+                }
+            } else {
+                val itemStack = event.item ?: return
+                val itemType = itemStack.type
+
+                if (
+                    itemType != Material.DIAMOND &&
+                        itemType != Material.DIAMOND_BLOCK &&
+                        itemType != Material.SHULKER_BOX &&
+                        !(itemType == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStack))
+                ) {
+                    return
+                }
+            }
+
             event.isCancelled = true
             event.player.sendMessage(
                 mm.deserialize(
@@ -324,26 +323,26 @@ internal class Events : Listener {
         val worldName = player.world.name
         if (!vanillaWorlds.contains(worldName)) return
 
-        val itemStackInMainHand = player.inventory.itemInMainHand
-        val itemTypeInMainHand = itemStackInMainHand.type
-
-        val itemStackInOffHand = player.inventory.itemInOffHand
-        val itemTypeInOffHand = itemStackInOffHand.type
-
-        if (
-            (itemTypeInMainHand != Material.DIAMOND &&
-                itemTypeInMainHand != Material.DIAMOND_BLOCK &&
-                itemTypeInMainHand != Material.SHULKER_BOX &&
-                !(itemTypeInMainHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInMainHand)) &&
-                (itemTypeInOffHand != Material.DIAMOND &&
-                    itemTypeInOffHand != Material.DIAMOND_BLOCK &&
-                    itemTypeInOffHand != Material.SHULKER_BOX &&
-                    !(itemTypeInOffHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInOffHand))))
-        ) {
-            return
-        }
-
         if (economyDisabled) {
+            val itemStackInMainHand = player.inventory.itemInMainHand
+            val itemTypeInMainHand = itemStackInMainHand.type
+
+            val itemStackInOffHand = player.inventory.itemInOffHand
+            val itemTypeInOffHand = itemStackInOffHand.type
+
+            if (
+                (itemTypeInMainHand != Material.DIAMOND &&
+                    itemTypeInMainHand != Material.DIAMOND_BLOCK &&
+                    itemTypeInMainHand != Material.SHULKER_BOX &&
+                    !(itemTypeInMainHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInMainHand)) &&
+                    (itemTypeInOffHand != Material.DIAMOND &&
+                        itemTypeInOffHand != Material.DIAMOND_BLOCK &&
+                        itemTypeInOffHand != Material.SHULKER_BOX &&
+                        !(itemTypeInOffHand == Material.PRISMARINE_SHARD && Shard.isShardItem(itemStackInOffHand))))
+            ) {
+                return
+            }
+
             event.isCancelled = true
             event.player.sendMessage(
                 mm.deserialize(
