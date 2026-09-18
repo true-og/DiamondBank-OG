@@ -243,9 +243,7 @@ private constructor(
                     toDelete -= removed
 
                     if (itemStack.amount == 0) {
-                        contents[firstSlot] = null
-                    } else {
-                        contents[firstSlot] = itemStack
+                        setItem(firstSlot, null)
                     }
                 }
             }

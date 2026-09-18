@@ -10,6 +10,7 @@ import net.trueog.diamondbankog.DiamondBankOG.Companion.transactionLock
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.transaction.InventoryLockExtensions.withInventoryLockSuspend
 import net.trueog.diamondbankog.transaction.InventorySnapshot
+import net.trueog.diamondbankog.util.InventoryExtensions.removeItemWithSameKey
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
@@ -98,7 +99,8 @@ internal object AutoCompress {
                     }
 
                     if (changeInShards < 0) {
-                        val removeMap = inventorySnapshot.removeItem(Shard.createItemStack(abs(changeInShards)))
+                        val removeMap =
+                            inventorySnapshot.removeItemWithSameKey(Shard.createItemStack(abs(changeInShards)))
                         if (removeMap.isNotEmpty()) {
                             player.sendMessage(
                                 mm.deserialize(

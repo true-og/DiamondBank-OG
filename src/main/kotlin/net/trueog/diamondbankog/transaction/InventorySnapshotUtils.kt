@@ -5,6 +5,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.trueog.diamondbankog.balance.BalanceManager
 import net.trueog.diamondbankog.balance.shard.Shard
 import net.trueog.diamondbankog.config.Config
+import net.trueog.diamondbankog.util.InventoryExtensions.removeItemWithSameKey
 import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countShards
@@ -25,7 +26,7 @@ object InventorySnapshotUtils {
 
         val shards = shards.toInt()
 
-        val notRemovedShards = inventory.removeItem(Shard.createItemStack(shards)).values.sumOf { it.amount }
+        val notRemovedShards = inventory.removeItemWithSameKey(Shard.createItemStack(shards)).values.sumOf { it.amount }
         if (notRemovedShards == 0) return Result.success(shards)
 
         val diamondsToBeRemoved = ceil(notRemovedShards / 9.0).toInt()
@@ -103,7 +104,7 @@ object InventorySnapshotUtils {
     /** @return the amount of shards that could be removed */
     fun removeAllShards(inventory: InventorySnapshot): Int {
         val shards = inventory.countShards().toInt()
-        inventory.removeItem(Shard.createItemStack(shards))
+        inventory.removeItemWithSameKey(Shard.createItemStack(shards))
         return shards
     }
 

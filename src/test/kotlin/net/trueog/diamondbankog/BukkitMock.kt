@@ -105,7 +105,7 @@ object BukkitMock {
             {
                 val itemMeta = firstArg<ItemMeta>()
                 val persistentDataContainerKeys = mutableSetOf<NamespacedKey>()
-                val displayName = itemMeta.displayName()
+                var displayName = itemMeta.displayName()
                 itemMeta.persistentDataContainer.keys.forEach { persistentDataContainerKeys.add(it) }
 
                 val material = secondArg<Material>()
@@ -118,6 +118,7 @@ object BukkitMock {
 
                 every { newItemMeta.clone() } returns newItemMeta
                 every { newItemMeta.displayName() } answers { displayName }
+                every { newItemMeta.displayName(any()) } answers { displayName = firstArg<Component>() }
                 every { newItemMeta.persistentDataContainer.has(any()) } answers
                     {
                         val key = firstArg<NamespacedKey>()
@@ -177,6 +178,10 @@ object BukkitMock {
         var contents = arrayOfNulls<ItemStack>(36)
         every { inventory.contents = any<Array<ItemStack?>>() } answers { contents = firstArg<Array<ItemStack?>>() }
         every { inventory.contents } answers { contents }
+        every { inventory.setItem(any<Int>(), anyNullable<ItemStack?>()) } answers
+            {
+                contents[firstArg()] = secondArg()
+            }
         every { inventory.storageContents } answers { contents }
         every { inventory.all(any<Material>()) } answers
             {
