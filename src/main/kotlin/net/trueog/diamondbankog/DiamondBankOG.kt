@@ -100,6 +100,28 @@ internal class DiamondBankOG : JavaPlugin() {
 
         this.server.pluginManager.registerEvents(Events(), this)
 
+        setUpCommands()
+
+        Shard.createCraftingRecipes()
+
+        val diamondBankAPIJava = DiamondBankAPIJava()
+        this.server.servicesManager.register(
+            DiamondBankAPIJava::class.java,
+            diamondBankAPIJava,
+            this,
+            ServicePriority.Normal,
+        )
+
+        val diamondBankAPIKotlin = DiamondBankAPIKotlin()
+        this.server.servicesManager.register(
+            DiamondBankAPIKotlin::class.java,
+            diamondBankAPIKotlin,
+            this,
+            ServicePriority.Normal,
+        )
+    }
+
+    fun setUpCommands() {
         this.getCommand("deposit")?.setExecutor(Deposit())
         this.getCommand("withdraw")?.setExecutor(Withdraw())
         this.getCommand("setbankbalance")?.setExecutor(SetBankBalance())
@@ -120,24 +142,6 @@ internal class DiamondBankOG : JavaPlugin() {
         this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
 
         this.getCommand("dbogtoggledebug")?.setExecutor(ToggleDebug())
-
-        Shard.createCraftingRecipes()
-
-        val diamondBankAPIJava = DiamondBankAPIJava()
-        this.server.servicesManager.register(
-            DiamondBankAPIJava::class.java,
-            diamondBankAPIJava,
-            this,
-            ServicePriority.Normal,
-        )
-
-        val diamondBankAPIKotlin = DiamondBankAPIKotlin()
-        this.server.servicesManager.register(
-            DiamondBankAPIKotlin::class.java,
-            diamondBankAPIKotlin,
-            this,
-            ServicePriority.Normal,
-        )
     }
 
     override fun onDisable() {
