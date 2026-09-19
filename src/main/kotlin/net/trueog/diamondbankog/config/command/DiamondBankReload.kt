@@ -13,6 +13,13 @@ import org.bukkit.command.CommandSender
 
 internal class DiamondBankReload : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
+        if (!sender.hasPermission("diamondbank-og.admin")) {
+            sender.sendMessage(
+                mm.deserialize("${config.prefix}<reset>: <red>You do not have permission to use this command.")
+            )
+            return true
+        }
+
         config =
             YamlConfig.create()
                 ?: run {

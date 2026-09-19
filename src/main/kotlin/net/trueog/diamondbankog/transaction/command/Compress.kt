@@ -15,6 +15,7 @@ import net.trueog.diamondbankog.util.CommonCommandInterlude
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.util.InventoryExtensions.countDiamonds
 import net.trueog.diamondbankog.util.InventoryExtensions.countShards
+import net.trueog.diamondbankog.util.InventoryExtensions.removeItemWithSameKey
 import net.trueog.diamondbankog.util.MainThreadBlock.runOnMainThread
 import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamondBlocks
 import net.trueog.diamondbankog.util.PlayerInventoryExtensions.countDiamonds
@@ -166,7 +167,8 @@ internal class Compress(
                                 val summaryStringBuilder = StringBuilder("Compression Summary:")
 
                                 if (changeInShards < 0) {
-                                    val removeMap = inventory.removeItem(Shard.createItemStack(abs(changeInShards)))
+                                    val removeMap =
+                                        inventory.removeItemWithSameKey(Shard.createItemStack(abs(changeInShards)))
                                     if (removeMap.isNotEmpty()) {
                                         sender.sendMessage(
                                             mm.deserialize(

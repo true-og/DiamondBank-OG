@@ -191,6 +191,22 @@ class DepositTest {
                     0,
                     1,
                 ),
+                Arguments.of(
+                    "2 renamed Diamond Shards",
+                    "0.2 <aqua>Diamonds",
+                    arrayOf(
+                        Shard.createItemStack(2).apply {
+                            val meta = itemMeta
+                            meta.displayName(Component.text("Renamed Diamond Shard"))
+                            itemMeta = meta
+                        }
+                    ),
+                    "0.2",
+                    arrayOf<Long>(2),
+                    0,
+                    0,
+                    0,
+                ),
             )
     }
 
