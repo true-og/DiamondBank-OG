@@ -145,6 +145,10 @@ internal class DiamondBankOG : JavaPlugin() {
     }
 
     override fun onDisable() {
+        scope.cancel()
+
+        runBlocking { scope.coroutineContext[Job]?.join() }
+
         if (isRedisInitialized()) {
             redis.shutdown()
         }
@@ -152,10 +156,6 @@ internal class DiamondBankOG : JavaPlugin() {
         if (isBalanceManagerInitialized()) {
             balanceManager.shutdown()
         }
-
-        scope.cancel()
-
-        runBlocking { scope.coroutineContext[Job]?.join() }
 
         transactionLock.removeAllLocks()
     }
