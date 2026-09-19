@@ -1,4 +1,4 @@
-package net.trueog.diamondbankog
+package net.trueog.diamondbankog.commands
 
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -15,6 +15,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.luckperms.api.LuckPerms
 import net.luckperms.api.model.user.User
 import net.luckperms.api.node.Node
+import net.trueog.diamondbankog.BukkitMock
 import net.trueog.diamondbankog.Constants.otherPlayerUuid
 import net.trueog.diamondbankog.Constants.playerUuid
 import net.trueog.diamondbankog.Utils.mockPlayerInventory

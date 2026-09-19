@@ -1,12 +1,12 @@
 package net.trueog.diamondbankog.balance.command
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import net.kyori.adventure.text.minimessage.MiniMessage
 import net.trueog.diamondbankog.DiamondBankOG
-import net.trueog.diamondbankog.DiamondBankOG.Companion.balanceManager
-import net.trueog.diamondbankog.DiamondBankOG.Companion.config
 import net.trueog.diamondbankog.DiamondBankOG.Companion.economyDisabled
-import net.trueog.diamondbankog.DiamondBankOG.Companion.mm
-import net.trueog.diamondbankog.DiamondBankOG.Companion.scope
+import net.trueog.diamondbankog.balance.BalanceManager
+import net.trueog.diamondbankog.config.Config
 import net.trueog.diamondbankog.transaction.CommonOperations
 import net.trueog.diamondbankog.util.PlayerPrefix.getPrefix
 import org.bukkit.command.Command
@@ -14,7 +14,12 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-internal class Balance : CommandExecutor {
+internal class Balance(
+    val config: Config = DiamondBankOG.config,
+    val balanceManager: BalanceManager = DiamondBankOG.balanceManager,
+    val mm: MiniMessage = DiamondBankOG.mm,
+    val scope: CoroutineScope = DiamondBankOG.scope,
+) : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         scope.launch {
             if (economyDisabled) {

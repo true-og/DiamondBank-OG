@@ -13,7 +13,7 @@ import org.bukkit.entity.Item
 import org.bukkit.entity.Player
 
 internal object AutoDeposit {
-    fun deposit(player: Player, item: Item) {
+    fun deposit(player: Player, item: Item, remaining: Int) {
         val worldName = player.world.name
         if (worldName != "world" && worldName != "world_nether" && worldName != "world_the_end") {
             return
@@ -24,7 +24,7 @@ internal object AutoDeposit {
             return
         }
 
-        val itemStack = item.itemStack
+        val itemStack = item.itemStack.clone().apply { amount += remaining }
         val shards =
             if (itemStack.type == Material.DIAMOND_BLOCK) {
                 (itemStack.amount * 9 * 9).toLong()

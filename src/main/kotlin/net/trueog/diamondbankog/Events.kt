@@ -145,7 +145,7 @@ internal class Events : Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onEntityPickupItem(event: EntityPickupItemEvent) {
         val player = event.entity as? Player ?: return
         val worldName = player.world.name
@@ -178,7 +178,7 @@ internal class Events : Listener {
         }
 
         if (redis.getValue("diamondbankog:${player.uniqueId}:autodeposit") == "true") {
-            deposit(player, event.item)
+            deposit(player, event.item, event.remaining)
         }
 
         scope.launch {
@@ -197,7 +197,7 @@ internal class Events : Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
         val worldName = event.player.world.name
         if (!vanillaWorlds.contains(worldName)) return
@@ -239,7 +239,7 @@ internal class Events : Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onInventoryClickEvent(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
         val worldName = player.world.name
@@ -317,7 +317,7 @@ internal class Events : Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onPlayerInteractEntity(event: PlayerInteractEntityEvent) {
         val player = event.player
         val worldName = player.world.name

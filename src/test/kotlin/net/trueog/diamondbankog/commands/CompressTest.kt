@@ -1,4 +1,4 @@
-package net.trueog.diamondbankog
+package net.trueog.diamondbankog.commands
 
 import io.mockk.MockKAnnotations
 import io.mockk.Runs
@@ -17,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.runTest
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
+import net.trueog.diamondbankog.BukkitMock
 import net.trueog.diamondbankog.Constants.playerUuid
 import net.trueog.diamondbankog.Utils.mockPlayerInventory
 import net.trueog.diamondbankog.Utils.waitForCoroutines

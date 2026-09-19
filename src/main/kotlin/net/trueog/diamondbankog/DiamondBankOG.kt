@@ -100,26 +100,7 @@ internal class DiamondBankOG : JavaPlugin() {
 
         this.server.pluginManager.registerEvents(Events(), this)
 
-        this.getCommand("deposit")?.setExecutor(Deposit())
-        this.getCommand("withdraw")?.setExecutor(Withdraw())
-        this.getCommand("setbankbalance")?.setExecutor(SetBankBalance())
-        this.getCommand("setbankbal")?.setExecutor(SetBankBalance())
-        this.getCommand("pay")?.setExecutor(Pay())
-        this.getCommand("balancetop")?.setExecutor(Balancetop())
-        this.getCommand("baltop")?.setExecutor(Balancetop())
-        this.getCommand("balance")?.setExecutor(Balance())
-        this.getCommand("bal")?.setExecutor(Balance())
-        this.getCommand("compress")?.setExecutor(Compress())
-        this.getCommand("autocompress")?.setExecutor(AutoCompress())
-        this.getCommand("autodeposit")?.setExecutor(AutoDeposit())
-
-        this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
-        this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
-
-        this.getCommand("enableeconomy")?.setExecutor(EnableEconomy())
-        this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
-
-        this.getCommand("dbogtoggledebug")?.setExecutor(ToggleDebug())
+        setUpCommands()
 
         Shard.createCraftingRecipes()
 
@@ -140,7 +121,34 @@ internal class DiamondBankOG : JavaPlugin() {
         )
     }
 
+    fun setUpCommands() {
+        this.getCommand("deposit")?.setExecutor(Deposit())
+        this.getCommand("withdraw")?.setExecutor(Withdraw())
+        this.getCommand("setbankbalance")?.setExecutor(SetBankBalance())
+        this.getCommand("setbankbal")?.setExecutor(SetBankBalance())
+        this.getCommand("pay")?.setExecutor(Pay())
+        this.getCommand("balancetop")?.setExecutor(Balancetop())
+        this.getCommand("baltop")?.setExecutor(Balancetop())
+        this.getCommand("balance")?.setExecutor(Balance())
+        this.getCommand("bal")?.setExecutor(Balance())
+        this.getCommand("compress")?.setExecutor(Compress())
+        this.getCommand("autocompress")?.setExecutor(AutoCompress())
+        this.getCommand("autodeposit")?.setExecutor(AutoDeposit())
+
+        this.getCommand("diamondbankreload")?.setExecutor(DiamondBankReload())
+        this.getCommand("diamondbankhelp")?.setExecutor(DiamondBankHelp())
+
+        this.getCommand("enableeconomy")?.setExecutor(EnableEconomy())
+        this.getCommand("disableeconomy")?.setExecutor(DisableEconomy())
+
+        this.getCommand("dbogtoggledebug")?.setExecutor(ToggleDebug())
+    }
+
     override fun onDisable() {
+        scope.cancel()
+
+        runBlocking { scope.coroutineContext[Job]?.join() }
+
         if (isRedisInitialized()) {
             redis.shutdown()
         }
@@ -148,10 +156,6 @@ internal class DiamondBankOG : JavaPlugin() {
         if (isBalanceManagerInitialized()) {
             balanceManager.shutdown()
         }
-
-        scope.cancel()
-
-        runBlocking { scope.coroutineContext[Job]?.join() }
 
         transactionLock.removeAllLocks()
     }
