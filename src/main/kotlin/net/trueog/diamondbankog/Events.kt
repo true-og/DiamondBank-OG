@@ -178,7 +178,7 @@ internal class Events : Listener {
         }
 
         if (redis.getValue("diamondbankog:${player.uniqueId}:autodeposit") == "true") {
-            deposit(player, event.item)
+            deposit(player, event.item, event.remaining)
         }
 
         scope.launch {
