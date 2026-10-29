@@ -38,4 +38,4 @@ diamondbank-og.debug
 ## License
 
 This project is licensed under the terms of **The Unlicense** (public domain dedication). See `LICENSE`.
-The Unlicense is used with permission of the original author.<sup>[1](https://github.com/andromdaa/UnityTemplate/issues/1#issuecomment-3342032195)</sup> <sup>[2](https://web.archive.org/web/20250927211153/https://github.com/andromdaa/UnityTemplate/issues/1#issuecomment-3342032195)</sup> <sup>[3](https://github.com/true-og/DiamondBank-OG/pull/13#issuecomment-3678843384)</sup> <sup>[4](https://web.archive.org/web/20260119131305/https://github.com/true-og/DiamondBank-OG/pull/13#issuecomment-3678843384)</sup>
+The Unlicense is used with permission of the original author.<sup>[1](https://github.com/andromdaa/UnityTemplate/issues/1#issuecomment-3342032195)</sup> <sup>[2](https://web.archive.org/web/20250927211153/https://github.com/andromdaa/UnityTemplate/issues/1#issuecomment-3342032195)</sup> <sup>[3](https://git.trueog.net/trueog/DiamondBank-OG/pulls/13#issuecomment-28)</sup> <sup>[4](https://web.archive.org/web/20260119131305/https://github.com/true-og/DiamondBank-OG/pull/13#issuecomment-3678843384)</sup>
